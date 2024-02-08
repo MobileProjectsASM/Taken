@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "537568996262",
+    "project_id": "puzzle-16426",
+    "storage_bucket": "puzzle-16426.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:537568996262:android:60e4d0930b50367df67d67",
+        "android_client_info": {
+          "package_name": "com.asm.taken"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "537568996262-vg8lo69kqbqf3bh8nv5kcvuj3cvv03fm.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.asm.taken",
+            "certificate_hash": "1a24138fec64a6c4f0ae9e0a12047dc1d208c76e"
+          }
+        },
+        {
+          "client_id": "537568996262-c7nrhuvi4s9jaukcg9uh0hvm98l9ubls.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDcmQoeG1-PzJMWyyKh_nyBnNaDQ84U2fo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "537568996262-c7nrhuvi4s9jaukcg9uh0hvm98l9ubls.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

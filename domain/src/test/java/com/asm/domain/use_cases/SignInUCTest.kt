@@ -1,0 +1,172 @@
+package com.asm.domain.use_cases
+
+import com.asm.domain.entities.Gamer
+import com.asm.domain.errors.Failure
+import com.asm.domain.errors.RegisterFailure
+import com.asm.domain.repositories.GamerRepositories
+import com.asm.domain.utils.Completed
+import com.asm.domain.utils.Either
+import com.asm.domain.utils.Logger
+import io.mockk.MockKAnnotations
+import io.mockk.coEvery
+import io.mockk.coVerify
+import io.mockk.every
+import io.mockk.impl.annotations.MockK
+import io.mockk.verify
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
+import java.lang.Exception
+import kotlin.test.BeforeTest
+import kotlin.test.Test
+import kotlin.test.assertEquals
+
+class SignInUCTest {
+
+    private lateinit var signInUC: SignInUC
+
+    @MockK
+    private lateinit var gamerRepositories: GamerRepositories
+
+    @MockK
+    private lateinit var logger: Logger
+
+    @BeforeTest
+    fun onBefore() {
+        MockKAnnotations.init(this, relaxUnitFun = true)
+        signInUC = SignInUC(gamerRepositories, logger)
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test
+    fun `test the registration process when there is no internet connection`() = runTest {
+        //Arrange
+        val param = Gamer(
+            gamerId = "Abc",
+            gamerNickName = "Arturo",
+            gamerAge = 26,
+            gamerCountry = "MX",
+            gamerImage = ""
+        )
+        coEvery { gamerRepositories.checkIfGamerExists(ofType(String::class)) } returns Either.Left(
+            Failure.NetworkConnection
+        )
+
+        //Act
+        val result = signInUC.run(param)
+
+        //Asserts
+        coVerify(exactly = 1) { gamerRepositories.checkIfGamerExists(ofType(String::class)) }
+        assert(result.isLeft)
+        val failure = (result as Either.Left).l
+        assert(failure is Failure.NetworkConnection)
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test
+    fun `test the registration process when a user has already been registered`() = runTest {
+        //Arrange
+        val param = Gamer(
+            gamerId = "Abc",
+            gamerNickName = "Arturo",
+            gamerAge = 26,
+            gamerCountry = "MX",
+            gamerImage = ""
+        )
+        coEvery { gamerRepositories.checkIfGamerExists(ofType(String::class)) } returns Either.Right(
+            true
+        )
+
+        //Act
+        val result = signInUC.run(param)
+
+        //Asserts
+        coVerify(exactly = 1) { gamerRepositories.checkIfGamerExists(ofType(String::class)) }
+        assert(result.isLeft)
+        val failure = (result as Either.Left).l
+        assert(failure is RegisterFailure.GamerExists)
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test
+    fun `test the registration process when there is no internet connection 2`() = runTest {
+        //Arrange
+        val param = Gamer(
+            gamerId = "Abc",
+            gamerNickName = "Arturo",
+            gamerAge = 26,
+            gamerCountry = "MX",
+            gamerImage = ""
+        )
+        coEvery { gamerRepositories.checkIfGamerExists(ofType(String::class)) } returns Either.Right(
+            false
+        )
+        coEvery { gamerRepositories.registerGamer(param) } returns Either.Left(Failure.NetworkConnection)
+
+        //Act
+        val result = signInUC.run(param)
+
+        //Asserts
+        coVerify(exactly = 1) { gamerRepositories.checkIfGamerExists(ofType(String::class)) }
+        coVerify(exactly = 1) { gamerRepositories.registerGamer(ofType(Gamer::class)) }
+        assert(result.isLeft)
+        val failure = (result as Either.Left).l
+        assert(failure is Failure.NetworkConnection)
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test
+    fun `test the registration process when all is right`() = runTest {
+        //Arrange
+        val param = Gamer(
+            gamerId = "Abc",
+            gamerNickName = "Arturo",
+            gamerAge = 26,
+            gamerCountry = "MX",
+            gamerImage = ""
+        )
+        coEvery { gamerRepositories.checkIfGamerExists(ofType(String::class)) } returns Either.Right(
+            false
+        )
+        coEvery { gamerRepositories.registerGamer(param) } returns Either.Right(Completed)
+
+        //Act
+        val result = signInUC.run(param)
+
+        //Asserts
+        coVerify(exactly = 1) { gamerRepositories.checkIfGamerExists(ofType(String::class)) }
+        coVerify(exactly = 1) { gamerRepositories.registerGamer(ofType(Gamer::class)) }
+        assert(result.isRight)
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test
+    fun `test the registration process when occur other exception`() = runTest {
+        //Arrange
+        val otherException = Exception("Other exception")
+        val param = Gamer(
+            gamerId = "Abc",
+            gamerNickName = "Arturo",
+            gamerAge = 26,
+            gamerCountry = "MX",
+            gamerImage = ""
+        )
+        coEvery { gamerRepositories.checkIfGamerExists(ofType(String::class)) } returns Either.Right(
+            false
+        )
+        coEvery { gamerRepositories.registerGamer(param) } throws otherException
+
+
+        //Act
+        val result = signInUC.run(param)
+
+        //Asserts
+        coVerify(exactly = 1) { gamerRepositories.checkIfGamerExists(ofType(String::class)) }
+        coVerify(exactly = 1) { gamerRepositories.registerGamer(ofType(Gamer::class)) }
+        coVerify(exactly = 1) { logger.logE(any()) }
+        assert(result.isLeft)
+        val failure = (result as Either.Left).l
+        assert(failure is Failure.UnknownError)
+    }
+}
