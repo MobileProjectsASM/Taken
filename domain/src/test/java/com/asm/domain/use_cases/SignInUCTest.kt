@@ -3,31 +3,28 @@ package com.asm.domain.use_cases
 import com.asm.domain.entities.Gamer
 import com.asm.domain.errors.Failure
 import com.asm.domain.errors.RegisterFailure
-import com.asm.domain.repositories.GamerRepositories
+import com.asm.domain.repositories.GamerRepository
 import com.asm.domain.utils.Completed
 import com.asm.domain.utils.Either
 import com.asm.domain.utils.Logger
 import io.mockk.MockKAnnotations
 import io.mockk.coEvery
 import io.mockk.coVerify
-import io.mockk.every
 import io.mockk.impl.annotations.MockK
-import io.mockk.verify
+import io.mockk.just
+import io.mockk.runs
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import java.lang.Exception
 import kotlin.test.BeforeTest
 import kotlin.test.Test
-import kotlin.test.assertEquals
 
 class SignInUCTest {
 
     private lateinit var signInUC: SignInUC
 
     @MockK
-    private lateinit var gamerRepositories: GamerRepositories
+    private lateinit var gamerRepository: GamerRepository
 
     @MockK
     private lateinit var logger: Logger
@@ -35,7 +32,7 @@ class SignInUCTest {
     @BeforeTest
     fun onBefore() {
         MockKAnnotations.init(this, relaxUnitFun = true)
-        signInUC = SignInUC(gamerRepositories, logger)
+        signInUC = SignInUC(gamerRepository, logger)
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -49,15 +46,15 @@ class SignInUCTest {
             gamerCountry = "MX",
             gamerImage = ""
         )
-        coEvery { gamerRepositories.checkIfGamerExists(ofType(String::class)) } returns Either.Left(
+        coEvery { gamerRepository.checkIfGamerExists(ofType(String::class)) } returns Either.Left(
             Failure.NetworkConnection
         )
 
         //Act
-        val result = signInUC.run(param)
+        val result = signInUC.execute(param)
 
         //Asserts
-        coVerify(exactly = 1) { gamerRepositories.checkIfGamerExists(ofType(String::class)) }
+        coVerify(exactly = 1) { gamerRepository.checkIfGamerExists(ofType(String::class)) }
         assert(result.isLeft)
         val failure = (result as Either.Left).l
         assert(failure is Failure.NetworkConnection)
@@ -74,15 +71,15 @@ class SignInUCTest {
             gamerCountry = "MX",
             gamerImage = ""
         )
-        coEvery { gamerRepositories.checkIfGamerExists(ofType(String::class)) } returns Either.Right(
+        coEvery { gamerRepository.checkIfGamerExists(ofType(String::class)) } returns Either.Right(
             true
         )
 
         //Act
-        val result = signInUC.run(param)
+        val result = signInUC.execute(param)
 
         //Asserts
-        coVerify(exactly = 1) { gamerRepositories.checkIfGamerExists(ofType(String::class)) }
+        coVerify(exactly = 1) { gamerRepository.checkIfGamerExists(ofType(String::class)) }
         assert(result.isLeft)
         val failure = (result as Either.Left).l
         assert(failure is RegisterFailure.GamerExists)
@@ -99,17 +96,17 @@ class SignInUCTest {
             gamerCountry = "MX",
             gamerImage = ""
         )
-        coEvery { gamerRepositories.checkIfGamerExists(ofType(String::class)) } returns Either.Right(
+        coEvery { gamerRepository.checkIfGamerExists(ofType(String::class)) } returns Either.Right(
             false
         )
-        coEvery { gamerRepositories.registerGamer(param) } returns Either.Left(Failure.NetworkConnection)
+        coEvery { gamerRepository.registerGamer(param) } returns Either.Left(Failure.NetworkConnection)
 
         //Act
-        val result = signInUC.run(param)
+        val result = signInUC.execute(param)
 
         //Asserts
-        coVerify(exactly = 1) { gamerRepositories.checkIfGamerExists(ofType(String::class)) }
-        coVerify(exactly = 1) { gamerRepositories.registerGamer(ofType(Gamer::class)) }
+        coVerify(exactly = 1) { gamerRepository.checkIfGamerExists(ofType(String::class)) }
+        coVerify(exactly = 1) { gamerRepository.registerGamer(ofType(Gamer::class)) }
         assert(result.isLeft)
         val failure = (result as Either.Left).l
         assert(failure is Failure.NetworkConnection)
@@ -126,17 +123,17 @@ class SignInUCTest {
             gamerCountry = "MX",
             gamerImage = ""
         )
-        coEvery { gamerRepositories.checkIfGamerExists(ofType(String::class)) } returns Either.Right(
+        coEvery { gamerRepository.checkIfGamerExists(ofType(String::class)) } returns Either.Right(
             false
         )
-        coEvery { gamerRepositories.registerGamer(param) } returns Either.Right(Completed)
+        coEvery { gamerRepository.registerGamer(param) } returns Either.Right(Completed)
 
         //Act
-        val result = signInUC.run(param)
+        val result = signInUC.execute(param)
 
         //Asserts
-        coVerify(exactly = 1) { gamerRepositories.checkIfGamerExists(ofType(String::class)) }
-        coVerify(exactly = 1) { gamerRepositories.registerGamer(ofType(Gamer::class)) }
+        coVerify(exactly = 1) { gamerRepository.checkIfGamerExists(ofType(String::class)) }
+        coVerify(exactly = 1) { gamerRepository.registerGamer(ofType(Gamer::class)) }
         assert(result.isRight)
     }
 
@@ -152,18 +149,19 @@ class SignInUCTest {
             gamerCountry = "MX",
             gamerImage = ""
         )
-        coEvery { gamerRepositories.checkIfGamerExists(ofType(String::class)) } returns Either.Right(
+        coEvery { gamerRepository.checkIfGamerExists(ofType(String::class)) } returns Either.Right(
             false
         )
-        coEvery { gamerRepositories.registerGamer(param) } throws otherException
+        coEvery { gamerRepository.registerGamer(param) } throws otherException
+        coEvery { logger.logE(any()) } just runs
 
 
         //Act
-        val result = signInUC.run(param)
+        val result = signInUC.execute(param)
 
         //Asserts
-        coVerify(exactly = 1) { gamerRepositories.checkIfGamerExists(ofType(String::class)) }
-        coVerify(exactly = 1) { gamerRepositories.registerGamer(ofType(Gamer::class)) }
+        coVerify(exactly = 1) { gamerRepository.checkIfGamerExists(ofType(String::class)) }
+        coVerify(exactly = 1) { gamerRepository.registerGamer(ofType(Gamer::class)) }
         coVerify(exactly = 1) { logger.logE(any()) }
         assert(result.isLeft)
         val failure = (result as Either.Left).l

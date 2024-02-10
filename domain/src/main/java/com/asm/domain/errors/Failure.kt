@@ -11,3 +11,7 @@ sealed class Failure {
 sealed class RegisterFailure: Failure() {
     data object GamerExists: RegisterFailure()
 }
+
+sealed class GamerFailure: Failure() {
+    data object GamerNotExists: GamerFailure()
+}
