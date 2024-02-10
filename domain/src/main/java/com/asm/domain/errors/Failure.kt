@@ -15,3 +15,8 @@ sealed class RegisterFailure: Failure() {
 sealed class GamerFailure: Failure() {
     data object GamerNotExists: GamerFailure()
 }
+
+sealed class GameFailure: Failure() {
+    data object ThereIsNotGameInProcess: GameFailure()
+    data object ThereIsGameInProcess: GameFailure()
+}

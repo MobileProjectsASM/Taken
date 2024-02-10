@@ -8,6 +8,7 @@ import com.asm.domain.use_cases.base.UseCaseSync
 import com.asm.domain.utils.Completed
 import com.asm.domain.utils.Either
 import com.asm.domain.utils.Logger
+import com.asm.domain.utils.toLeft
 import com.asm.domain.utils.toRight
 
 class SignInUC(
@@ -25,7 +26,7 @@ class SignInUC(
             return Completed.toRight()
         } catch (exception: Exception) {
             logger.logE { exception }
-            return Either.Left(Failure.UnknownError)
+            return Failure.UnknownError.toLeft()
         }
     }
 }

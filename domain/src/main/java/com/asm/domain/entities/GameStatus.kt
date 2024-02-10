@@ -12,9 +12,4 @@ sealed class GameStatus {
         val movesMade: Int,
         val score: Double
     ): GameStatus()
-    data class Lose(
-        val timePlaying: Int,
-        val movesMade: Int,
-        val score: Double
-    ): GameStatus()
 }

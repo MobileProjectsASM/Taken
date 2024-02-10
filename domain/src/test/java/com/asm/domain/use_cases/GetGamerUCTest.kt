@@ -1,12 +1,10 @@
 package com.asm.domain.use_cases
 
-import com.asm.domain.errors.Failure
 import com.asm.domain.errors.GamerFailure
 import com.asm.domain.repositories.GamerRepository
 import com.asm.domain.utils.Logger
 import com.asm.domain.utils.toLeft
 import io.mockk.MockKAnnotations
-import io.mockk.Runs
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.impl.annotations.MockK
@@ -14,7 +12,6 @@ import io.mockk.just
 import io.mockk.runs
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
-import java.lang.Exception
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 
