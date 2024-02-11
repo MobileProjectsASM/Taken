@@ -17,6 +17,7 @@ import kotlinx.coroutines.test.runTest
 import org.junit.BeforeClass
 import kotlin.test.BeforeTest
 import kotlin.test.Test
+import kotlin.test.assertEquals
 
 class GetMainGamesUCTest {
     private lateinit var getMainGamesUC: GetMainGamesUC
@@ -29,11 +30,13 @@ class GetMainGamesUCTest {
 
     companion object {
         var fakeGames: FakeGames? = null
+        var gamesExpected: GamesExpected? = null
 
         @BeforeClass
         @JvmStatic
         fun setup() {
             fakeGames = FakeGames()
+            gamesExpected = GamesExpected()
         }
     }
 
@@ -122,5 +125,90 @@ class GetMainGamesUCTest {
         assert(result.isLeft)
         val failure = (result as Either.Left).l
         assert(failure is GameFailure.MoreThanOneLockGame)
+    }
+
+    @Test
+    fun `test process when is new Gamer`() = runTest {
+        //Arrange
+        val initialGames = fakeGames!!.initialGames
+        val expectedValue = gamesExpected!!.expectedInitialGames
+        coEvery { gamesRepository.getGamesByGamerId(ofType(String::class)) } returns initialGames.toRight()
+
+        //Act
+        val result = getMainGamesUC.execute("ABDCE")
+
+        //Asserts
+        coVerify(exactly = 1) { gamesRepository.getGamesByGamerId(ofType(String::class)) }
+        assert(result.isRight)
+        val value = (result as Either.Right).r
+        assertEquals(expectedValue, value)
+    }
+
+    @Test
+    fun `test when the there is games won`() = runTest {
+        //Arrange
+        val fakeGames = fakeGames!!.firstLevelWin
+        val expectedValue = gamesExpected!!.firstLevelWinExpected
+        coEvery { gamesRepository.getGamesByGamerId(ofType(String::class)) } returns fakeGames.toRight()
+
+        //Act
+        val result = getMainGamesUC.execute("ABCDE")
+
+        //Asserts
+        coVerify(exactly = 1) { gamesRepository.getGamesByGamerId(ofType(String::class)) }
+        assert(result.isRight)
+        val value = (result as Either.Right).r
+        assertEquals(expectedValue, value)
+    }
+
+    @Test
+    fun `test when the there are multiple levels won`() = runTest {
+        //Arrange
+        val fakeGames = fakeGames!!.multipleLevelsWin
+        val expectedValue = gamesExpected!!.multipleLevelsWinExpected
+        coEvery { gamesRepository.getGamesByGamerId(ofType(String::class)) } returns fakeGames.toRight()
+
+        //Act
+        val result = getMainGamesUC.execute("ABCDE")
+
+        //Asserts
+        coVerify(exactly = 1) { gamesRepository.getGamesByGamerId(ofType(String::class)) }
+        assert(result.isRight)
+        val value = (result as Either.Right).r
+        assertEquals(expectedValue, value)
+    }
+
+    @Test
+    fun `test when the there isn't levels lock`() = runTest {
+        //Arrange
+        val fakeGames = fakeGames!!.thereIsNotLevelLock
+        val expectedValue = gamesExpected!!.thereIsNotLevelLockExpected
+        coEvery { gamesRepository.getGamesByGamerId(ofType(String::class)) } returns fakeGames.toRight()
+
+        //Act
+        val result = getMainGamesUC.execute("ABCDE")
+
+        //Asserts
+        coVerify(exactly = 1) { gamesRepository.getGamesByGamerId(ofType(String::class)) }
+        assert(result.isRight)
+        val value = (result as Either.Right).r
+        assertEquals(expectedValue, value)
+    }
+
+    @Test
+    fun `test when the all levels are won`() = runTest {
+        //Arrange
+        val fakeGames = fakeGames!!.allLevelsWon
+        val expectedValue = gamesExpected!!.allLevelsWonExpected
+        coEvery { gamesRepository.getGamesByGamerId(ofType(String::class)) } returns fakeGames.toRight()
+
+        //Act
+        val result = getMainGamesUC.execute("ABCDE")
+
+        //Asserts
+        coVerify(exactly = 1) { gamesRepository.getGamesByGamerId(ofType(String::class)) }
+        assert(result.isRight)
+        val value = (result as Either.Right).r
+        assertEquals(expectedValue, value)
     }
 }
