@@ -19,4 +19,6 @@ sealed class GamerFailure: Failure() {
 sealed class GameFailure: Failure() {
     data object ThereIsNotGameInProcess: GameFailure()
     data object ThereIsGameInProcess: GameFailure()
+    data object MoreThanOneNewGame: GameFailure()
+    data object MoreThanOneLockGame: GameFailure()
 }

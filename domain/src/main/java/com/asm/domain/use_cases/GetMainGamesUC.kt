@@ -22,6 +22,10 @@ class GetMainGamesUC(
             val allGamesByUser = (result as Either.Right).r
             val thereIsGameInProcess = allGamesByUser.any { it.gameStatus is GameStatus.Process }
             if (thereIsGameInProcess) return GameFailure.ThereIsGameInProcess.toLeft()
+            val thereAreMoreThanOneNew = allGamesByUser.filter { it.gameStatus is GameStatus.New }.size > 1
+            if (thereAreMoreThanOneNew) return GameFailure.MoreThanOneNewGame.toLeft()
+            val thereAreMoreThanOneLock = allGamesByUser.filter { it.gameStatus is GameStatus.Lock }.size > 1
+            if (thereAreMoreThanOneLock) return GameFailure.MoreThanOneLockGame.toLeft()
             val gamesGroupByLevelOrder = allGamesByUser.groupBy { it.level.levelOrder }
 
             //get main games
