@@ -26,7 +26,7 @@ class GetMainGamesUC(
             if (thereAreMoreThanOneNew) return GameFailure.MoreThanOneNewGame.toLeft()
             val thereAreMoreThanOneLock = allGamesByUser.filter { it.gameStatus is GameStatus.Lock }.size > 1
             if (thereAreMoreThanOneLock) return GameFailure.MoreThanOneLockGame.toLeft()
-            val gamesGroupByLevelOrder = allGamesByUser.groupBy { it.level.levelOrder }
+            val gamesGroupByLevelOrder = allGamesByUser.groupBy { it.levelInfo.levelOrder }
 
             //get main games
             val mainGames = mutableMapOf<Int, Game>()
@@ -51,7 +51,7 @@ class GetMainGamesUC(
             }
 
             //Sort by order main games
-            val mainGamesSorted = mainGames.values.sortedBy { it.level.levelOrder }
+            val mainGamesSorted = mainGames.values.sortedBy { it.levelInfo.levelOrder}
             return mainGamesSorted.toRight()
         } catch (exception: Exception) {
             logger.logE { exception }

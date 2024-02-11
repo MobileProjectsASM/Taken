@@ -1,9 +1,8 @@
 package com.asm.domain.use_cases
 
-import com.asm.domain.entities.Difficulty
 import com.asm.domain.entities.Game
 import com.asm.domain.entities.GameStatus
-import com.asm.domain.entities.Level
+import com.asm.domain.entities.LevelInfo
 import com.asm.domain.errors.Failure
 import com.asm.domain.errors.GameFailure
 import com.asm.domain.repositories.GameRepository
@@ -17,7 +16,6 @@ import io.mockk.coVerify
 import io.mockk.impl.annotations.MockK
 import io.mockk.just
 import io.mockk.runs
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -40,7 +38,6 @@ class GetGameInProcessUCTest {
         getGameInProcessUC = GetGameInProcessUC(logger, gameRepository)
     }
 
-    @OptIn(ExperimentalCoroutinesApi::class)
     @Test
     fun `test process when getGameInProcess return a Failure`() = runTest {
         //Arrange
@@ -56,7 +53,6 @@ class GetGameInProcessUCTest {
         assert(failure is Failure.NetworkConnection)
     }
 
-    @OptIn(ExperimentalCoroutinesApi::class)
     @Test
     fun `test process when an exception occurs in the process`() = runTest {
         //Arrange
@@ -74,7 +70,6 @@ class GetGameInProcessUCTest {
         assert(failure is Failure.UnknownError)
     }
 
-    @OptIn(ExperimentalCoroutinesApi::class)
     @Test
     fun `test process when getGameInProcess return null value`() = runTest {
         //Arrange
@@ -90,19 +85,14 @@ class GetGameInProcessUCTest {
         assert(failure is GameFailure.ThereIsNotGameInProcess)
     }
 
-    @OptIn(ExperimentalCoroutinesApi::class)
     @Test
     fun `test process when all is right`() = runTest {
         //Arranges
         val expectedValue = Game(
-            Level(
-                "",
+            LevelInfo(
                 1,
                 "",
-                Difficulty.EASY,
-                100,
-                1000,
-                arrayOf()
+                ""
             ),
             GameStatus.New,
             arrayOf()

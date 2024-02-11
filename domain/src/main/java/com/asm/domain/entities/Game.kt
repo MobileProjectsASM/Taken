@@ -1,7 +1,7 @@
 package com.asm.domain.entities
 
 data class Game(
-    val level: Level,
+    val levelInfo: LevelInfo,
     val gameStatus: GameStatus,
     val workTable: Array<Array<Box>>
 ) {
@@ -11,13 +11,13 @@ data class Game(
 
         other as Game
 
-        if (level != other.level) return false
+        if (levelInfo != other.levelInfo) return false
         if (gameStatus != other.gameStatus) return false
         return workTable.contentDeepEquals(other.workTable)
     }
 
     override fun hashCode(): Int {
-        var result = level.hashCode()
+        var result = levelInfo.hashCode()
         result = 31 * result + gameStatus.hashCode()
         result = 31 * result + workTable.contentDeepHashCode()
         return result

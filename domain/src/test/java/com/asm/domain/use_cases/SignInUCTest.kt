@@ -35,7 +35,6 @@ class SignInUCTest {
         signInUC = SignInUC(gamerRepository, logger)
     }
 
-    @OptIn(ExperimentalCoroutinesApi::class)
     @Test
     fun `test the registration process when there is no internet connection`() = runTest {
         //Arrange
@@ -60,7 +59,6 @@ class SignInUCTest {
         assert(failure is Failure.NetworkConnection)
     }
 
-    @OptIn(ExperimentalCoroutinesApi::class)
     @Test
     fun `test the registration process when a user has already been registered`() = runTest {
         //Arrange
@@ -85,7 +83,6 @@ class SignInUCTest {
         assert(failure is RegisterFailure.GamerExists)
     }
 
-    @OptIn(ExperimentalCoroutinesApi::class)
     @Test
     fun `test the registration process when there is no internet connection 2`() = runTest {
         //Arrange
@@ -112,7 +109,6 @@ class SignInUCTest {
         assert(failure is Failure.NetworkConnection)
     }
 
-    @OptIn(ExperimentalCoroutinesApi::class)
     @Test
     fun `test the registration process when all is right`() = runTest {
         //Arrange
@@ -137,7 +133,6 @@ class SignInUCTest {
         assert(result.isRight)
     }
 
-    @OptIn(ExperimentalCoroutinesApi::class)
     @Test
     fun `test the registration process when occur other exception`() = runTest {
         //Arrange

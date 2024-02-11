@@ -10,7 +10,6 @@ import io.mockk.coVerify
 import io.mockk.impl.annotations.MockK
 import io.mockk.just
 import io.mockk.runs
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -30,7 +29,6 @@ class GetGamerUCTest {
         getGamerUC = GetGamerUC(logger, gamerRepository)
     }
 
-    @OptIn(ExperimentalCoroutinesApi::class)
     @Test
     fun `test the process when getGamerById return a Failure`() = runTest {
         //Arrange
@@ -44,7 +42,6 @@ class GetGamerUCTest {
         assert(result.isLeft)
     }
 
-    @OptIn(ExperimentalCoroutinesApi::class)
     @Test
     fun `test the process when process throws error`() = runTest {
         //Arrange
