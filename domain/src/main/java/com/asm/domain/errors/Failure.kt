@@ -1,5 +1,7 @@
 package com.asm.domain.errors
 
+import com.asm.domain.entities.Timer
+
 sealed class Failure {
     data object NetworkConnection : Failure()
     data object ServerError : Failure()
@@ -21,4 +23,8 @@ sealed class GameFailure: Failure() {
     data object ThereIsGameInProcess: GameFailure()
     data object MoreThanOneNewGame: GameFailure()
     data object MoreThanOneLockGame: GameFailure()
+}
+
+sealed class TimerFailure: Failure() {
+    data object TimeInitIsNull: TimerFailure()
 }
