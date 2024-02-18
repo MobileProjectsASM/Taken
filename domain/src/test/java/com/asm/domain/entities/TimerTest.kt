@@ -2,12 +2,16 @@ package com.asm.domain.entities
 
 import com.asm.domain.errors.TimerFailure
 import com.asm.domain.utils.Either
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import kotlin.math.round
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.time.TimeSource
 
 class TimerTest {
@@ -33,7 +37,7 @@ class TimerTest {
     fun `test when time is right`() = runBlocking {
         //Arrange
         val seconds = 60L
-        timer.setTime(seconds * 1000)
+        timer.setTime(seconds * 1_000)
         val timeSource: TimeSource.Monotonic = TimeSource.Monotonic
 
         //Act
@@ -57,5 +61,50 @@ class TimerTest {
 
         //Asserts
         assert(result.isRight)
+    }
+
+    @Test
+    fun `test when pause time before timeout`() = runBlocking {
+        //Arrange
+        val seconds = 60L
+        val simulatedProcessTime = 38L
+        val expectedLeftSeconds = seconds - simulatedProcessTime
+        timer.setTime(seconds * 1_000)
+
+        //Act
+        launch {
+            val result = timer.start(initTimer = {}, inProcess = {}, timeOut = {})
+            assert(result.isRight)
+        }
+        //Wait 10 seconds and pause timer
+        delay(simulatedProcessTime * 1_000)
+        val leftTime = timer.pause()
+
+
+        //Asserts
+        assertNotNull(leftTime)
+        val leftSeconds = round(leftTime / 1000.0).toLong()
+        assertEquals(expectedLeftSeconds, leftSeconds)
+    }
+
+    @Test
+    fun `test when pause timer and already it timeout`() = runBlocking {
+        //Arrange
+        val seconds = 20L
+        val simulatedProcessTime = 38L
+        timer.setTime(seconds * 1_000)
+
+        //Act
+        launch {
+            val result = timer.start(initTimer = {}, inProcess = {}, timeOut = {})
+            assert(result.isRight)
+        }
+        //Wait 10 seconds and pause timer
+        delay(simulatedProcessTime * 1_000)
+        val leftTime = timer.pause()
+
+
+        //Asserts
+        assertNull(leftTime)
     }
 }
