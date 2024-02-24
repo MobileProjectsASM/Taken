@@ -2,6 +2,8 @@ package com.asm.domain.use_cases
 
 import com.asm.domain.entities.Difficulty
 import com.asm.domain.entities.Level
+import com.asm.domain.entities.MovementsMetrics
+import com.asm.domain.entities.TimeMetrics
 import com.asm.domain.errors.Failure
 import com.asm.domain.repositories.LevelRepository
 import com.asm.domain.utils.Either
@@ -74,8 +76,8 @@ class GetLevelUCTest {
             1,
             "",
             Difficulty.EASY,
-            120,
-            40,
+            TimeMetrics(0,0,0,0,0),
+            MovementsMetrics(0,0,0,0,0),
             arrayOf()
         )
         coEvery { levelRepository.getLevelByOrder(ofType(Int::class)) } returns expectedLevel.toRight()

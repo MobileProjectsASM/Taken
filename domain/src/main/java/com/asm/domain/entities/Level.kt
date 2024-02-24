@@ -5,8 +5,8 @@ data class Level(
     val levelOrder: Int,
     val levelImage: String,
     val difficulty: Difficulty,
-    val maxTime: Int,
-    val minMovements: Int,
+    val timeMetrics: TimeMetrics,
+    val movementsMetrics: MovementsMetrics,
     val response: Array<Array<Box>>
 ) {
     override fun equals(other: Any?): Boolean {
@@ -19,8 +19,8 @@ data class Level(
         if (levelOrder != other.levelOrder) return false
         if (levelImage != other.levelImage) return false
         if (difficulty != other.difficulty) return false
-        if (maxTime != other.maxTime) return false
-        if (minMovements != other.minMovements) return false
+        if (timeMetrics != other.timeMetrics) return false
+        if (movementsMetrics != other.movementsMetrics) return false
         return response.contentDeepEquals(other.response)
     }
 
@@ -29,8 +29,8 @@ data class Level(
         result = 31 * result + levelOrder
         result = 31 * result + levelImage.hashCode()
         result = 31 * result + difficulty.hashCode()
-        result = 31 * result + maxTime
-        result = 31 * result + minMovements
+        result = 31 * result + timeMetrics.hashCode()
+        result = 31 * result + movementsMetrics.hashCode()
         result = 31 * result + response.contentDeepHashCode()
         return result
     }

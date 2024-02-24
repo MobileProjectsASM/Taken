@@ -22,8 +22,8 @@ class SolutionValidatorTest {
             1,
             "",
             Difficulty.EASY,
-            500,
-            50,
+            TimeMetrics(0, 0, 0, 0, 0),
+            MovementsMetrics(0, 0, 0, 0,0),
             arrayOf(
                 arrayOf(Box(1, 255), Box(2, 4294967295), Box(3, 255), Box(4, 4294967295)),
                 arrayOf(Box(5, 4294967295), Box(6, 255), Box(7, 4294967295), Box(8, 255)),
@@ -53,8 +53,8 @@ class SolutionValidatorTest {
             1,
             "",
             Difficulty.EASY,
-            500,
-            50,
+            TimeMetrics(0, 0, 0, 0, 0),
+            MovementsMetrics(0, 0, 0, 0,0),
             arrayOf(
                 arrayOf(Box(1, 255), Box(2, 4294967295), Box(3, 255), Box(4, 4294967295)),
                 arrayOf(Box(5, 4294967295), Box(6, 255), Box(7, 4294967295), Box(8, 255)),
