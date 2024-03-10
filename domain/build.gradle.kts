@@ -1,6 +1,7 @@
 plugins {
     id("java-library")
     id("org.jetbrains.kotlin.jvm")
+    id("kotlin-kapt")
 }
 
 java {
@@ -10,6 +11,8 @@ java {
 
 dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.1")
+    implementation("com.google.dagger:dagger:2.44")
+    kapt("com.google.dagger:dagger-compiler:2.44")
 
     testImplementation(kotlin("test"))
     testImplementation("io.mockk:mockk:1.13.9")

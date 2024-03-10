@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">PUZZLE</string>
+    <string name="txt_title_login_dialog">Welcome to Puzzle!!</string>
+    <string name="txt_inf_login_dialog">Login to continue</string>
+    <string name="txt_inf_sign_in">Or sign in with ...</string>
+    <string name="txt_label_user_id_login">User ID</string>
+    <string name="txt_cd_icon_user_id">Icon user ID</string>
+    <string name="txt_label_password">Password</string>
+    <string name="txt_cd_trailing_icon_info_">Icon info</string>
+    <string name="txt_cd_icon_button">Icon button</string>
+    <string name="txt_cd_icon_app">Icon app</string>
+    <string name="txt_btn_login">LOGIN</string>
+</resources>

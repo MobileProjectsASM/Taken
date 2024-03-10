@@ -9,8 +9,9 @@ import com.asm.domain.utils.Either
 import com.asm.domain.utils.Logger
 import com.asm.domain.utils.toLeft
 import com.asm.domain.utils.toRight
+import javax.inject.Inject
 
-class GetGameInProcessUC(
+class GetGameInProcessUC @Inject constructor(
     private val logger: Logger,
     private val gameRepository: GameRepository
 ) : UseCaseSync<Game, String>() {

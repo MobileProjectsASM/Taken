@@ -10,8 +10,9 @@ import com.asm.domain.utils.Either
 import com.asm.domain.utils.Logger
 import com.asm.domain.utils.toLeft
 import com.asm.domain.utils.toRight
+import javax.inject.Inject
 
-class SignInUC(
+class SignInUC @Inject constructor(
     private val gamerRepository: GamerRepository,
     private val logger: Logger
 ) : UseCaseSync<Completed, Gamer>() {
