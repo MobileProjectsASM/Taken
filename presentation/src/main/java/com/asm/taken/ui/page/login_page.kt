@@ -43,10 +43,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.asm.taken.R
+import com.asm.taken.ui.DefaultButton
 import com.asm.taken.ui.DefaultImageButton
 import com.asm.taken.ui.DefaultOutlinedTextFieldLI
 import com.asm.taken.ui.DefaultOutlinedTextFieldTI
-import com.asm.taken.ui.PuzzleDefaultButton
 import com.asm.taken.ui.PuzzleDefaultText
 import com.asm.taken.ui.PuzzleGeneralTitle
 import com.asm.taken.ui.puzzleFontFamily
@@ -118,6 +118,7 @@ fun CardLogin(loginVM: LoginVM) {
     val userId: String by loginVM.userIdSTFlow.collectAsState()
     val password: String by loginVM.passwordSTFlow.collectAsState()
     val isPasswordVisible: Boolean by loginVM.isPasswordVisibleSTF.collectAsState()
+    val isBtnLoginEnable: Boolean by loginVM.isBtnLoginEnableSTF.collectAsState()
 
     Card(
         modifier = Modifier
@@ -148,8 +149,9 @@ fun CardLogin(loginVM: LoginVM) {
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                 leadingIcon = Icons.Default.Person,
                 cdLeadingIcon = R.string.txt_cd_icon_user_id,
-                onValueChange = loginVM.setUserId,
-            )
+            ) {
+                loginVM.updateDataLogin(it, password)
+            }
             DefaultOutlinedTextFieldTI(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -163,16 +165,20 @@ fun CardLogin(loginVM: LoginVM) {
                 trailingIcon = if (isPasswordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
                 cdTrailingIcon = R.string.txt_cd_trailing_icon_info_,
                 onClickTrailingIcon = {
-                    loginVM.setIsPasswordVisible(!isPasswordVisible)
+                    loginVM.updateIsPasswordVisible(!isPasswordVisible)
                 },
-                onValueChange = loginVM.setPassword,
-            )
+            ) {
+                loginVM.updateDataLogin(userId, it)
+            }
             Spacer(modifier = Modifier.height(50.dp))
             Column(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                PuzzleDefaultButton(text = stringResource(id = R.string.txt_btn_login)) {
+                DefaultButton(
+                    text = stringResource(id = R.string.txt_btn_login),
+                    enable = isBtnLoginEnable
+                ) {
 
                 }
             }

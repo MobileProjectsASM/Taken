@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.asm.taken.R
+import com.asm.taken.ui.theme.Purple40
 import com.asm.taken.ui.theme.Purple80
 import com.asm.taken.ui.theme.PurpleGrey80
 
@@ -158,19 +159,20 @@ fun DefaultOutlinedTextFieldTI(
 }
 
 @Composable
-fun PuzzleDefaultButton(
+fun DefaultButton(
     modifier: Modifier = Modifier,
+    enable: Boolean = true,
     text: String,
     onClickButton: (() -> Unit)? = null
 ) {
     Button(
         modifier = modifier,
         onClick = { onClickButton?.invoke() },
-        enabled = true,
+        enabled = enable,
         colors = ButtonDefaults.buttonColors(
-            containerColor = Purple80,
+            containerColor = colorResource(R.color.purple_200),
             contentColor = Color.White,
-            disabledContainerColor = PurpleGrey80,
+            disabledContainerColor = Purple80,
             disabledContentColor = Color.White
         )
     ) {
