@@ -22,35 +22,39 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Card
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.asm.taken.R
-import com.asm.taken.ui.AppTitle
 import com.asm.taken.ui.DefaultImageButton
+import com.asm.taken.ui.DefaultOutlinedTextFieldLI
+import com.asm.taken.ui.DefaultOutlinedTextFieldTI
 import com.asm.taken.ui.PuzzleDefaultButton
-import com.asm.taken.ui.PuzzleDefaultOutlinedTrailingIcon
 import com.asm.taken.ui.PuzzleDefaultText
 import com.asm.taken.ui.PuzzleGeneralTitle
+import com.asm.taken.ui.puzzleFontFamily
+import com.asm.taken.vm.LoginVM
 
 @Composable
-fun LoginPage(
-    userId: String,
-    password: String,
-    isPasswordVisible: Boolean,
-    onUserIdChanged: (String) -> Unit,
-    onPasswordChanged: (String) -> Unit,
-    onVisibilityChanged: (Boolean) -> Unit
-) {
+fun LoginPage(loginVM: LoginVM) {
+
     Box(
         modifier = Modifier.fillMaxSize()
     ) {
@@ -84,11 +88,14 @@ fun LoginPage(
                     id = R.string.txt_cd_icon_app
                 )
             )
-            AppTitle(
-                text = stringResource(id = R.string.app_name),
+            Text(
                 modifier = Modifier
                     .fillMaxWidth()
                     .align(Alignment.BottomCenter),
+                fontSize = dimensionResource(id = R.dimen.app_name_size).value.sp,
+                text = stringResource(id = R.string.app_name),
+                fontFamily = puzzleFontFamily,
+                fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center,
                 color = Color.White
             )
@@ -99,14 +106,7 @@ fun LoginPage(
                 .verticalScroll(rememberScrollState())
         ) {
             Box(modifier = Modifier.height(250.dp))
-            CardLogin(
-                userId = userId,
-                password = password,
-                isPasswordVisible = isPasswordVisible,
-                onUserIdChanged = onUserIdChanged,
-                onPasswordChanged = onPasswordChanged,
-                onVisibilityChanged = onVisibilityChanged
-            )
+            CardLogin(loginVM)
             CardSocialMedia()
             Box(modifier = Modifier.height(250.dp))
         }
@@ -114,14 +114,11 @@ fun LoginPage(
 }
 
 @Composable
-fun CardLogin(
-    userId: String,
-    password: String,
-    isPasswordVisible: Boolean,
-    onUserIdChanged: (String) -> Unit,
-    onPasswordChanged: (String) -> Unit,
-    onVisibilityChanged: (Boolean) -> Unit
-) {
+fun CardLogin(loginVM: LoginVM) {
+    val userId: String by loginVM.userIdSTFlow.collectAsState()
+    val password: String by loginVM.passwordSTFlow.collectAsState()
+    val isPasswordVisible: Boolean by loginVM.isPasswordVisibleSTF.collectAsState()
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -142,34 +139,33 @@ fun CardLogin(
                 textAlign = TextAlign.Center
             )
             Spacer(modifier = Modifier.height(50.dp))
-            PuzzleDefaultOutlinedTrailingIcon(
+            DefaultOutlinedTextFieldLI(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 10.dp),
                 value = userId,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 10.dp),
                 label = R.string.txt_label_user_id_login,
-                leadingIcon = Icons.Default.Person,//R.drawable.round_person_24,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                leadingIcon = Icons.Default.Person,
                 cdLeadingIcon = R.string.txt_cd_icon_user_id,
-                cdTrailingIcon = R.string.txt_cd_trailing_icon_info_,
-                onValueChanged = onUserIdChanged
+                onValueChange = loginVM.setUserId,
             )
-            PuzzleDefaultOutlinedTrailingIcon(
-                value = password,
+            DefaultOutlinedTextFieldTI(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 10.dp),
+                value = password,
                 label = R.string.txt_label_password,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                visualTransformation = if (isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                 leadingIcon = Icons.Default.Lock,
                 cdLeadingIcon = R.string.txt_cd_icon_user_id,
                 trailingIcon = if (isPasswordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                cdTrailingIcon = R . string . txt_cd_trailing_icon_info_,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                isPasswordVisible = isPasswordVisible,
-                onValueChanged = onPasswordChanged,
+                cdTrailingIcon = R.string.txt_cd_trailing_icon_info_,
                 onClickTrailingIcon = {
-                    onVisibilityChanged.invoke(!isPasswordVisible)
-                }
+                    loginVM.setIsPasswordVisible(!isPasswordVisible)
+                },
+                onValueChange = loginVM.setPassword,
             )
             Spacer(modifier = Modifier.height(50.dp))
             Column(

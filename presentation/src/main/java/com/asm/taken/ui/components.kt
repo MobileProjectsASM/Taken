@@ -3,13 +3,10 @@ package com.asm.taken.ui
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
@@ -25,7 +22,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
@@ -34,24 +30,6 @@ import androidx.compose.ui.unit.sp
 import com.asm.taken.R
 import com.asm.taken.ui.theme.Purple80
 import com.asm.taken.ui.theme.PurpleGrey80
-
-@Composable
-fun AppTitle(
-    text: String,
-    modifier: Modifier = Modifier,
-    textAlign: TextAlign = TextAlign.Start,
-    color: Color = Color.Black
-) {
-    Text(
-        modifier = modifier,
-        fontSize = dimensionResource(id = R.dimen.app_name_size).value.sp,
-        text = text,
-        fontFamily = puzzleFontFamily,
-        fontWeight = FontWeight.Bold,
-        textAlign = textAlign,
-        color = color
-    )
-}
 
 @Composable
 fun PuzzleGeneralTitle(
@@ -88,27 +66,49 @@ fun PuzzleDefaultText(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PuzzleDefaultOutlinedText(
+fun DefaultOutlinedTextField(
     modifier: Modifier,
-    value: String = "",
+    value: String,
     @StringRes label: Int,
-    leadingIcon: ImageVector,
-    @StringRes cdLeadingIcon: Int,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
-    onValueChanged: (String) -> Unit,
-    isPasswordVisible: Boolean? = null,
-    trailingIcon: @Composable (() -> Unit)? = null
+    visualTransformation: VisualTransformation = VisualTransformation.None,
+    leadingIcon: @Composable (() -> Unit)? = null,
+    trailingIcon: @Composable (() -> Unit)? = null,
+    onValueChange: (String) -> Unit,
 ) {
     OutlinedTextField(
         modifier = modifier,
         value = value,
-        onValueChange = onValueChanged,
-        label = {
-            PuzzleDefaultText(text = stringResource(id = label))
-        },
+        label = { PuzzleDefaultText(text = stringResource(id = label)) },
+        keyboardOptions = keyboardOptions,
+        visualTransformation = visualTransformation,
+        leadingIcon = leadingIcon,
+        trailingIcon = trailingIcon,
+        onValueChange = onValueChange,
         textStyle = TextStyle(fontFamily = puzzleFontFamily),
+        singleLine = true,
+    )
+}
+
+@Composable
+fun DefaultOutlinedTextFieldLI(
+    modifier: Modifier,
+    value: String,
+    @StringRes label: Int,
+    keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
+    visualTransformation: VisualTransformation = VisualTransformation.None,
+    leadingIcon: ImageVector,
+    @StringRes cdLeadingIcon: Int,
+    trailingIcon: @Composable (() -> Unit)? = null,
+    onValueChange: (String) -> Unit,
+) {
+    DefaultOutlinedTextField(
+        modifier = modifier,
+        value = value,
+        label = label,
+        keyboardOptions = keyboardOptions,
+        visualTransformation = visualTransformation,
         leadingIcon = {
             Icon(
                 imageVector = leadingIcon,
@@ -116,38 +116,34 @@ fun PuzzleDefaultOutlinedText(
                 tint = colorResource(id = R.color.purple_200)
             )
         },
-        keyboardOptions = keyboardOptions,
-        visualTransformation = if (isPasswordVisible == null || isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
         trailingIcon = trailingIcon,
-        singleLine = true
+        onValueChange = onValueChange,
     )
 }
 
 @Composable
-fun PuzzleDefaultOutlinedTrailingIcon(
+fun DefaultOutlinedTextFieldTI(
     modifier: Modifier,
     value: String = "",
     @StringRes label: Int,
-    leadingIcon: ImageVector,
-    trailingIcon: ImageVector? = null,
-    @StringRes cdLeadingIcon: Int,
-    @StringRes cdTrailingIcon: Int,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
+    visualTransformation: VisualTransformation = VisualTransformation.None,
+    leadingIcon: ImageVector,
+    @StringRes cdLeadingIcon: Int,
+    trailingIcon: ImageVector,
+    @StringRes cdTrailingIcon: Int,
     onClickTrailingIcon: (() -> Unit)? = null,
-    isPasswordVisible: Boolean? = null,
-    onValueChanged: (String) -> Unit,
+    onValueChange: (String) -> Unit,
 ) {
-    PuzzleDefaultOutlinedText(
+    DefaultOutlinedTextFieldLI(
         modifier = modifier,
         value = value,
         label = label,
-        leadingIcon = leadingIcon,
         keyboardOptions = keyboardOptions,
-        onValueChanged = onValueChanged,
-        isPasswordVisible = isPasswordVisible,
-        cdLeadingIcon = cdLeadingIcon
-    ) {
-        if (trailingIcon != null) {
+        visualTransformation = visualTransformation,
+        leadingIcon = leadingIcon,
+        cdLeadingIcon = cdLeadingIcon,
+        trailingIcon = {
             IconButton(onClick = { onClickTrailingIcon?.invoke() }) {
                 Icon(
                     imageVector = trailingIcon,
@@ -156,8 +152,9 @@ fun PuzzleDefaultOutlinedTrailingIcon(
                     )
                 )
             }
-        }
-    }
+        },
+        onValueChange = onValueChange,
+    )
 }
 
 @Composable
