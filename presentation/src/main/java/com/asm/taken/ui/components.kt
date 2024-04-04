@@ -51,7 +51,7 @@ fun PuzzleGeneralTitle(
 }
 
 @Composable
-fun PuzzleDefaultText(
+fun DefaultText(
     text: String,
     modifier: Modifier = Modifier,
     textAlign: TextAlign = TextAlign.Start
@@ -76,18 +76,25 @@ fun DefaultOutlinedTextField(
     visualTransformation: VisualTransformation = VisualTransformation.None,
     leadingIcon: @Composable (() -> Unit)? = null,
     trailingIcon: @Composable (() -> Unit)? = null,
+    message: String? = null,
+    isError: Boolean = false,
     onValueChange: (String) -> Unit,
 ) {
     OutlinedTextField(
         modifier = modifier,
         value = value,
-        label = { PuzzleDefaultText(text = stringResource(id = label)) },
+        label = { DefaultText(text = stringResource(id = label)) },
         keyboardOptions = keyboardOptions,
         visualTransformation = visualTransformation,
         leadingIcon = leadingIcon,
         trailingIcon = trailingIcon,
         onValueChange = onValueChange,
         textStyle = TextStyle(fontFamily = puzzleFontFamily),
+        supportingText = {
+            if (message == null) return@OutlinedTextField
+            DefaultText(text = message)
+        },
+        isError = isError,
         singleLine = true,
     )
 }
@@ -102,6 +109,8 @@ fun DefaultOutlinedTextFieldLI(
     leadingIcon: ImageVector,
     @StringRes cdLeadingIcon: Int,
     trailingIcon: @Composable (() -> Unit)? = null,
+    message: String? = null,
+    isError: Boolean = false,
     onValueChange: (String) -> Unit,
 ) {
     DefaultOutlinedTextField(
@@ -118,6 +127,8 @@ fun DefaultOutlinedTextFieldLI(
             )
         },
         trailingIcon = trailingIcon,
+        message = message,
+        isError = isError,
         onValueChange = onValueChange,
     )
 }
@@ -134,6 +145,8 @@ fun DefaultOutlinedTextFieldTI(
     trailingIcon: ImageVector,
     @StringRes cdTrailingIcon: Int,
     onClickTrailingIcon: (() -> Unit)? = null,
+    message: String? = null,
+    isError: Boolean = false,
     onValueChange: (String) -> Unit,
 ) {
     DefaultOutlinedTextFieldLI(
@@ -154,6 +167,8 @@ fun DefaultOutlinedTextFieldTI(
                 )
             }
         },
+        message = message,
+        isError = isError,
         onValueChange = onValueChange,
     )
 }
@@ -176,7 +191,7 @@ fun DefaultButton(
             disabledContentColor = Color.White
         )
     ) {
-        PuzzleDefaultText(
+        DefaultText(
             text = text,
             textAlign = TextAlign.Center
         )

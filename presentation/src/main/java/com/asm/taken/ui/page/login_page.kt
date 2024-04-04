@@ -43,11 +43,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.asm.taken.R
+import com.asm.taken.model.LoginData
 import com.asm.taken.ui.DefaultButton
 import com.asm.taken.ui.DefaultImageButton
 import com.asm.taken.ui.DefaultOutlinedTextFieldLI
 import com.asm.taken.ui.DefaultOutlinedTextFieldTI
-import com.asm.taken.ui.PuzzleDefaultText
+import com.asm.taken.ui.DefaultText
 import com.asm.taken.ui.PuzzleGeneralTitle
 import com.asm.taken.ui.puzzleFontFamily
 import com.asm.taken.vm.LoginVM
@@ -115,11 +116,7 @@ fun LoginPage(loginVM: LoginVM) {
 
 @Composable
 fun CardLogin(loginVM: LoginVM) {
-    val userId: String by loginVM.userIdSTFlow.collectAsState()
-    val password: String by loginVM.passwordSTFlow.collectAsState()
-    val isPasswordVisible: Boolean by loginVM.isPasswordVisibleSTF.collectAsState()
-    val isBtnLoginEnable: Boolean by loginVM.isBtnLoginEnableSTF.collectAsState()
-
+    val loginData: LoginData by loginVM.loginDataSTF.collectAsState()
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -134,7 +131,7 @@ fun CardLogin(loginVM: LoginVM) {
                 modifier = Modifier.fillMaxWidth(),
                 text = stringResource(id = R.string.txt_title_login_dialog)
             )
-            PuzzleDefaultText(
+            DefaultText(
                 modifier = Modifier.fillMaxWidth(),
                 text = stringResource(id = R.string.txt_inf_login_dialog),
                 textAlign = TextAlign.Center
@@ -144,31 +141,35 @@ fun CardLogin(loginVM: LoginVM) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 10.dp),
-                value = userId,
+                value = loginData.userId ?: "",
                 label = R.string.txt_label_user_id_login,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                 leadingIcon = Icons.Default.Person,
                 cdLeadingIcon = R.string.txt_cd_icon_user_id,
+                message = loginData.userIdMessage,
+                isError = loginData.userIdMessage != null,
             ) {
-                loginVM.updateDataLogin(it, password)
+                loginVM.updateDataLogin(it, loginData.password)
             }
             DefaultOutlinedTextFieldTI(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 10.dp),
-                value = password,
+                value = loginData.password ?: "",
                 label = R.string.txt_label_password,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                visualTransformation = if (isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                visualTransformation = if (loginData.isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                 leadingIcon = Icons.Default.Lock,
                 cdLeadingIcon = R.string.txt_cd_icon_user_id,
-                trailingIcon = if (isPasswordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                trailingIcon = if (loginData.isPasswordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
                 cdTrailingIcon = R.string.txt_cd_trailing_icon_info_,
                 onClickTrailingIcon = {
-                    loginVM.updateIsPasswordVisible(!isPasswordVisible)
+                    loginVM.updateIsPasswordVisible(!loginData.isPasswordVisible)
                 },
+                message = loginData.passwordMessage,
+                isError = loginData.passwordMessage != null,
             ) {
-                loginVM.updateDataLogin(userId, it)
+                loginVM.updateDataLogin(loginData.userId, it)
             }
             Spacer(modifier = Modifier.height(50.dp))
             Column(
@@ -177,7 +178,7 @@ fun CardLogin(loginVM: LoginVM) {
             ) {
                 DefaultButton(
                     text = stringResource(id = R.string.txt_btn_login),
-                    enable = isBtnLoginEnable
+                    enable = loginData.btnLoginEnable
                 ) {
 
                 }

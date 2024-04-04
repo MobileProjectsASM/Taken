@@ -1,40 +1,60 @@
 package com.asm.taken.vm
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
+import com.asm.taken.model.LoginData
+import com.asm.taken.model.TextState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import javax.inject.Inject
-import kotlin.coroutines.coroutineContext
 
 @HiltViewModel
 class LoginVM @Inject constructor(): ViewModel() {
 
     //region MutableStateFlows
-    private val _userIdSTF = MutableStateFlow("")
-    private val _passwordSTF = MutableStateFlow("")
-    private val _isPasswordVisibleSTF = MutableStateFlow(false)
-    private val _isBtnLoginEnableSTF = MutableStateFlow(false)
+    private val _loginDataSTF = MutableStateFlow(LoginData())
     //endregion
 
     //region StateFlows
-    val userIdSTFlow: StateFlow<String> = _userIdSTF
-    val passwordSTFlow: StateFlow<String> = _passwordSTF
-    val isPasswordVisibleSTF: StateFlow<Boolean> = _isPasswordVisibleSTF
-    val isBtnLoginEnableSTF: StateFlow<Boolean> = _isBtnLoginEnableSTF
+    val loginDataSTF: StateFlow<LoginData> = _loginDataSTF
     //endregion
 
-    fun updateDataLogin(userId: String, password: String) {
-        _userIdSTF.value = userId
-        _passwordSTF.value = password
-        _isBtnLoginEnableSTF.value = userId.isNotEmpty() && password.isNotEmpty()
+    fun updateDataLogin(userId: String?, password: String?) {
+        val userMessage = validateUserId(userId)
+        val passwordMessage = validatePassword(password)
+        _loginDataSTF.update {
+            it.copy(
+                userId = userId,
+                password = password,
+                userIdMessage = when(userMessage) {
+                    TextState.Init, TextState.Valid -> null
+                    is TextState.Error -> userMessage.message
+                },
+                passwordMessage = when(passwordMessage) {
+                    TextState.Init, TextState.Valid -> null
+                    is TextState.Error -> passwordMessage.message
+                },
+                btnLoginEnable = userMessage is TextState.Valid && passwordMessage is TextState.Valid
+            )
+        }
     }
 
     fun updateIsPasswordVisible (isPasswordVisible: Boolean) {
-        _isPasswordVisibleSTF.value = isPasswordVisible
+        _loginDataSTF.update {
+            it.copy(isPasswordVisible = isPasswordVisible)
+        }
+    }
+
+    private fun validateUserId(userId: String?): TextState {
+        if (userId == null) return TextState.Init
+        if (userId.isEmpty()) return TextState.Error("Data empty")
+        return TextState.Valid
+    }
+
+    private fun validatePassword(password: String?): TextState {
+        if (password == null) return TextState.Init
+        if (password.isEmpty()) return TextState.Error("Data empty")
+        return TextState.Valid
     }
 }
