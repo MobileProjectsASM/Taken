@@ -55,6 +55,8 @@ class LoginVM @Inject constructor(): ViewModel() {
     private fun validatePassword(password: String?): TextState {
         if (password == null) return TextState.Init
         if (password.isEmpty()) return TextState.Error("Data empty")
+        if (!password.matches(Regex("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&#])[A-Za-z\\d@$!%*?&#]{8,}$"))) return TextState.Error("No cumple patron")
         return TextState.Valid
+
     }
 }
