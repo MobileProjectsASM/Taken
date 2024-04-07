@@ -3,6 +3,7 @@ package com.asm.taken.vm
 import androidx.lifecycle.ViewModel
 import com.asm.taken.model.LoginData
 import com.asm.taken.model.TextState
+import com.asm.taken.utils.ResourceResolver
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -10,7 +11,13 @@ import kotlinx.coroutines.flow.update
 import javax.inject.Inject
 
 @HiltViewModel
-class LoginVM @Inject constructor(): ViewModel() {
+class LoginVM @Inject constructor(
+    val resourceResolver: ResourceResolver
+): ViewModel() {
+
+    init {
+
+    }
 
     //region MutableStateFlows
     private val _loginDataSTF = MutableStateFlow(LoginData())
