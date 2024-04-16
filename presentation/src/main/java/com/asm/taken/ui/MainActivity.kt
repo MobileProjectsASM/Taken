@@ -1,11 +1,9 @@
 package com.asm.taken.ui
 
-import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
-import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
@@ -17,8 +15,10 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.asm.taken.model.CreateAccount
 import com.asm.taken.model.Login
-import com.asm.taken.model.SignInState
+import com.asm.taken.model.MainPage
+import com.asm.taken.model.SignInGamer
 import com.asm.taken.ui.page.LoginPage
 import com.asm.taken.ui.theme.TakenTheme
 import com.asm.taken.utils.GoogleAuthUiClient
@@ -51,7 +51,7 @@ class MainActivity : ComponentActivity() {
                             if (activityResult.resultCode == RESULT_OK) lifecycleScope.launch {
                                 val intent = activityResult.data ?: return@launch
                                 val signInResult = googleAuthUiClient.signInWithIntent(intent)
-                                loginVM.signInWithGoogle(signInResult)
+                                loginVM.loginUser(signInResult)
                             }
                         }
 
@@ -70,8 +70,16 @@ class MainActivity : ComponentActivity() {
                             }
                         )
                     }
-                }
+                    composable(CreateAccount.route) {
 
+                    }
+                    composable(SignInGamer.route) {
+
+                    }
+                    composable(MainPage.route) {
+
+                    }
+                }
             }
         }
     }

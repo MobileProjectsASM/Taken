@@ -44,7 +44,7 @@ class LoginVM @Inject constructor(
         }
     }
 
-    fun signInWithGoogle(signInResult: SignInResult) {
+    fun loginUser(signInResult: SignInResult) {
         viewModelScope.launch {
             if (signInResult.data == null) {
                 _signInUiStateSTF.update { SignInState.SignInFail(SignInError.AUTH_ERROR) }
