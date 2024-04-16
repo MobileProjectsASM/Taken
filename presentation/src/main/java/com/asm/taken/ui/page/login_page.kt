@@ -45,6 +45,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavHostController
 import com.asm.taken.R
 import com.asm.taken.model.FormUiState
 import com.asm.taken.model.PasswordUiState
@@ -54,14 +55,19 @@ import com.asm.taken.ui.DefaultImageButton
 import com.asm.taken.ui.DefaultOutlinedTextFieldLI
 import com.asm.taken.ui.DefaultOutlinedTextFieldTI
 import com.asm.taken.ui.DefaultText
+import com.asm.taken.ui.DefaultTextButton
 import com.asm.taken.ui.PuzzleGeneralTitle
 import com.asm.taken.ui.puzzleFontFamily
 import com.asm.taken.utils.ResourceResolver
 import com.asm.taken.vm.LoginVM
 
 @Composable
-fun LoginPage(loginVM: LoginVM, resourceResolver: ResourceResolver) {
-
+fun LoginPage(
+    loginVM: LoginVM,
+    resourceResolver: ResourceResolver,
+    navController: NavHostController,
+    signInWithGoogle: () -> Unit,
+) {
     Box(
         modifier = Modifier.fillMaxSize()
     ) {
@@ -114,7 +120,7 @@ fun LoginPage(loginVM: LoginVM, resourceResolver: ResourceResolver) {
         ) {
             Box(modifier = Modifier.height(250.dp))
             CardLogin(loginVM, resourceResolver)
-            CardSocialMedia()
+            CardSocialMedia(signInWithGoogle)
             Box(modifier = Modifier.height(250.dp))
         }
     }
@@ -181,7 +187,7 @@ fun CardLogin(loginVM: LoginVM, resourceResolver: ResourceResolver) {
             ) {
                 loginVM.updateDataLogin(formUiState.userIdUiState.value, it)
             }
-            Spacer(modifier = Modifier.height(50.dp))
+            Spacer(modifier = Modifier.height(10.dp))
             Column(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally
@@ -198,7 +204,7 @@ fun CardLogin(loginVM: LoginVM, resourceResolver: ResourceResolver) {
 }
 
 @Composable
-fun CardSocialMedia() {
+fun CardSocialMedia(signInWithGoogle: () -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -207,7 +213,8 @@ fun CardSocialMedia() {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 15.dp)
+                .padding(vertical = 15.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             PuzzleGeneralTitle(
                 modifier = Modifier.fillMaxWidth(),
@@ -227,13 +234,19 @@ fun CardSocialMedia() {
                 DefaultImageButton(
                     imageSize = 40.dp,
                     iconButton = R.drawable.google,
-                    cdIconButton = R.string.txt_cd_icon_button
+                    cdIconButton = R.string.txt_cd_icon_button,
+                    onClickButton = signInWithGoogle
                 )
                 DefaultImageButton(
                     imageSize = 40.dp,
                     iconButton = R.drawable.phone,
                     cdIconButton = R.string.txt_cd_icon_button
                 )
+            }
+            DefaultTextButton(
+                text = stringResource(id = R.string.txt_btn_with_email)
+            ) {
+
             }
         }
     }

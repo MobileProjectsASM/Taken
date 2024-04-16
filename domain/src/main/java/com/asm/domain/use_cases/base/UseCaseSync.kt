@@ -8,9 +8,7 @@ import kotlinx.coroutines.withContext
 abstract class UseCaseSync<out Type, in Params> where Type : Any {
     abstract suspend fun run(params: Params): Either<Failure, Type>
 
-    suspend fun execute(
-        params: Params
-    ): Either<Failure, Type> = withContext(Dispatchers.IO) {
+    suspend fun execute(params: Params): Either<Failure, Type> = withContext(Dispatchers.IO) {
         run(params)
     }
 

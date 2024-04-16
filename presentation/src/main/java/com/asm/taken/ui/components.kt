@@ -199,6 +199,26 @@ fun DefaultButton(
 }
 
 @Composable
+fun DefaultTextButton(
+    modifier: Modifier = Modifier,
+    text: String,
+    onClickButton: (() -> Unit)? = null
+) {
+    TextButton(
+        modifier = modifier,
+        onClick = { onClickButton?.invoke() },
+        colors = ButtonDefaults.textButtonColors(
+            contentColor = Color.Black
+        )
+    ) {
+        DefaultText(
+            text = text,
+            textAlign = TextAlign.Center
+        )
+    }
+}
+
+@Composable
 fun DefaultImageButton(
     imageSize: Dp = 50.dp,
     @DrawableRes iconButton: Int,

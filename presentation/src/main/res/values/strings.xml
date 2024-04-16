@@ -10,9 +10,11 @@
     <string name="txt_cd_icon_button">Icon button</string>
     <string name="txt_cd_icon_app">Icon app</string>
     <string name="txt_btn_login">LOGIN</string>
+    <string name="txt_btn_with_email">EMAIL</string>
     
     <!-- Errors -->
     <string name="err_empty_field">Campo vacio</string>
     <string name="err_min_8_characters">Debe tener al menos 8 caracteres</string>
     <string name="err_does_not_meet_pattern_password">Debe tener al menos una mayuscula, un numero y un caracter</string>
+    <string name="default_web_client_id">537568996262-c7nrhuvi4s9jaukcg9uh0hvm98l9ubls.apps.googleusercontent.com</string>
 </resources>
