@@ -6,4 +6,5 @@ import com.asm.domain.utils.Either
 
 interface LevelRepository {
     suspend fun getLevelByOrder(levelOrder: Int): Either<Failure, Level>
+    suspend fun getRangeLevels(initialRange: Int =  1, finalRange: Int): Either<Failure, List<Level>>
 }

@@ -19,6 +19,7 @@ import com.asm.taken.model.CreateAccount
 import com.asm.taken.model.Login
 import com.asm.taken.model.MainPage
 import com.asm.taken.model.SignInGamer
+import com.asm.taken.ui.page.CreateAccountPage
 import com.asm.taken.ui.page.LoginPage
 import com.asm.taken.ui.theme.TakenTheme
 import com.asm.taken.utils.GoogleAuthUiClient
@@ -71,7 +72,7 @@ class MainActivity : ComponentActivity() {
                         )
                     }
                     composable(CreateAccount.route) {
-
+                        CreateAccountPage()
                     }
                     composable(SignInGamer.route) {
 

@@ -5,6 +5,5 @@ data class Gamer(
     val gamerNickName: String,
     val gamerAge:Int,
     val gamerCountry: String,
-    val gamerImage: String,
-    val games: List<Game> = listOf()
+    val gamerImage: String
 )

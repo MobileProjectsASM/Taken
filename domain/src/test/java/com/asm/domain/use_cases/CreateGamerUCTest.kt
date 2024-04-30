@@ -3,7 +3,9 @@ package com.asm.domain.use_cases
 import com.asm.domain.entities.Gamer
 import com.asm.domain.errors.Failure
 import com.asm.domain.errors.RegisterFailure
+import com.asm.domain.repositories.GameRepository
 import com.asm.domain.repositories.GamerRepository
+import com.asm.domain.repositories.LevelRepository
 import com.asm.domain.utils.Completed
 import com.asm.domain.utils.Either
 import com.asm.domain.utils.Logger
@@ -13,18 +15,22 @@ import io.mockk.coVerify
 import io.mockk.impl.annotations.MockK
 import io.mockk.just
 import io.mockk.runs
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
-import java.lang.Exception
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 
-class SignInUCTest {
+class CreateGamerUCTest {
 
-    private lateinit var signInUC: SignInUC
+    private lateinit var signInUC: CreateGamerUC
 
     @MockK
     private lateinit var gamerRepository: GamerRepository
+
+    @MockK
+    private lateinit var levelRepository: LevelRepository
+
+    @MockK
+    private lateinit var gameRepository: GameRepository
 
     @MockK
     private lateinit var logger: Logger
@@ -32,7 +38,12 @@ class SignInUCTest {
     @BeforeTest
     fun onBefore() {
         MockKAnnotations.init(this, relaxUnitFun = true)
-        signInUC = SignInUC(gamerRepository, logger)
+        signInUC = CreateGamerUC(
+            gamerRepository,
+            levelRepository,
+            gameRepository,
+            logger,
+        )
     }
 
     @Test
