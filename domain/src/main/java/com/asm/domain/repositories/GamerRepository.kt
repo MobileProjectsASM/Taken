@@ -1,6 +1,5 @@
 package com.asm.domain.repositories
 
-import com.asm.domain.entities.Game
 import com.asm.domain.entities.Gamer
 import com.asm.domain.errors.Failure
 import com.asm.domain.utils.Completed

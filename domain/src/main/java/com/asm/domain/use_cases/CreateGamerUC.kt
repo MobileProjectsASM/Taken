@@ -10,6 +10,7 @@ import com.asm.domain.errors.RegisterFailure
 import com.asm.domain.repositories.GameRepository
 import com.asm.domain.repositories.GamerRepository
 import com.asm.domain.repositories.LevelRepository
+import com.asm.domain.repositories.MultimediaRepository
 import com.asm.domain.use_cases.base.UseCaseSync
 import com.asm.domain.utils.Completed
 import com.asm.domain.utils.Either
@@ -21,20 +22,48 @@ class CreateGamerUC @Inject constructor(
     private val gamerRepository: GamerRepository,
     private val levelRepository: LevelRepository,
     private val gameRepository: GameRepository,
+    private val multimediaRepository: MultimediaRepository,
     private val logger: Logger
-) : UseCaseSync<Completed, Gamer>() {
-    override suspend fun run(params: Gamer): Either<Failure, Completed> {
+) : UseCaseSync<Completed, CreateGamerUC.GamerParams>() {
+
+    companion object {
+        const val PROFILE_IMAGE_NAME = "profile_image"
+    }
+
+    data class InfoImage(
+        val formatImage: String,
+        val base64: String
+    )
+
+    data class GamerParams(
+        val gamerId: String,
+        val nickName: String,
+        val age: Int,
+        val country: String,
+        val image: InfoImage?
+    )
+
+    override suspend fun run(params: GamerParams): Either<Failure, Completed> {
         try {
-            val result = gamerRepository.checkIfGamerExists(params.gamerId)
-            if (result.isLeft) return result as Either.Left
-            val gamerExists = (result as Either.Right).r
-            if (gamerExists) return Either.Left(RegisterFailure.GamerExists)
-            val resultRegisterGamer = gamerRepository.registerGamer(params)
+            val resultImage = if (params.image == null) {
+                multimediaRepository.getDefaultUserImage()
+            } else {
+                multimediaRepository.uploadUserImage(
+                    params.gamerId,
+                    "$PROFILE_IMAGE_NAME.${params.image.formatImage}",
+                    params.image.base64
+                )
+            }
+            if (resultImage.isLeft) return resultImage as Either.Left
+            val imagePath = (resultImage as Either.Right).r
+            val resultRegisterGamer = gamerRepository.registerGamer(
+                Gamer(params.gamerId, params.nickName, params.age, params.country, imagePath)
+            )
             if (resultRegisterGamer.isLeft) return resultRegisterGamer as Either.Left
             val levelsResult = levelRepository.getRangeLevels(finalRange = 2)
             if (levelsResult.isLeft) return levelsResult as Either.Left
-            val levels = (levelsResult as Either.Right).r
-            val initialGames = createInitGames(levels)
+            val initLevels = (levelsResult as Either.Right).r
+            val initialGames = createInitGames(initLevels)
             val resultRegisterGames = gameRepository.saveGames(initialGames)
             if (resultRegisterGamer.isLeft) return resultRegisterGames as Either.Left
             return resultRegisterGamer
