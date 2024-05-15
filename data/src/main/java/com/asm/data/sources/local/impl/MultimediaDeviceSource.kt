@@ -5,8 +5,9 @@ import android.os.Environment
 import android.util.Log
 import com.asm.data.sources.local.interfaces.MultimediaLocalSource
 import java.io.File
+import javax.inject.Inject
 
-class MultimediaDeviceSource(
+class MultimediaDeviceSource @Inject constructor(
     val context: Context
 ): MultimediaLocalSource {
 

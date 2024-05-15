@@ -9,7 +9,9 @@ import com.google.firebase.firestore.toObject
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
-class GamerFireStoreSource @Inject constructor(private val fs: FirebaseFirestore) : GamerRemoteSource {
+class GamerFireStoreSource @Inject constructor(
+    private val fs: FirebaseFirestore
+) : GamerRemoteSource {
 
     companion object {
         const val TAG = "GamerFireStoreSource"

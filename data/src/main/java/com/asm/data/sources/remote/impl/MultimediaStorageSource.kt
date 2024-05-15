@@ -5,8 +5,9 @@ import android.util.Log
 import com.asm.data.sources.remote.interfaces.MultimediaRemoteSource
 import com.google.firebase.storage.StorageReference
 import kotlinx.coroutines.tasks.await
+import javax.inject.Inject
 
-class MultimediaStorageSource(
+class MultimediaStorageSource @Inject constructor(
     val storageReference: StorageReference
 ): MultimediaRemoteSource {
 

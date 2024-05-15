@@ -9,8 +9,9 @@ import com.asm.domain.repositories.MultimediaRepository
 import com.asm.domain.utils.Either
 import com.asm.domain.utils.toLeft
 import com.asm.domain.utils.toRight
+import javax.inject.Inject
 
-class MultimediaRepositoryImpl(
+class MultimediaRepositoryImpl @Inject constructor(
     val multimediaLocalSource: MultimediaLocalSource,
     val multimediaRemoteSource: MultimediaRemoteSource,
     val connection: Connection
