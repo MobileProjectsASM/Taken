@@ -1,6 +1,6 @@
 package com.asm.domain.use_cases
 
-import com.asm.domain.errors.GamerFailure
+import com.asm.domain.errors.GamerError
 import com.asm.domain.repositories.GamerRepository
 import com.asm.domain.utils.Logger
 import com.asm.domain.utils.toLeft
@@ -32,7 +32,7 @@ class GetGamerUCTest {
     @Test
     fun `test the process when getGamerById return a Failure`() = runTest {
         //Arrange
-        coEvery { gamerRepository.getGamerById(ofType(String::class)) } returns GamerFailure.GamerNotExists.toLeft()
+        coEvery { gamerRepository.getGamerById(ofType(String::class)) } returns GamerError.GamerNotExists.toLeft()
 
         //Act
         val result = getGamerUC.execute("ABCDE")

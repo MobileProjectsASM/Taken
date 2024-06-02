@@ -4,10 +4,11 @@ import com.asm.data.sources.local.TakenDB
 import com.asm.data.sources.local.interfaces.GamerLocalSource
 import com.asm.data.sources.local.mappers.GamerMapper
 import com.asm.domain.entities.Gamer
+import javax.inject.Inject
 
-class GamerRoomSource(
-    val takenDB: TakenDB,
-    val gamerMapper: GamerMapper
+class GamerRoomSource @Inject constructor(
+    private val takenDB: TakenDB,
+    private val gamerMapper: GamerMapper
 ): GamerLocalSource {
     override suspend fun saveGamer(gamer: Gamer) {
         takenDB.getGamerDao().insertGamer(gamerMapper.getGamer(gamer))

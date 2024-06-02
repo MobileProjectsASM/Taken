@@ -1,7 +1,6 @@
 package com.asm.domain.entities
 
-import com.asm.domain.errors.TimerFailure
-import com.asm.domain.utils.Either
+import com.asm.domain.errors.TimerError
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -30,7 +29,7 @@ class TimerTest {
         //Asserts
         assert(result.isLeft)
         val failure = (result as Either.Left).l
-        assert(failure is TimerFailure.TimeInitIsNull)
+        assert(failure is TimerError.TimeInitIsNull)
     }
 
     @Test

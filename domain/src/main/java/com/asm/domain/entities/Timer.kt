@@ -1,8 +1,7 @@
 package com.asm.domain.entities
 
-import com.asm.domain.errors.Failure
-import com.asm.domain.errors.TimerFailure
-import com.asm.domain.utils.Either
+import com.asm.domain.errors.Error
+import com.asm.domain.errors.TimerError
 import com.asm.domain.utils.toLeft
 import com.asm.domain.utils.toRight
 import kotlinx.coroutines.Job
@@ -25,8 +24,8 @@ class Timer {
         initTimer: (Long) -> Unit,
         inProcess: (Long) -> Unit,
         timeOut: () -> Unit
-    ): Either<Failure, Unit> = coroutineScope {
-        if (time == null) return@coroutineScope TimerFailure.TimeInitIsNull.toLeft()
+    ): Either<Error, Unit> = coroutineScope {
+        if (time == null) return@coroutineScope TimerError.TimeInitIsNull.toLeft()
         job = launch {
             initMark = timeSource.markNow()
             initTimer.invoke(time!!)

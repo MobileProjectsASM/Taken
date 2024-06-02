@@ -1,63 +1,48 @@
 package com.asm.data.repositories
 
 import android.util.Log
-import com.asm.data.sources.hardware.Connection
+import com.asm.data.sources.hardware.ConnectionSource
 import com.asm.data.sources.local.interfaces.GamerLocalSource
 import com.asm.data.sources.remote.interfaces.GamerRemoteSource
-import com.asm.domain.entities.Game
 import com.asm.domain.entities.Gamer
-import com.asm.domain.errors.Failure
-import com.asm.domain.errors.GamerFailure
+import com.asm.domain.entities.Result
+import com.asm.domain.entities.toFailure
+import com.asm.domain.entities.toSuccessful
+import com.asm.domain.errors.Error
 import com.asm.domain.repositories.GamerRepository
 import com.asm.domain.utils.Completed
-import com.asm.domain.utils.Either
-import com.asm.domain.utils.toLeft
-import com.asm.domain.utils.toRight
+import com.asm.domain.utils.Logger
 import javax.inject.Inject
 
 class GamerRepositoryImpl @Inject constructor(
-    val gamerLocalSource: GamerLocalSource,
-    val gamerRemoteSource: GamerRemoteSource,
-    val connection: Connection
+    private val gamerLocalSource: GamerLocalSource,
+    private val gamerRemoteSource: GamerRemoteSource,
+    private val connectionSource: ConnectionSource,
+    private val logger: Logger
 ) : GamerRepository {
     companion object {
         const val TAG = "GamerRepositoryImpl"
     }
 
-    override suspend fun registerGamer(gamer: Gamer): Either<Failure, Completed> {
+    override suspend fun registerGamer(gamer: Gamer): Result<Completed> {
         return try {
-            if (!connection.thereIsInternetConnection()) return Failure.NetworkConnection.toLeft()
+            if (!connectionSource.thereIsInternetConnection()) return Error.NetworkConnection.toFailure()
             gamerRemoteSource.saveGamer(gamer)
             gamerLocalSource.saveGamer(gamer)
-            Completed.toRight()
+            Completed.toSuccessful()
         } catch (exception: Exception) {
             Log.e(TAG, exception.stackTraceToString())
-            Failure.UnknownError.toLeft()
+            Error.UnknownError.toFailure()
         }
     }
 
-    override suspend fun checkIfGamerExists(gamerId: String): Either<Failure, Boolean> {
+    override suspend fun checkIfGamerExists(gamerId: String): Result<Boolean> {
         return try {
-            val gamerExists = if (connection.thereIsInternetConnection()) {
-                gamerRemoteSource.checkGamerExists(gamerId)
-            } else {
-                gamerLocalSource.checkGamerExists(gamerId)
-            }
-            gamerExists.toRight()
+            val gamerExists = gamerLocalSource.checkGamerExists(gamerId)
+            gamerExists.toSuccessful()
         } catch (exception: Exception) {
-            Log.e(TAG, exception.stackTraceToString())
-            Failure.UnknownError.toLeft()
-        }
-    }
-
-    override suspend fun getGamerById(gamerId: String): Either<Failure, Gamer> {
-        return try {
-            val gamer = gamerLocalSource.getGamer(gamerId)
-                ?: return GamerFailure.GamerNotExists.toLeft()
-            gamer.toRight()
-        } catch (exception: Exception) {
-            Log.e(TAG, exception.stackTraceToString())
-            Failure.UnknownError.toLeft()
+            logger.logE(TAG, exception)
+            Error.UnknownError.toFailure()
         }
     }
 

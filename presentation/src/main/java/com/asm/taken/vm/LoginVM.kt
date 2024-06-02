@@ -2,9 +2,8 @@ package com.asm.taken.vm
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.asm.domain.errors.GamerFailure
+import com.asm.domain.errors.GamerError
 import com.asm.domain.use_cases.GetGamerUC
-import com.asm.domain.utils.Either
 import com.asm.taken.model.FormUiState
 import com.asm.taken.model.PasswordUiState
 import com.asm.taken.model.SignInError
@@ -58,7 +57,7 @@ class LoginVM @Inject constructor(
                 return@launch
             }
             val failure = (result as Either.Left).l
-            if (failure is GamerFailure.GamerNotExists) {
+            if (failure is GamerError.GamerNotExists) {
                 _signInUiStateSTF.update { SignInState.UnregisteredUser(userId) }
                 return@launch
             }

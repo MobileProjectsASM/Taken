@@ -5,17 +5,20 @@ import com.asm.domain.entities.GameStatus
 import com.asm.domain.entities.Gamer
 import com.asm.domain.entities.Level
 import com.asm.domain.entities.LevelInfo
-import com.asm.domain.errors.Failure
-import com.asm.domain.errors.RegisterFailure
+import com.asm.domain.entities.Result
+import com.asm.domain.entities.asFailure
+import com.asm.domain.entities.asSuccessful
+import com.asm.domain.entities.toFailure
+import com.asm.domain.errors.Error
+import com.asm.domain.errors.RegisterError
+import com.asm.domain.repositories.ConnectionRepository
 import com.asm.domain.repositories.GameRepository
 import com.asm.domain.repositories.GamerRepository
 import com.asm.domain.repositories.LevelRepository
 import com.asm.domain.repositories.MultimediaRepository
 import com.asm.domain.use_cases.base.UseCaseSync
 import com.asm.domain.utils.Completed
-import com.asm.domain.utils.Either
 import com.asm.domain.utils.Logger
-import com.asm.domain.utils.toLeft
 import javax.inject.Inject
 
 class CreateGamerUC @Inject constructor(
@@ -23,11 +26,13 @@ class CreateGamerUC @Inject constructor(
     private val levelRepository: LevelRepository,
     private val gameRepository: GameRepository,
     private val multimediaRepository: MultimediaRepository,
+    private val connectionRepository: ConnectionRepository,
     private val logger: Logger
 ) : UseCaseSync<Completed, CreateGamerUC.GamerParams>() {
 
     companion object {
-        const val PROFILE_IMAGE_NAME = "profile_image"
+        const val PROFILE_IMAGE = "pi"
+        const val TAG = "CreateGamerUc"
     }
 
     data class InfoImage(
@@ -43,33 +48,37 @@ class CreateGamerUC @Inject constructor(
         val image: InfoImage?
     )
 
-    override suspend fun run(params: GamerParams): Either<Failure, Completed> {
-        try {
+    override suspend fun run(params: GamerParams): Result<Completed> {
+        return try {
+            val connectionResult = connectionRepository.thereIsInternetConnection()
+            if (connectionResult.isFailure) return connectionResult.asFailure().toFailure()
+            if (!connectionResult.asSuccessful().data) return Error.NetworkConnection.toFailure()
+            val resultGamerExists = gamerRepository.checkIfGamerExists(params.gamerId)
+            if (resultGamerExists.isFailure) return resultGamerExists.asFailure().toFailure()
+            if (resultGamerExists.asSuccessful().data) return RegisterError.GamerExists.toFailure()
             val resultImage = if (params.image == null) {
                 multimediaRepository.getDefaultUserImage()
             } else {
                 multimediaRepository.uploadUserImage(
                     params.gamerId,
-                    "$PROFILE_IMAGE_NAME.${params.image.formatImage}",
+                    "${PROFILE_IMAGE}_${params.gamerId}.${params.image.formatImage}",
                     params.image.base64
                 )
             }
-            if (resultImage.isLeft) return resultImage as Either.Left
-            val imagePath = (resultImage as Either.Right).r
+            if (resultImage.isFailure) return resultImage.asFailure().toFailure()
+            val imagePath = resultImage.asSuccessful().data
             val resultRegisterGamer = gamerRepository.registerGamer(
                 Gamer(params.gamerId, params.nickName, params.age, params.country, imagePath)
             )
-            if (resultRegisterGamer.isLeft) return resultRegisterGamer as Either.Left
-            val levelsResult = levelRepository.getRangeLevels(finalRange = 2)
-            if (levelsResult.isLeft) return levelsResult as Either.Left
-            val initLevels = (levelsResult as Either.Right).r
+            if (resultRegisterGamer.isFailure) return resultRegisterGamer
+            val levelsResult = levelRepository.downloadLevelsByOrderCriteria(listOf(1, 2))
+            if (levelsResult.isFailure) return levelsResult.asFailure().toFailure()
+            val initLevels = levelsResult.asSuccessful().data
             val initialGames = createInitGames(initLevels)
-            val resultRegisterGames = gameRepository.saveGames(initialGames)
-            if (resultRegisterGamer.isLeft) return resultRegisterGames as Either.Left
-            return resultRegisterGamer
+            gameRepository.saveGamerGames(initialGames, params.gamerId)
         } catch (exception: Exception) {
-            logger.logE { exception }
-            return Failure.UnknownError.toLeft()
+            logger.logE(TAG, exception)
+            Error.UnknownError.toFailure()
         }
     }
 
@@ -77,13 +86,13 @@ class CreateGamerUC @Inject constructor(
         val initGames = mutableListOf<Game>()
         for (level in levels) {
             val levelInfo = LevelInfo(
-                levelOrder = level.levelOrder,
+                levelOrder = level.orderCriteria,
                 levelName = level.levelName,
                 levelImage = level.levelImage
             )
             val game = Game(
                 levelInfo = levelInfo,
-                gameStatus = if (level.levelOrder == 1) GameStatus.New else GameStatus.Lock
+                gameStatus = if (level.orderCriteria == 1) GameStatus.New else GameStatus.Lock
             )
             initGames.add(game)
         }

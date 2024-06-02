@@ -1,5 +1,6 @@
 package com.asm.taken.di
 
+import com.asm.data.sources.hardware.ConnectionSource
 import com.asm.domain.utils.Logger
 import com.asm.taken.core.LoggerImpl
 import dagger.Binds
@@ -14,4 +15,8 @@ abstract class UtilsModule {
     @Singleton
     @Binds
     abstract fun providesLogger(logger: LoggerImpl): Logger
+
+    @Singleton
+    @Binds
+    abstract fun getConnection(): ConnectionSource
 }

@@ -4,9 +4,8 @@ import com.asm.domain.entities.Difficulty
 import com.asm.domain.entities.Level
 import com.asm.domain.entities.MovementsMetrics
 import com.asm.domain.entities.TimeMetrics
-import com.asm.domain.errors.Failure
+import com.asm.domain.errors.Error
 import com.asm.domain.repositories.LevelRepository
-import com.asm.domain.utils.Either
 import com.asm.domain.utils.Logger
 import com.asm.domain.utils.toLeft
 import com.asm.domain.utils.toRight
@@ -50,13 +49,13 @@ class GetLevelUCTest {
         coVerify(exactly = 1) { logger.logE(any()) }
         assert(result.isLeft)
         val failure = (result as Either.Left).l
-        assert(failure is Failure.UnknownError)
+        assert(failure is com.asm.domain.errors.Failure.Error.UnknownError)
     }
 
     @Test
     fun `test process when getLevelByOrder return a failure`() = runTest {
         //Arrange
-        coEvery { levelRepository.getLevelByOrder(ofType(Int::class)) } returns Failure.NetworkConnection.toLeft()
+        coEvery { levelRepository.getLevelByOrder(ofType(Int::class)) } returns Error.NetworkConnection.toLeft()
 
         //Act
         val result = getLevelUC.execute(1)
@@ -65,7 +64,7 @@ class GetLevelUCTest {
         coVerify(exactly = 1) { levelRepository.getLevelByOrder(ofType(Int::class)) }
         assert(result.isLeft)
         val failure = (result as Either.Left).l
-        assert(failure is Failure.NetworkConnection)
+        assert(failure is com.asm.domain.errors.Failure.Error.NetworkConnection)
     }
 
     @Test

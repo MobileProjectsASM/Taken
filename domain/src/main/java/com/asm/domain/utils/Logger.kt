@@ -1,6 +1,6 @@
 package com.asm.domain.utils
 
 interface Logger {
-    fun logI(message: () -> String)
-    fun logE(throwable: () -> Throwable)
+    fun logI(location: String, message:String)
+    fun logE(location: String, throwable:Throwable)
 }

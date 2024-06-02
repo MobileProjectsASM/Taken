@@ -1,20 +1,21 @@
 package com.asm.data.repositories
 
-import android.util.Log
-import com.asm.data.sources.hardware.Connection
+import com.asm.data.sources.hardware.ConnectionSource
 import com.asm.data.sources.local.interfaces.MultimediaLocalSource
 import com.asm.data.sources.remote.interfaces.MultimediaRemoteSource
-import com.asm.domain.errors.Failure
+import com.asm.domain.entities.Result
+import com.asm.domain.entities.toFailure
+import com.asm.domain.entities.toSuccessful
+import com.asm.domain.errors.Error
 import com.asm.domain.repositories.MultimediaRepository
-import com.asm.domain.utils.Either
-import com.asm.domain.utils.toLeft
-import com.asm.domain.utils.toRight
+import com.asm.domain.utils.Logger
 import javax.inject.Inject
 
 class MultimediaRepositoryImpl @Inject constructor(
-    val multimediaLocalSource: MultimediaLocalSource,
-    val multimediaRemoteSource: MultimediaRemoteSource,
-    val connection: Connection
+    private val multimediaLocalSource: MultimediaLocalSource,
+    private val multimediaRemoteSource: MultimediaRemoteSource,
+    private val connectionSource: ConnectionSource,
+    private val logger: Logger
 ): MultimediaRepository {
 
     companion object {
@@ -23,34 +24,34 @@ class MultimediaRepositoryImpl @Inject constructor(
         const val DEFAULT_IMAGE_NAME_PROFILE = "default_profile_image.jpg"
         const val TAG = "MultimediaRepositoryImpl"
     }
-    override suspend fun uploadUserImage(userId: String, profileImageName: String, base64: String): Either<Failure, String> {
-        if (!connection.thereIsInternetConnection()) return Failure.NetworkConnection.toLeft()
-        val folderPath = "$userId/$DEFAULT_PATH_USER_IMAGES"
-        try {
+    override suspend fun uploadUserImage(userId: String, profileImageName: String, base64: String): Result<String> {
+        return try {
+            if (!connectionSource.thereIsInternetConnection()) return Error.NetworkConnection.toFailure()
+            val folderPath = "$userId/$DEFAULT_PATH_USER_IMAGES"
             multimediaRemoteSource.uploadImage(folderPath, profileImageName, base64)
             val imagePath = multimediaLocalSource.saveImage(folderPath, profileImageName, base64)
-            return imagePath.toRight()
+            imagePath.toSuccessful()
         } catch (exception: Exception) {
-            Log.e(TAG, exception.stackTraceToString())
-            throw exception
+            logger.logE(TAG, exception)
+            Error.UnknownError.toFailure()
         }
     }
 
-    override suspend fun getDefaultUserImage(): Either<Failure, String> {
-        try {
+    override suspend fun getDefaultUserImage(): Result<String> {
+        return try {
             val fullPath = "$DEFAULT_FOLDER_PATH_USER_IMAGE_PROFILE/$DEFAULT_IMAGE_NAME_PROFILE"
             val existsImage = multimediaLocalSource.existsImage(fullPath)
-            if (existsImage) return fullPath.toRight()
-            if (!connection.thereIsInternetConnection()) return Failure.NetworkConnection.toLeft()
+            if (existsImage) return fullPath.toSuccessful()
+            if (!connectionSource.thereIsInternetConnection()) return Error.NetworkConnection.toFailure()
             val base64 = multimediaRemoteSource.downloadImage(fullPath)
             return multimediaLocalSource.saveImage(
                 DEFAULT_FOLDER_PATH_USER_IMAGE_PROFILE,
                 DEFAULT_IMAGE_NAME_PROFILE,
                 base64
-            ).toRight()
+            ).toSuccessful()
         } catch (exception: Exception) {
-            Log.e(TAG, exception.stackTraceToString())
-            throw exception
+            logger.logE(TAG, exception)
+            Error.UnknownError.toFailure()
         }
     }
 }

@@ -1,13 +1,12 @@
 package com.asm.domain.use_cases
 
 import com.asm.domain.entities.Gamer
-import com.asm.domain.errors.Failure
-import com.asm.domain.errors.RegisterFailure
+import com.asm.domain.errors.Error
+import com.asm.domain.errors.RegisterError
 import com.asm.domain.repositories.GameRepository
 import com.asm.domain.repositories.GamerRepository
 import com.asm.domain.repositories.LevelRepository
 import com.asm.domain.utils.Completed
-import com.asm.domain.utils.Either
 import com.asm.domain.utils.Logger
 import io.mockk.MockKAnnotations
 import io.mockk.coEvery
@@ -57,7 +56,7 @@ class CreateGamerUCTest {
             gamerImage = ""
         )
         coEvery { gamerRepository.checkIfGamerExists(ofType(String::class)) } returns Either.Left(
-            Failure.NetworkConnection
+            Error.NetworkConnection
         )
 
         //Act
@@ -67,7 +66,7 @@ class CreateGamerUCTest {
         coVerify(exactly = 1) { gamerRepository.checkIfGamerExists(ofType(String::class)) }
         assert(result.isLeft)
         val failure = (result as Either.Left).l
-        assert(failure is Failure.NetworkConnection)
+        assert(failure is com.asm.domain.errors.Failure.Error.NetworkConnection)
     }
 
     @Test
@@ -91,7 +90,7 @@ class CreateGamerUCTest {
         coVerify(exactly = 1) { gamerRepository.checkIfGamerExists(ofType(String::class)) }
         assert(result.isLeft)
         val failure = (result as Either.Left).l
-        assert(failure is RegisterFailure.GamerExists)
+        assert(failure is RegisterError.GamerExists)
     }
 
     @Test
@@ -107,7 +106,7 @@ class CreateGamerUCTest {
         coEvery { gamerRepository.checkIfGamerExists(ofType(String::class)) } returns Either.Right(
             false
         )
-        coEvery { gamerRepository.registerGamer(param) } returns Either.Left(Failure.NetworkConnection)
+        coEvery { gamerRepository.registerGamer(param) } returns Either.Left(Error.NetworkConnection)
 
         //Act
         val result = signInUC.execute(param)
@@ -117,7 +116,7 @@ class CreateGamerUCTest {
         coVerify(exactly = 1) { gamerRepository.registerGamer(ofType(Gamer::class)) }
         assert(result.isLeft)
         val failure = (result as Either.Left).l
-        assert(failure is Failure.NetworkConnection)
+        assert(failure is com.asm.domain.errors.Failure.Error.NetworkConnection)
     }
 
     @Test
@@ -171,6 +170,6 @@ class CreateGamerUCTest {
         coVerify(exactly = 1) { logger.logE(any()) }
         assert(result.isLeft)
         val failure = (result as Either.Left).l
-        assert(failure is Failure.UnknownError)
+        assert(failure is com.asm.domain.errors.Failure.Error.UnknownError)
     }
 }

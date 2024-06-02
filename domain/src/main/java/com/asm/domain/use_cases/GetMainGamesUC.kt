@@ -2,31 +2,32 @@ package com.asm.domain.use_cases
 
 import com.asm.domain.entities.Game
 import com.asm.domain.entities.GameStatus
-import com.asm.domain.errors.Failure
-import com.asm.domain.errors.GameFailure
+import com.asm.domain.entities.Result
+import com.asm.domain.entities.asSuccessful
+import com.asm.domain.entities.toFailure
+import com.asm.domain.entities.toSuccessful
+import com.asm.domain.errors.Error
+import com.asm.domain.errors.GameError
 import com.asm.domain.repositories.GameRepository
 import com.asm.domain.use_cases.base.UseCaseSync
-import com.asm.domain.utils.Either
 import com.asm.domain.utils.Logger
-import com.asm.domain.utils.toLeft
-import com.asm.domain.utils.toRight
 import javax.inject.Inject
 
 class GetMainGamesUC @Inject constructor(
     private val logger: Logger,
     private val gameRepository: GameRepository
 ) : UseCaseSync<List<Game>, String>() {
-    override suspend fun run(params: String): Either<Failure, List<Game>> {
-        try {
-            val result = gameRepository.getGamesByGamerId(params)
-            if (result.isLeft) return result as Either.Left
-            val allGamesByUser = (result as Either.Right).r
+    override suspend fun run(params: String): Result<List<Game>> {
+        return try {
+            val result = gameRepository.getGamerGames(params)
+            if (result.isFailure) return result
+            val allGamesByUser = result.asSuccessful().data
             val thereIsGameInProcess = allGamesByUser.any { it.gameStatus is GameStatus.Process }
-            if (thereIsGameInProcess) return GameFailure.ThereIsGameInProcess.toLeft()
+            if (thereIsGameInProcess) return GameError.ThereIsGameInProcess.toFailure()
             val thereAreMoreThanOneNew = allGamesByUser.filter { it.gameStatus is GameStatus.New }.size > 1
-            if (thereAreMoreThanOneNew) return GameFailure.MoreThanOneNewGame.toLeft()
+            if (thereAreMoreThanOneNew) return GameError.MoreThanOneNewGame.toFailure()
             val thereAreMoreThanOneLock = allGamesByUser.filter { it.gameStatus is GameStatus.Lock }.size > 1
-            if (thereAreMoreThanOneLock) return GameFailure.MoreThanOneLockGame.toLeft()
+            if (thereAreMoreThanOneLock) return GameError.MoreThanOneLockGame.toFailure()
             val gamesGroupByLevelOrder = allGamesByUser.groupBy { it.levelInfo.levelOrder }
 
             //get main games
@@ -53,10 +54,10 @@ class GetMainGamesUC @Inject constructor(
 
             //Sort by order main games
             val mainGamesSorted = mainGames.values.sortedBy { it.levelInfo.levelOrder}
-            return mainGamesSorted.toRight()
+            mainGamesSorted.toSuccessful()
         } catch (exception: Exception) {
             logger.logE { exception }
-            return Failure.UnknownError.toLeft()
+            Error.UnknownError.toFailure()
         }
     }
 }

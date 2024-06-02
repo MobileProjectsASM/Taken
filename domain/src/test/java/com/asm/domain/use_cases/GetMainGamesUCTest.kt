@@ -1,9 +1,8 @@
 package com.asm.domain.use_cases
 
-import com.asm.domain.errors.Failure
-import com.asm.domain.errors.GameFailure
+import com.asm.domain.errors.Error
+import com.asm.domain.errors.GameError
 import com.asm.domain.repositories.GameRepository
-import com.asm.domain.utils.Either
 import com.asm.domain.utils.Logger
 import com.asm.domain.utils.toLeft
 import com.asm.domain.utils.toRight
@@ -49,7 +48,7 @@ class GetMainGamesUCTest {
     @Test
     fun `test process when getGamesByGamerId return Failure`() = runTest {
         //Arrange
-        coEvery { gamesRepository.getGamesByGamerId(ofType(String::class)) } returns Failure.NetworkConnection.toLeft()
+        coEvery { gamesRepository.getGamesByGamerId(ofType(String::class)) } returns Error.NetworkConnection.toLeft()
 
         //Act
         val result = getMainGamesUC.execute("ABCDE")
@@ -58,7 +57,7 @@ class GetMainGamesUCTest {
         coVerify(exactly = 1) { gamesRepository.getGamesByGamerId(ofType(String::class)) }
         assert(result.isLeft)
         val failure = (result as Either.Left).l
-        assert(failure is Failure.NetworkConnection)
+        assert(failure is com.asm.domain.errors.Failure.Error.NetworkConnection)
     }
 
     @Test
@@ -75,7 +74,7 @@ class GetMainGamesUCTest {
         coVerify(exactly = 1) { logger.logE(any()) }
         assert(result.isLeft)
         val failure = (result as Either.Left).l
-        assert(failure is Failure.UnknownError)
+        assert(failure is com.asm.domain.errors.Failure.Error.UnknownError)
     }
 
 
@@ -92,7 +91,7 @@ class GetMainGamesUCTest {
         coVerify(exactly = 1) { gamesRepository.getGamesByGamerId(ofType(String::class)) }
         assert(result.isLeft)
         val failure = (result as Either.Left).l
-        assert(failure is GameFailure.ThereIsGameInProcess)
+        assert(failure is GameError.ThereIsGameInProcess)
     }
 
     @Test
@@ -108,7 +107,7 @@ class GetMainGamesUCTest {
         coVerify(exactly = 1) { gamesRepository.getGamesByGamerId(ofType(String::class)) }
         assert(result.isLeft)
         val failure = (result as Either.Left).l
-        assert(failure is GameFailure.MoreThanOneNewGame)
+        assert(failure is GameError.MoreThanOneNewGame)
     }
 
     @Test
@@ -124,7 +123,7 @@ class GetMainGamesUCTest {
         coVerify(exactly = 1) { gamesRepository.getGamesByGamerId(ofType(String::class)) }
         assert(result.isLeft)
         val failure = (result as Either.Left).l
-        assert(failure is GameFailure.MoreThanOneLockGame)
+        assert(failure is GameError.MoreThanOneLockGame)
     }
 
     @Test

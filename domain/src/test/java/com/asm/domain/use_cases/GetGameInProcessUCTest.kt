@@ -3,10 +3,9 @@ package com.asm.domain.use_cases
 import com.asm.domain.entities.Game
 import com.asm.domain.entities.GameStatus
 import com.asm.domain.entities.LevelInfo
-import com.asm.domain.errors.Failure
-import com.asm.domain.errors.GameFailure
+import com.asm.domain.errors.Error
+import com.asm.domain.errors.GameError
 import com.asm.domain.repositories.GameRepository
-import com.asm.domain.utils.Either
 import com.asm.domain.utils.Logger
 import com.asm.domain.utils.toLeft
 import com.asm.domain.utils.toRight
@@ -41,7 +40,7 @@ class GetGameInProcessUCTest {
     @Test
     fun `test process when getGameInProcess return a Failure`() = runTest {
         //Arrange
-        coEvery { gameRepository.getGameInProcess(ofType(String::class)) } returns Failure.NetworkConnection.toLeft()
+        coEvery { gameRepository.getGameInProcess(ofType(String::class)) } returns Error.NetworkConnection.toLeft()
 
         //Act
         val result = getGameInProcessUC.execute("")
@@ -50,7 +49,7 @@ class GetGameInProcessUCTest {
         coVerify(exactly = 1) { gameRepository.getGameInProcess(ofType(String::class)) }
         assert(result.isLeft)
         val failure = (result as Either.Left).l
-        assert(failure is Failure.NetworkConnection)
+        assert(failure is com.asm.domain.errors.Failure.Error.NetworkConnection)
     }
 
     @Test
@@ -67,7 +66,7 @@ class GetGameInProcessUCTest {
         coVerify(exactly = 1) { logger.logE(any()) }
         assert(result.isLeft)
         val failure = (result as Either.Left).l
-        assert(failure is Failure.UnknownError)
+        assert(failure is com.asm.domain.errors.Failure.Error.UnknownError)
     }
 
     @Test
@@ -82,7 +81,7 @@ class GetGameInProcessUCTest {
         coVerify(exactly = 1) { gameRepository.getGameInProcess(ofType(String::class)) }
         assert(result.isLeft)
         val failure = (result as Either.Left).l
-        assert(failure is GameFailure.ThereIsNotGameInProcess)
+        assert(failure is GameError.ThereIsNotGameInProcess)
     }
 
     @Test

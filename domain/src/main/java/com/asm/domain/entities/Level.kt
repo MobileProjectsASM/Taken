@@ -2,7 +2,7 @@ package com.asm.domain.entities
 
 data class Level(
     val levelName: String,
-    val levelOrder: Int,
+    val orderCriteria: Int,
     val levelImage: String,
     val difficulty: Difficulty,
     val timeMetrics: TimeMetrics,
@@ -16,7 +16,7 @@ data class Level(
         other as Level
 
         if (levelName != other.levelName) return false
-        if (levelOrder != other.levelOrder) return false
+        if (orderCriteria != other.orderCriteria) return false
         if (levelImage != other.levelImage) return false
         if (difficulty != other.difficulty) return false
         if (timeMetrics != other.timeMetrics) return false
@@ -26,7 +26,7 @@ data class Level(
 
     override fun hashCode(): Int {
         var result = levelName.hashCode()
-        result = 31 * result + levelOrder
+        result = 31 * result + orderCriteria
         result = 31 * result + levelImage.hashCode()
         result = 31 * result + difficulty.hashCode()
         result = 31 * result + timeMetrics.hashCode()
