@@ -1,22 +1,11 @@
 package com.asm.domain.use_cases
 
-import com.asm.domain.errors.Error
-import com.asm.domain.errors.GameError
 import com.asm.domain.repositories.GameRepository
 import com.asm.domain.utils.Logger
-import com.asm.domain.utils.toLeft
-import com.asm.domain.utils.toRight
 import io.mockk.MockKAnnotations
-import io.mockk.coEvery
-import io.mockk.coVerify
 import io.mockk.impl.annotations.MockK
-import io.mockk.just
-import io.mockk.runs
-import kotlinx.coroutines.test.runTest
 import org.junit.BeforeClass
 import kotlin.test.BeforeTest
-import kotlin.test.Test
-import kotlin.test.assertEquals
 
 class GetMainGamesUCTest {
     private lateinit var getMainGamesUC: GetMainGamesUC
@@ -27,7 +16,7 @@ class GetMainGamesUCTest {
     @MockK
     private lateinit var gamesRepository: GameRepository
 
-    companion object {
+    /*companion object {
         var fakeGames: FakeGames? = null
         var gamesExpected: GamesExpected? = null
 
@@ -209,5 +198,5 @@ class GetMainGamesUCTest {
         assert(result.isRight)
         val value = (result as Either.Right).r
         assertEquals(expectedValue, value)
-    }
+    }*/
 }

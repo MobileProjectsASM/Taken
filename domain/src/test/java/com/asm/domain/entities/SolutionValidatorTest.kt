@@ -18,6 +18,7 @@ class SolutionValidatorTest {
     fun `test validateSolution when the solution is incorrect`() {
         //Arrange
         val level = Level(
+            "level_1",
             "Level 1",
             1,
             "",
@@ -49,6 +50,7 @@ class SolutionValidatorTest {
     fun `test validateSolution when the solution is right`() {
         //Arrange
         val level = Level(
+            "level_1",
             "Level 1",
             1,
             "",

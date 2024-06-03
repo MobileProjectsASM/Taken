@@ -14,6 +14,7 @@ class ScoreByTimeTest {
     fun onBefore() {
         levelScore = ScoreByTime()
         level = Level(
+            "level_1",
             "Level 1",
             1,
             "",

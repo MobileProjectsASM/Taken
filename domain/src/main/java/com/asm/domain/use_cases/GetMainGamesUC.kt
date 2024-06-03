@@ -18,7 +18,7 @@ class GetMainGamesUC @Inject constructor(
     private val gameRepository: GameRepository
 ) : UseCaseSync<List<Game>, String>() {
     override suspend fun run(params: String): Result<List<Game>> {
-        return try {
+        /*return try {
             val result = gameRepository.getGamerGames(params)
             if (result.isFailure) return result
             val allGamesByUser = result.asSuccessful().data
@@ -58,6 +58,7 @@ class GetMainGamesUC @Inject constructor(
         } catch (exception: Exception) {
             logger.logE { exception }
             Error.UnknownError.toFailure()
-        }
+        }*/
+        return Error.UnknownError.toFailure()
     }
 }

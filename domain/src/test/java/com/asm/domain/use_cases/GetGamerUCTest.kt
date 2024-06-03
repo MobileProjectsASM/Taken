@@ -1,9 +1,9 @@
 package com.asm.domain.use_cases
 
+import com.asm.domain.entities.toFailure
 import com.asm.domain.errors.GamerError
 import com.asm.domain.repositories.GamerRepository
 import com.asm.domain.utils.Logger
-import com.asm.domain.utils.toLeft
 import io.mockk.MockKAnnotations
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -32,28 +32,28 @@ class GetGamerUCTest {
     @Test
     fun `test the process when getGamerById return a Failure`() = runTest {
         //Arrange
-        coEvery { gamerRepository.getGamerById(ofType(String::class)) } returns GamerError.GamerNotExists.toLeft()
+        coEvery { gamerRepository.getGamerById(ofType(String::class)) } returns GamerError.GamerNotExists.toFailure()
 
         //Act
         val result = getGamerUC.execute("ABCDE")
 
         //Asserts
         coVerify(exactly = 1) { gamerRepository.getGamerById(ofType(String::class)) }
-        assert(result.isLeft)
+        assert(result.isFailure)
     }
 
     @Test
     fun `test the process when process throws error`() = runTest {
         //Arrange
         coEvery { gamerRepository.getGamerById(ofType(String::class)) } throws Exception("Another error")
-        coEvery { logger.logE(any()) } just runs
+        coEvery { logger.logE(ofType(String::class), ofType(Exception::class)) } just runs
 
         //Act
         val result = getGamerUC.execute("ABCDE")
 
         //Asserts
         coVerify(exactly = 1) { gamerRepository.getGamerById(ofType(String::class)) }
-        coVerify(exactly = 1) { logger.logE(any()) }
-        assert(result.isLeft)
+        coVerify(exactly = 1) { logger.logE(ofType(String::class), ofType(Exception::class)) }
+        assert(result.isFailure)
     }
 }

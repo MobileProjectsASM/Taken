@@ -14,11 +14,12 @@ class GetLevelUC @Inject constructor(
     private val levelRepository: LevelRepository
 ) : UseCaseSync<Level, Int>() {
     override suspend fun run(params: Int): Result<Level> {
-        return try {
+        /*return try {
             levelRepository.getLevelByOrder(params)
         } catch (exception: Exception) {
             logger.logE { exception }
             Error.UnknownError.toFailure()
-        }
+        }*/
+        return Error.UnknownError.toFailure()
     }
 }

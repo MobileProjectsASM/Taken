@@ -1,9 +1,6 @@
 package com.asm.domain.entities
 
-import com.asm.domain.errors.Error
 import com.asm.domain.errors.TimerError
-import com.asm.domain.utils.toLeft
-import com.asm.domain.utils.toRight
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
@@ -24,8 +21,8 @@ class Timer {
         initTimer: (Long) -> Unit,
         inProcess: (Long) -> Unit,
         timeOut: () -> Unit
-    ): Either<Error, Unit> = coroutineScope {
-        if (time == null) return@coroutineScope TimerError.TimeInitIsNull.toLeft()
+    ): Result<Unit> = coroutineScope {
+        if (time == null) return@coroutineScope TimerError.TimeInitIsNull.toFailure()
         job = launch {
             initMark = timeSource.markNow()
             initTimer.invoke(time!!)
@@ -37,7 +34,7 @@ class Timer {
             } while (elapsedTime < time!!)
             timeOut()
         }
-        return@coroutineScope Unit.toRight()
+        return@coroutineScope Unit.toSuccessful()
     }
 
     fun pause(): Long? {

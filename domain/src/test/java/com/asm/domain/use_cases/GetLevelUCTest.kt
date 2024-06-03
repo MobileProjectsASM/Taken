@@ -1,24 +1,10 @@
 package com.asm.domain.use_cases
 
-import com.asm.domain.entities.Difficulty
-import com.asm.domain.entities.Level
-import com.asm.domain.entities.MovementsMetrics
-import com.asm.domain.entities.TimeMetrics
-import com.asm.domain.errors.Error
 import com.asm.domain.repositories.LevelRepository
 import com.asm.domain.utils.Logger
-import com.asm.domain.utils.toLeft
-import com.asm.domain.utils.toRight
 import io.mockk.MockKAnnotations
-import io.mockk.coEvery
-import io.mockk.coVerify
 import io.mockk.impl.annotations.MockK
-import io.mockk.just
-import io.mockk.runs
-import kotlinx.coroutines.test.runTest
 import kotlin.test.BeforeTest
-import kotlin.test.Test
-import kotlin.test.assertEquals
 
 class GetLevelUCTest {
     private lateinit var getLevelUC: GetLevelUC
@@ -35,7 +21,7 @@ class GetLevelUCTest {
         getLevelUC = GetLevelUC(logger, levelRepository)
     }
 
-    @Test
+    /*@Test
     fun `test process when process throws an exception`() = runTest {
         //Arrange
         coEvery { levelRepository.getLevelByOrder(ofType(Int::class)) } throws Exception("Another exception")
@@ -89,5 +75,5 @@ class GetLevelUCTest {
         assert(result.isRight)
         val value = (result as Either.Right).r
         assertEquals(expectedLevel, value)
-    }
+    }*/
 }

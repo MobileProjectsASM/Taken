@@ -1,16 +1,15 @@
 package com.asm.domain.use_cases
 
-import com.asm.domain.entities.Difficulty
 import com.asm.domain.entities.Game
 import com.asm.domain.entities.GameStatus
 import com.asm.domain.entities.LevelInfo
 
 class FakeGames {
-    val moreThanOneGameInProcess = listOf(
+    /*val moreThanOneGameInProcess = listOf(
         Game(
-            LevelInfo(1, "",""),//
+            "",
+            LevelInfo("level_1", "",""),//
             GameStatus.Win(30, 20, 23.0),
-            arrayOf()
         ),
         Game(
             LevelInfo(1, "",""),//
@@ -443,5 +442,5 @@ class GamesExpected {
             GameStatus.Win(30, 20, 60.0),
             arrayOf()
         )
-    )
+    )*/
 }

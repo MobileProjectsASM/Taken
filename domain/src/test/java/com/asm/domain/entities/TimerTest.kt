@@ -27,8 +27,8 @@ class TimerTest {
         val result = timer.start({}, {}, {})
 
         //Asserts
-        assert(result.isLeft)
-        val failure = (result as Either.Left).l
+        assert(result.isFailure)
+        val failure = result.asFailure().failure
         assert(failure is TimerError.TimeInitIsNull)
     }
 
@@ -59,7 +59,7 @@ class TimerTest {
         })
 
         //Asserts
-        assert(result.isRight)
+        assert(result.isSuccessful)
     }
 
     @Test
@@ -73,7 +73,7 @@ class TimerTest {
         //Act
         launch {
             val result = timer.start(initTimer = {}, inProcess = {}, timeOut = {})
-            assert(result.isRight)
+            assert(result.isSuccessful)
         }
         //Wait 10 seconds and pause timer
         delay(simulatedProcessTime * 1_000)
@@ -96,7 +96,7 @@ class TimerTest {
         //Act
         launch {
             val result = timer.start(initTimer = {}, inProcess = {}, timeOut = {})
-            assert(result.isRight)
+            assert(result.isSuccessful)
         }
         //Wait 10 seconds and pause timer
         delay(simulatedProcessTime * 1_000)

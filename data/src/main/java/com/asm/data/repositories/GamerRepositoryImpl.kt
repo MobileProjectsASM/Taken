@@ -46,4 +46,14 @@ class GamerRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun getGamerById(gamerId: String): Result<Gamer> {
+        return try {
+            val gamer = gamerLocalSource.getGamer(gamerId)
+            gamer.toSuccessful()
+        } catch (exception: Exception) {
+            logger.logE(TAG, exception)
+            Error.UnknownError.toFailure()
+        }
+    }
+
 }

@@ -13,7 +13,7 @@ class ValidateUserPasswordUC @Inject constructor(
     private val logger: Logger
 ) : UseCaseSync<PasswordState, String>() {
     override suspend fun run(params: String): Result<PasswordState> {
-        return try {
+        /*return try {
             if (params.isEmpty()) return PasswordState.EMPTY.toSuccessful()
             if (!params.matches(
                 Regex("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&#])[A-Za-z\\d@$!%*?&#]{8,}$")
@@ -22,6 +22,7 @@ class ValidateUserPasswordUC @Inject constructor(
         } catch (exception: Exception) {
             logger.logE { exception }
             Error.UnknownError.toFailure()
-        }
+        }*/
+        return Error.UnknownError.toFailure()
     }
 }

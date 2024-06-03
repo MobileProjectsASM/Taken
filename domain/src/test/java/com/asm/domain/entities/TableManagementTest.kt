@@ -18,6 +18,7 @@ class TableManagementTest {
     fun `test the process that initializes the board`() {
         //Arrange
         val level = Level(
+            "level_1",
             "Level 1",
             1,
             "",

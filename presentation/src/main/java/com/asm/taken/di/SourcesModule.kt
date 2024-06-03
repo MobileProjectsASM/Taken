@@ -23,49 +23,51 @@ import com.asm.domain.utils.Logger
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
+import dagger.hilt.android.components.ActivityComponent
+import dagger.hilt.android.scopes.ActivityScoped
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
 @Module
-@InstallIn(SingletonComponent::class)
+@InstallIn(ActivityComponent::class)
 abstract class SourcesModule {
-    @Singleton
+    @ActivityScoped
     @Binds
     abstract fun getMultimediaRemoteSource(multimediaStorageSource: MultimediaStorageSource): MultimediaRemoteSource
 
-    @Singleton
+    @ActivityScoped
     @Binds
     abstract fun getMultimediaLocalSource(multimediaDeviceSource: MultimediaDeviceSource): MultimediaLocalSource
 
-    @Singleton
+    @ActivityScoped
     @Binds
     abstract fun getGamerRemoteSource(gamerRemoteSource: GamerFireStoreSource): GamerRemoteSource
 
-    @Singleton
+    @ActivityScoped
     @Binds
     abstract fun getGamerLocalSource(gamerLocalSource: GamerRoomSource): GamerLocalSource
 
-    @Singleton
+    @ActivityScoped
     @Binds
     abstract fun getGameLocalSource(gameLocalSource: GameRoomSource): GameLocalSource
 
-    @Singleton
+    @ActivityScoped
     @Binds
     abstract fun getGameRemoteSource(gameRemoteSource: GameFireStoreSource): GameRemoteSource
 
-    @Singleton
+    @ActivityScoped
     @Binds
     abstract fun getLevelsLocalSource(levelLocalSource: LevelRoomSource): LevelLocalSource
 
-    @Singleton
+    @ActivityScoped
     @Binds
     abstract fun getLevelsRemoteSource(levelRemoteSource: LevelFireStoreSource): LevelRemoteSource
 
-    @Singleton
+    @ActivityScoped
     @Binds
     abstract fun providesLogger(logger: LoggerSourceMobile): Logger
 
-    @Singleton
+    @ActivityScoped
     @Binds
     abstract fun getConnection(connectionSourceMobile: ConnectionSourceMobile): ConnectionSource
 }

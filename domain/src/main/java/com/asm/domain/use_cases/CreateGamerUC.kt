@@ -19,6 +19,7 @@ import com.asm.domain.repositories.MultimediaRepository
 import com.asm.domain.use_cases.base.UseCaseSync
 import com.asm.domain.utils.Completed
 import com.asm.domain.utils.Logger
+import java.util.UUID
 import javax.inject.Inject
 
 class CreateGamerUC @Inject constructor(
@@ -86,11 +87,13 @@ class CreateGamerUC @Inject constructor(
         val initGames = mutableListOf<Game>()
         for (level in levels) {
             val levelInfo = LevelInfo(
-                levelOrder = level.orderCriteria,
+                levelId = level.levelId,
                 levelName = level.levelName,
                 levelImage = level.levelImage
             )
+            val gameId = UUID.randomUUID().toString()
             val game = Game(
+                gameId = gameId,
                 levelInfo = levelInfo,
                 gameStatus = if (level.orderCriteria == 1) GameStatus.New else GameStatus.Lock
             )

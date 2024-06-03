@@ -4,6 +4,8 @@ import com.asm.data.repositories.GameRepositoryImpl
 import com.asm.data.repositories.GamerRepositoryImpl
 import com.asm.data.repositories.LevelRepositoryImpl
 import com.asm.data.repositories.MultimediaRepositoryImpl
+import com.asm.data.sources.hardware.ConnectionSource
+import com.asm.domain.repositories.ConnectionRepository
 import com.asm.domain.repositories.GameRepository
 import com.asm.domain.repositories.GamerRepository
 import com.asm.domain.repositories.LevelRepository
@@ -32,4 +34,8 @@ abstract class RepositoryModule {
     @ActivityScoped
     @Binds
     abstract fun getMultimediaRepository(multimediaRepository: MultimediaRepositoryImpl): MultimediaRepository
+
+    @ActivityScoped
+    @Binds
+    abstract fun getConnectionRepository(connectionSource: ConnectionSource): ConnectionRepository
 }

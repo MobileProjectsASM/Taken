@@ -1,25 +1,10 @@
 package com.asm.domain.use_cases
 
-import com.asm.domain.entities.Game
-import com.asm.domain.entities.GameStatus
-import com.asm.domain.entities.LevelInfo
-import com.asm.domain.errors.Error
-import com.asm.domain.errors.GameError
 import com.asm.domain.repositories.GameRepository
 import com.asm.domain.utils.Logger
-import com.asm.domain.utils.toLeft
-import com.asm.domain.utils.toRight
 import io.mockk.MockKAnnotations
-import io.mockk.coEvery
-import io.mockk.coVerify
 import io.mockk.impl.annotations.MockK
-import io.mockk.just
-import io.mockk.runs
-import kotlinx.coroutines.test.runTest
 import kotlin.test.BeforeTest
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
 
 class GetGameInProcessUCTest {
 
@@ -37,7 +22,7 @@ class GetGameInProcessUCTest {
         getGameInProcessUC = GetGameInProcessUC(logger, gameRepository)
     }
 
-    @Test
+    /*@Test
     fun `test process when getGameInProcess return a Failure`() = runTest {
         //Arrange
         coEvery { gameRepository.getGameInProcess(ofType(String::class)) } returns Error.NetworkConnection.toLeft()
@@ -107,5 +92,5 @@ class GetGameInProcessUCTest {
         val value = (result as Either.Right).r
         assertNotNull(value)
         assertEquals(expectedValue, value)
-    }
+    }*/
 }

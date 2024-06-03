@@ -13,11 +13,16 @@ class GetGamerUC @Inject constructor(
     private val logger: Logger,
     private val gamerRepository: GamerRepository
 ): UseCaseSync<Gamer, String>() {
+
+    companion object {
+        const val TAG = "GetGamerUC"
+    }
+
     override suspend fun run(params: String): Result<Gamer> {
         return try {
             gamerRepository.getGamerById(params)
         } catch (exception: Exception) {
-            logger.logE { exception }
+            logger.logE(TAG, exception)
             Error.UnknownError.toFailure()
         }
     }
