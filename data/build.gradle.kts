@@ -36,18 +36,29 @@ android {
 
 dependencies {
     val roomVersion = "2.6.1"
+    val hiltVersion = "2.51.1"
+    val firebaseVersion = "33.0.0"
+    val gsonVersion = "2.11.0"
+
     implementation(project(":domain"))
 
-    //AUTHENTICATION
+    //FIREBASE API
     // Import the BoM for the Firebase platform
-    implementation(platform("com.google.firebase:firebase-bom:33.0.0"))
+    implementation(platform("com.google.firebase:firebase-bom:$firebaseVersion"))
     implementation("com.google.firebase:firebase-analytics")
     implementation("com.google.firebase:firebase-firestore")
     implementation("com.google.firebase:firebase-storage")
 
+    //DI
+    implementation("com.google.dagger:hilt-android:${hiltVersion}")
+    kapt("com.google.dagger:hilt-android-compiler:${hiltVersion}")
+
     //Room
     kapt("androidx.room:room-compiler:$roomVersion")
     implementation("androidx.room:room-ktx:$roomVersion")
+
+    //Gson
+    implementation("com.google.code.gson:gson:$gsonVersion")
 
     implementation("androidx.core:core-ktx:1.13.1")
     implementation("androidx.appcompat:appcompat:1.6.1")

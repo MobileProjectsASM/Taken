@@ -4,11 +4,12 @@ import android.util.Base64
 import android.util.Log
 import com.asm.data.sources.remote.interfaces.MultimediaRemoteSource
 import com.google.firebase.storage.StorageReference
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
 class MultimediaStorageSource @Inject constructor(
-    val storageReference: StorageReference
+    @ApplicationContext val storageReference: StorageReference
 ): MultimediaRemoteSource {
 
     companion object {
@@ -25,7 +26,7 @@ class MultimediaStorageSource @Inject constructor(
             return imageUri.path ?: throw Exception("Uri invalid")
         } catch (exception: Exception) {
             Log.e(TAG, exception.stackTraceToString())
-            throw exception
+            throw Exception("Error to uploadImage local source")
         }
     }
 
@@ -36,7 +37,7 @@ class MultimediaStorageSource @Inject constructor(
             return bytes.toBase64()
         } catch (exception: Exception) {
             Log.e(TAG, exception.stackTraceToString())
-            throw exception
+            throw Exception("Error to downloadImage local source")
         }
     }
 

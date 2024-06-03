@@ -1,32 +1,36 @@
-package com.asm.domain.entities
+package com.asm.data.sources.remote.model
 
-data class Level(
+data class LevelFireStore(
     val levelId: String,
     val levelName: String,
     val orderCriteria: Int,
     val levelImage: String,
-    val difficulty: Difficulty,
-    val timeMetrics: TimeMetrics,
-    val movementsMetrics: MovementsMetrics,
-    val response: Array<Array<Box>>
+    val difficulty: String,
+    val timeMetrics: Map<String, Int>,
+    val movementsMetrics: Map<String, Int>,
+    val response: Array<Array<Map<Int, Long>>>
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
 
-        other as Level
+        other as LevelFireStore
 
+        if (levelId != other.levelId) return false
         if (levelName != other.levelName) return false
         if (orderCriteria != other.orderCriteria) return false
         if (levelImage != other.levelImage) return false
         if (difficulty != other.difficulty) return false
         if (timeMetrics != other.timeMetrics) return false
         if (movementsMetrics != other.movementsMetrics) return false
-        return response.contentDeepEquals(other.response)
+        if (!response.contentDeepEquals(other.response)) return false
+
+        return true
     }
 
     override fun hashCode(): Int {
-        var result = levelName.hashCode()
+        var result = levelId.hashCode()
+        result = 31 * result + levelName.hashCode()
         result = 31 * result + orderCriteria
         result = 31 * result + levelImage.hashCode()
         result = 31 * result + difficulty.hashCode()

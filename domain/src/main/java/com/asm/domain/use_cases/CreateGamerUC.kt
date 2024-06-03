@@ -50,7 +50,7 @@ class CreateGamerUC @Inject constructor(
 
     override suspend fun run(params: GamerParams): Result<Completed> {
         return try {
-            val connectionResult = connectionRepository.thereIsInternetConnection()
+            val connectionResult = connectionRepository.isNetworkAvailable()
             if (connectionResult.isFailure) return connectionResult.asFailure().toFailure()
             if (!connectionResult.asSuccessful().data) return Error.NetworkConnection.toFailure()
             val resultGamerExists = gamerRepository.checkIfGamerExists(params.gamerId)

@@ -1,6 +1,6 @@
 package com.asm.data.sources.remote.model
 
-data class RemoteGamer(
+data class GamerFireStore(
     val gamerId: String,
     val gamerNickName: String,
     val gamerAge: Int,

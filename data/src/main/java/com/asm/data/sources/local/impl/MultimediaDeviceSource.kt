@@ -4,11 +4,12 @@ import android.content.Context
 import android.os.Environment
 import android.util.Log
 import com.asm.data.sources.local.interfaces.MultimediaLocalSource
+import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.File
 import javax.inject.Inject
 
 class MultimediaDeviceSource @Inject constructor(
-    val context: Context
+    @ApplicationContext val context: Context
 ): MultimediaLocalSource {
 
     companion object {
@@ -41,7 +42,7 @@ class MultimediaDeviceSource @Inject constructor(
             }
         } catch (exception: Exception) {
             Log.e(TAG, exception.stackTraceToString())
-            throw exception
+            throw Exception("Error to saveImage remote source")
         }
     }
 
@@ -51,7 +52,7 @@ class MultimediaDeviceSource @Inject constructor(
             return imageFile.exists()
         } catch (exception: Exception) {
             Log.e(TAG, exception.stackTraceToString())
-            throw exception
+            throw Exception("Error to existsImage remote source")
         }
     }
 

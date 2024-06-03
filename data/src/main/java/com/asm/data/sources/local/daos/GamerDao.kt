@@ -3,16 +3,16 @@ package com.asm.data.sources.local.daos
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
-import com.asm.data.sources.local.entities.Gamer
+import com.asm.data.sources.local.entities.GamerRoom
 
 @Dao
 interface GamerDao {
     @Insert
-    fun insertGamer(gamer: Gamer)
+    suspend fun insertGamer(gamerRoom: GamerRoom)
 
     @Query("SELECT * FROM gamers WHERE gamer_id = :gamerId")
-    fun getGamerById(gamerId: String): Gamer
+    suspend fun getGamerById(gamerId: String): GamerRoom
 
     @Query("SELECT exists(SELECT 1 FROM gamers WHERE gamer_id = :gamerId) AS gamer_exists")
-    fun gamerExists(gamerId: String): Int
+    suspend fun gamerExists(gamerId: String): Int
 }

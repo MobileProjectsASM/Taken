@@ -26,7 +26,7 @@ class MultimediaRepositoryImpl @Inject constructor(
     }
     override suspend fun uploadUserImage(userId: String, profileImageName: String, base64: String): Result<String> {
         return try {
-            if (!connectionSource.thereIsInternetConnection()) return Error.NetworkConnection.toFailure()
+            if (!connectionSource.isNetworkAvailable()) return Error.NetworkConnection.toFailure()
             val folderPath = "$userId/$DEFAULT_PATH_USER_IMAGES"
             multimediaRemoteSource.uploadImage(folderPath, profileImageName, base64)
             val imagePath = multimediaLocalSource.saveImage(folderPath, profileImageName, base64)
@@ -42,7 +42,7 @@ class MultimediaRepositoryImpl @Inject constructor(
             val fullPath = "$DEFAULT_FOLDER_PATH_USER_IMAGE_PROFILE/$DEFAULT_IMAGE_NAME_PROFILE"
             val existsImage = multimediaLocalSource.existsImage(fullPath)
             if (existsImage) return fullPath.toSuccessful()
-            if (!connectionSource.thereIsInternetConnection()) return Error.NetworkConnection.toFailure()
+            if (!connectionSource.isNetworkAvailable()) return Error.NetworkConnection.toFailure()
             val base64 = multimediaRemoteSource.downloadImage(fullPath)
             return multimediaLocalSource.saveImage(
                 DEFAULT_FOLDER_PATH_USER_IMAGE_PROFILE,

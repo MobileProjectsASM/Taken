@@ -1,10 +1,11 @@
 package com.asm.data.sources.local.mappers
 
-import com.asm.data.sources.local.entities.Gamer
+import com.asm.data.sources.local.entities.GamerRoom
+import javax.inject.Inject
 import com.asm.domain.entities.Gamer as GamerDomain
 
-class GamerMapper {
-    fun getGamer(gamerDomain: GamerDomain): Gamer = Gamer(
+class GamerMapper @Inject constructor() {
+    fun getGamer(gamerDomain: GamerDomain): GamerRoom = GamerRoom(
         gamerDomain.gamerId,
         gamerDomain.gamerNickName,
         gamerDomain.gamerAge,
@@ -12,11 +13,11 @@ class GamerMapper {
         gamerDomain.gamerImage
     )
 
-    fun toGamerDomain(gamer: Gamer): GamerDomain = GamerDomain(
-        gamer.gamerId,
-        gamer.gamerNickname,
-        gamer.gamerAge,
-        gamer.gamerCountry,
-        gamer.gamerImage
+    fun toGamerDomain(gamerRoom: GamerRoom): GamerDomain = GamerDomain(
+        gamerRoom.gamerId,
+        gamerRoom.gamerNickname,
+        gamerRoom.gamerAge,
+        gamerRoom.gamerCountry,
+        gamerRoom.gamerImage
     )
 }

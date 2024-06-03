@@ -13,3 +13,7 @@ sealed class GameStatus {
         val score: Double
     ): GameStatus()
 }
+
+fun GameStatus.asProcess() = this as GameStatus.Process
+
+fun GameStatus.asWin() = this as GameStatus.Win

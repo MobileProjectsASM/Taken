@@ -5,7 +5,7 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 
 @Entity(tableName = "gamers")
-data class Gamer(
+data class GamerRoom(
     @PrimaryKey
     @ColumnInfo(name = "gamer_id") val gamerId: String,
     @ColumnInfo(name = "gamer_nick_name") val gamerNickname: String,

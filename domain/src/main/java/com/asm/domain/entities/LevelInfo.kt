@@ -1,7 +1,7 @@
 package com.asm.domain.entities
 
 data class LevelInfo(
-    val levelOrder: Int,
+    val levelId: String,
     val levelName: String,
     val levelImage: String
 )

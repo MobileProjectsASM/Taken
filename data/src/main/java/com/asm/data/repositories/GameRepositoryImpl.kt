@@ -26,7 +26,7 @@ class GameRepositoryImpl @Inject constructor(
 
     override suspend fun saveGamerGames(games: List<Game>, gamerId: String): Result<Completed> {
         return try {
-            if (!connectionSource.thereIsInternetConnection()) return Error.NetworkConnection.toFailure()
+            if (!connectionSource.isNetworkAvailable()) return Error.NetworkConnection.toFailure()
             gameRemoteSource.insertGames(games, gamerId)
             gameLocalSource.saveGamesByGamerId(games, gamerId)
             Completed.toSuccessful()

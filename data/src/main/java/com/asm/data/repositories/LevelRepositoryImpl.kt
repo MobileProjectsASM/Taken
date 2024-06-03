@@ -25,8 +25,8 @@ class LevelRepositoryImpl @Inject constructor(
 
     override suspend fun downloadLevelsByOrderCriteria(ids: List<Int>): Result<List<Level>> {
         return try {
-            if (!connectionSource.thereIsInternetConnection()) return Error.NetworkConnection.toFailure()
-            val levels = levelRemoteSource.getLevelsByIds(ids)
+            if (!connectionSource.isNetworkAvailable()) return Error.NetworkConnection.toFailure()
+            val levels = levelRemoteSource.getLevelsByOrders(ids)
             levelLocalSource.saveLevels(levels)
             levels.toSuccessful()
         } catch (exception: Exception) {
