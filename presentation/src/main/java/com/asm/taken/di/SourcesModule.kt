@@ -23,51 +23,49 @@ import com.asm.domain.utils.Logger
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
-import dagger.hilt.android.components.ActivityComponent
-import dagger.hilt.android.scopes.ActivityScoped
-import dagger.hilt.components.SingletonComponent
-import javax.inject.Singleton
+import dagger.hilt.android.components.ViewModelComponent
+import dagger.hilt.android.scopes.ViewModelScoped
 
 @Module
-@InstallIn(ActivityComponent::class)
+@InstallIn(ViewModelComponent::class)
 abstract class SourcesModule {
-    @ActivityScoped
+    @ViewModelScoped
     @Binds
     abstract fun getMultimediaRemoteSource(multimediaStorageSource: MultimediaStorageSource): MultimediaRemoteSource
 
-    @ActivityScoped
+    @ViewModelScoped
     @Binds
     abstract fun getMultimediaLocalSource(multimediaDeviceSource: MultimediaDeviceSource): MultimediaLocalSource
 
-    @ActivityScoped
+    @ViewModelScoped
     @Binds
     abstract fun getGamerRemoteSource(gamerRemoteSource: GamerFireStoreSource): GamerRemoteSource
 
-    @ActivityScoped
+    @ViewModelScoped
     @Binds
     abstract fun getGamerLocalSource(gamerLocalSource: GamerRoomSource): GamerLocalSource
 
-    @ActivityScoped
+    @ViewModelScoped
     @Binds
     abstract fun getGameLocalSource(gameLocalSource: GameRoomSource): GameLocalSource
 
-    @ActivityScoped
+    @ViewModelScoped
     @Binds
     abstract fun getGameRemoteSource(gameRemoteSource: GameFireStoreSource): GameRemoteSource
 
-    @ActivityScoped
+    @ViewModelScoped
     @Binds
     abstract fun getLevelsLocalSource(levelLocalSource: LevelRoomSource): LevelLocalSource
 
-    @ActivityScoped
+    @ViewModelScoped
     @Binds
     abstract fun getLevelsRemoteSource(levelRemoteSource: LevelFireStoreSource): LevelRemoteSource
 
-    @ActivityScoped
+    @ViewModelScoped
     @Binds
     abstract fun providesLogger(logger: LoggerSourceMobile): Logger
 
-    @ActivityScoped
+    @ViewModelScoped
     @Binds
     abstract fun getConnection(connectionSourceMobile: ConnectionSourceMobile): ConnectionSource
 }

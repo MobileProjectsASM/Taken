@@ -3,8 +3,14 @@ package com.asm.taken.ui
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -13,6 +19,10 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -22,6 +32,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
@@ -69,7 +81,7 @@ fun DefaultText(
 
 @Composable
 fun DefaultOutlinedTextField(
-    modifier: Modifier,
+    modifier: Modifier = Modifier,
     value: String,
     @StringRes label: Int,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
@@ -83,17 +95,14 @@ fun DefaultOutlinedTextField(
     OutlinedTextField(
         modifier = modifier,
         value = value,
-        label = { DefaultText(text = stringResource(id = label)) },
+        label = stringResource(id = label).toDefaultText(),
         keyboardOptions = keyboardOptions,
         visualTransformation = visualTransformation,
         leadingIcon = leadingIcon,
         trailingIcon = trailingIcon,
         onValueChange = onValueChange,
         textStyle = TextStyle(fontFamily = puzzleFontFamily),
-        supportingText = {
-            if (message == null) return@OutlinedTextField
-            DefaultText(text = message)
-        },
+        supportingText = message?.toDefaultText(),
         isError = isError,
         singleLine = true,
     )
@@ -101,7 +110,7 @@ fun DefaultOutlinedTextField(
 
 @Composable
 fun DefaultOutlinedTextFieldLI(
-    modifier: Modifier,
+    modifier: Modifier = Modifier,
     value: String,
     @StringRes label: Int,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
@@ -135,7 +144,7 @@ fun DefaultOutlinedTextFieldLI(
 
 @Composable
 fun DefaultOutlinedTextFieldTI(
-    modifier: Modifier,
+    modifier: Modifier = Modifier,
     value: String = "",
     @StringRes label: Int,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
@@ -170,6 +179,35 @@ fun DefaultOutlinedTextFieldTI(
         message = message,
         isError = isError,
         onValueChange = onValueChange,
+    )
+}
+
+@Composable
+fun PasswordOutlinedTextField(
+    modifier: Modifier = Modifier,
+    @StringRes label: Int,
+    password: String,
+    leadingIcon: ImageVector,
+    passwordErrorMessage: String? = null,
+    onPasswordChange: (String) -> Unit
+) {
+    var isPasswordVisible: Boolean by rememberSaveable { mutableStateOf(false) }
+    DefaultOutlinedTextFieldTI(
+        modifier = modifier,
+        value = password,
+        label = label,
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+        visualTransformation = if (isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+        leadingIcon = leadingIcon,
+        cdLeadingIcon = R.string.txt_cd_li_password,
+        trailingIcon = if (isPasswordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+        cdTrailingIcon = R.string.txt_cd_ti_password,
+        onClickTrailingIcon = {
+            isPasswordVisible = !isPasswordVisible
+        },
+        message = passwordErrorMessage,
+        isError = passwordErrorMessage != null,
+        onValueChange = onPasswordChange
     )
 }
 
@@ -232,4 +270,15 @@ fun DefaultImageButton(
             contentDescription = stringResource(id = cdIconButton)
         )
     }
+}
+
+fun String.toDefaultText(
+    modifier: Modifier = Modifier,
+    textAlign: TextAlign = TextAlign.Start
+): @Composable (() -> Unit) = {
+    DefaultText(
+        text = this,
+        modifier = modifier,
+        textAlign = textAlign
+    )
 }

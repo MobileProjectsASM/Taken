@@ -1,10 +1,10 @@
 package com.asm.taken.di
 
+import com.asm.data.repositories.ConnectionRepositoryImpl
 import com.asm.data.repositories.GameRepositoryImpl
 import com.asm.data.repositories.GamerRepositoryImpl
 import com.asm.data.repositories.LevelRepositoryImpl
 import com.asm.data.repositories.MultimediaRepositoryImpl
-import com.asm.data.sources.hardware.ConnectionSource
 import com.asm.domain.repositories.ConnectionRepository
 import com.asm.domain.repositories.GameRepository
 import com.asm.domain.repositories.GamerRepository
@@ -13,29 +13,29 @@ import com.asm.domain.repositories.MultimediaRepository
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
-import dagger.hilt.android.components.ActivityComponent
-import dagger.hilt.android.scopes.ActivityScoped
+import dagger.hilt.android.components.ViewModelComponent
+import dagger.hilt.android.scopes.ViewModelScoped
 
 @Module
-@InstallIn(ActivityComponent::class)
+@InstallIn(ViewModelComponent::class)
 abstract class RepositoryModule {
-    @ActivityScoped
+    @ViewModelScoped
     @Binds
     abstract fun getGamerRepository(gamerRepository: GamerRepositoryImpl): GamerRepository
 
-    @ActivityScoped
+    @ViewModelScoped
     @Binds
     abstract fun getLevelRepository(levelRepository: LevelRepositoryImpl): LevelRepository
 
-    @ActivityScoped
+    @ViewModelScoped
     @Binds
     abstract fun getGameRepository(gameRepository: GameRepositoryImpl): GameRepository
 
-    @ActivityScoped
+    @ViewModelScoped
     @Binds
     abstract fun getMultimediaRepository(multimediaRepository: MultimediaRepositoryImpl): MultimediaRepository
 
-    @ActivityScoped
+    @ViewModelScoped
     @Binds
-    abstract fun getConnectionRepository(connectionSource: ConnectionSource): ConnectionRepository
+    abstract fun getConnectionRepository(connectionRepository: ConnectionRepositoryImpl): ConnectionRepository
 }

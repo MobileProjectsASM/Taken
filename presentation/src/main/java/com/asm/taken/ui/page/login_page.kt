@@ -19,16 +19,11 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Card
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -40,11 +35,10 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import com.asm.taken.R
 import com.asm.taken.model.FormUiState
@@ -53,9 +47,9 @@ import com.asm.taken.model.UserIdUiState
 import com.asm.taken.ui.DefaultButton
 import com.asm.taken.ui.DefaultImageButton
 import com.asm.taken.ui.DefaultOutlinedTextFieldLI
-import com.asm.taken.ui.DefaultOutlinedTextFieldTI
 import com.asm.taken.ui.DefaultText
 import com.asm.taken.ui.DefaultTextButton
+import com.asm.taken.ui.PasswordOutlinedTextField
 import com.asm.taken.ui.PuzzleGeneralTitle
 import com.asm.taken.ui.puzzleFontFamily
 import com.asm.taken.utils.ResourceResolver
@@ -129,11 +123,6 @@ fun LoginPage(
 
 @Composable
 fun CardLogin(loginVM: LoginVM, resourceResolver: ResourceResolver) {
-    var isPasswordVisible: Boolean by rememberSaveable { mutableStateOf(false) }
-    val formUiState: FormUiState by loginVM.formUiStateSTF.collectAsState()
-    val userIdMessage = getUserIdMessage(resourceResolver, formUiState.userIdUiState)
-    val passwordMessage = getPasswordMessage(resourceResolver, formUiState.passwordUiState)
-    val isBtnLoginEnable = formUiState.userIdUiState is UserIdUiState.IsValid && formUiState.passwordUiState is PasswordUiState.IsValid
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -154,52 +143,82 @@ fun CardLogin(loginVM: LoginVM, resourceResolver: ResourceResolver) {
                 textAlign = TextAlign.Center
             )
             Spacer(modifier = Modifier.height(50.dp))
-            DefaultOutlinedTextFieldLI(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 10.dp),
-                value = formUiState.userIdUiState.value ?: "",
-                label = R.string.txt_label_user_id_login,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-                leadingIcon = Icons.Default.Person,
-                cdLeadingIcon = R.string.txt_cd_icon_user_id,
-                message = userIdMessage,
-                isError = userIdMessage != null,
-            ) {
-                loginVM.updateDataLogin(it, formUiState.passwordUiState.value)
-            }
-            DefaultOutlinedTextFieldTI(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 10.dp),
-                value = formUiState.passwordUiState.value ?: "",
-                label = R.string.txt_label_password,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                visualTransformation = if (isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                leadingIcon = Icons.Default.Lock,
-                cdLeadingIcon = R.string.txt_cd_icon_user_id,
-                trailingIcon = if (isPasswordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                cdTrailingIcon = R.string.txt_cd_trailing_icon_info_,
-                onClickTrailingIcon = {
-                    isPasswordVisible = !isPasswordVisible
-                },
-                message = passwordMessage,
-                isError = passwordMessage != null,
-            ) {
-                loginVM.updateDataLogin(formUiState.userIdUiState.value, it)
-            }
-            Spacer(modifier = Modifier.height(10.dp))
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                DefaultButton(
-                    text = stringResource(id = R.string.txt_btn_login),
-                    enable = isBtnLoginEnable
-                ) {
+            FormLogin(loginVM = loginVM, resourceResolver = resourceResolver)
+        }
+    }
+}
 
-                }
-            }
+@Composable
+fun FormLogin(loginVM: LoginVM, resourceResolver: ResourceResolver) {
+    val formUiState: FormUiState by loginVM.formUiStateSTF.collectAsState()
+    val userId = formUiState.userIdUiState.value ?: "";
+    val userIdErrorMessage =  getUserIdErrorMessage(resourceResolver, formUiState.userIdUiState)
+    val password = formUiState.passwordUiState.value ?: ""
+    val passwordErrorMessage = getPasswordErrorMessage(resourceResolver, formUiState.passwordUiState)
+    val isBtnLoginEnable = formUiState.userIdUiState is UserIdUiState.IsValid && formUiState.passwordUiState is PasswordUiState.IsValid
+    FormLoginContent(
+        userId = userId,
+        userIdErrorMessage = userIdErrorMessage,
+        password = password,
+        passwordErrorMessage = passwordErrorMessage,
+        isBtnLoginEnable = isBtnLoginEnable,
+        onUserIdChange = {
+            loginVM.updateDataLogin(it, formUiState.passwordUiState.value)
+        },
+        onPasswordChange =  {
+            loginVM.updateDataLogin(formUiState.userIdUiState.value, it)
+        }
+    ) {
+
+    }
+}
+
+@Composable
+fun FormLoginContent(
+    userId: String,
+    userIdErrorMessage: String? = null,
+    password: String,
+    passwordErrorMessage: String? = null,
+    isBtnLoginEnable: Boolean,
+    onUserIdChange: (String) -> Unit,
+    onPasswordChange: (String) -> Unit,
+    onSubmit: () -> Unit,
+) {
+    Column {
+        DefaultOutlinedTextFieldLI(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 10.dp),
+            value = userId,
+            label = R.string.txt_label_user_id_login,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+            leadingIcon = Icons.Default.Person,
+            cdLeadingIcon = R.string.txt_cd_icon_user_id,
+            message = userIdErrorMessage,
+            isError = userIdErrorMessage != null,
+            onValueChange = onUserIdChange
+        )
+        Spacer(modifier = Modifier.height(10.dp))
+        PasswordOutlinedTextField(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 10.dp),
+            label = R.string.txt_label_password,
+            password = password,
+            leadingIcon = Icons.Default.Lock,
+            passwordErrorMessage = passwordErrorMessage,
+            onPasswordChange = onPasswordChange
+        )
+        Spacer(modifier = Modifier.height(20.dp))
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            DefaultButton(
+                text = stringResource(id = R.string.txt_btn_login),
+                enable = isBtnLoginEnable,
+                onClickButton = onSubmit
+            )
         }
     }
 }
@@ -253,12 +272,12 @@ fun CardSocialMedia(signInWithGoogle: () -> Unit) {
     }
 }
 
-fun getUserIdMessage(resourceResolver: ResourceResolver, userIdUiState: UserIdUiState): String? = when (userIdUiState) {
+fun getUserIdErrorMessage(resourceResolver: ResourceResolver, userIdUiState: UserIdUiState): String? = when (userIdUiState) {
     UserIdUiState.Init, is UserIdUiState.IsValid -> null
     UserIdUiState.IsEmpty -> resourceResolver.getString(R.string.err_empty_field)
 }
 
-fun getPasswordMessage(resourceResolver: ResourceResolver, passwordUiState: PasswordUiState): String? = when (passwordUiState) {
+fun getPasswordErrorMessage(resourceResolver: ResourceResolver, passwordUiState: PasswordUiState): String? = when (passwordUiState) {
     PasswordUiState.Init, is PasswordUiState.IsValid -> null
     PasswordUiState.IsEmpty -> resourceResolver.getString(R.string.err_empty_field)
     is PasswordUiState.IsInvalid -> resourceResolver.getString(R.string.err_does_not_meet_pattern_password)
