@@ -150,7 +150,7 @@ fun CardLogin(loginVM: LoginVM, resourceResolver: ResourceResolver) {
 
 @Composable
 fun FormLogin(loginVM: LoginVM, resourceResolver: ResourceResolver) {
-    val formUiState: FormUiState by loginVM.formUiStateSTF.collectAsState()
+    val formUiState: FormUiState by loginVM.formUiStateSTF.collectAsStateWithLifecycle()
     val userId = formUiState.userIdUiState.value ?: "";
     val userIdErrorMessage =  getUserIdErrorMessage(resourceResolver, formUiState.userIdUiState)
     val password = formUiState.passwordUiState.value ?: ""
