@@ -43,6 +43,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import com.asm.taken.R
+import com.asm.taken.model.CreateAccount
 import com.asm.taken.model.FormUiState
 import com.asm.taken.model.PasswordUiState
 import com.asm.taken.model.SignInError
@@ -70,14 +71,23 @@ fun LoginPage(
     val signInUiState by loginVM.signInUiStateSTF.collectAsStateWithLifecycle()
     val context = LocalContext.current
     LaunchedEffect(key1 = signInUiState) {
-        if (signInUiState != null && signInUiState is SignInState.SignInFail) {
-            val signInFail = signInUiState as SignInState.SignInFail
-            when (signInFail.signInError) {
-                SignInError.AUTH_ERROR -> Toast.makeText(context, "Authentication error", Toast.LENGTH_SHORT).show()
-                SignInError.REGISTER_ERROR -> Toast.makeText(context, "Register error", Toast.LENGTH_SHORT).show()
+        if (signInUiState == null) return@LaunchedEffect
+        when (signInUiState!!) {
+            is SignInState.RegisteredUser -> {
+
             }
-            loginVM.resetSignInState()
+            is SignInState.UnregisteredUser -> {
+                navController.navigate(CreateAccount.route)
+            }
+            is SignInState.SignInFail -> {
+                val signInFail = signInUiState as SignInState.SignInFail
+                when (signInFail.signInError) {
+                    SignInError.AUTH_ERROR -> Toast.makeText(context, "Authentication error", Toast.LENGTH_SHORT).show()
+                    SignInError.REGISTER_ERROR -> Toast.makeText(context, "Register error", Toast.LENGTH_SHORT).show()
+                }
+            }
         }
+        loginVM.resetSignInState()
     }
     Box(
         modifier = Modifier.fillMaxSize()

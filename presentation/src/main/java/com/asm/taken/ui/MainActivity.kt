@@ -47,13 +47,6 @@ class MainActivity : ComponentActivity() {
                 val navigationController = rememberNavController()
                 NavHost(navController = navigationController, startDestination = Login.route) {
                     composable(Login.route) {
-                        val signInState by loginVM.signInUiStateSTF.collectAsStateWithLifecycle()
-
-
-                        LaunchedEffect(key1 = signInState) {
-
-                        }
-
                         LoginPage(
                             loginVM,
                             resourceResolver,
