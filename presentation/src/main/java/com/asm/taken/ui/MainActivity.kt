@@ -52,17 +52,26 @@ class MainActivity : ComponentActivity() {
                             navigationController,
                             signInWithGoogle = {
                                 lifecycleScope.launch {
-                                    val signInResult = authenticationUiClient.signInWithGoogle()
-                                    loginVM.loginUser(signInResult)
+                                    val authResult = authenticationUiClient.signInWithGoogle()
+                                    loginVM.loginUser(authResult)
                                 }
                             },
                             signInWithPhoneNumber = { phoneNumber ->
-                                authenticationUiClient.signInWithPhoneNumber(
+                                authenticationUiClient.automaticSignInPhoneNumber(
                                     this@MainActivity,
                                     lifecycleScope,
                                     phoneNumber,
                                 ) {
                                     loginVM.loginUser(it)
+                                }
+                            },
+                            validatePhoneCode = { verificationId, phoneCode ->
+                                lifecycleScope.launch {
+                                    val authResult = authenticationUiClient.manualSignInPhoneNumber(
+                                        verificationId,
+                                        phoneCode
+                                    )
+                                    loginVM.loginUser(authResult)
                                 }
                             }
                         )

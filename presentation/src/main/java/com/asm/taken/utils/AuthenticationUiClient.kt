@@ -60,7 +60,7 @@ class AuthenticationUiClient @Inject constructor(
         }
     }
 
-    fun signInWithPhoneNumber(
+    fun automaticSignInPhoneNumber(
         activity: Activity,
         lifeCycleCoroutineScope: LifecycleCoroutineScope,
         phoneNumber: String,
@@ -96,6 +96,11 @@ class AuthenticationUiClient @Inject constructor(
             }
         )
         PhoneAuthProvider.verifyPhoneNumber(phoneAuthOptions)
+    }
+
+    suspend fun manualSignInPhoneNumber(verificationId: String, code: String): AuthResult {
+        val phoneAuthCredential = PhoneAuthProvider.getCredential(verificationId, code)
+        return signInWithCredential(phoneAuthCredential)
     }
 
     private suspend fun signInWithCredential(authorizedAccounts: Boolean = false): AuthResult {

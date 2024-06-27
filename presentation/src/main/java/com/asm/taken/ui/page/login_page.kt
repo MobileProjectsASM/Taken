@@ -68,6 +68,7 @@ fun LoginPage(
     navController: NavHostController,
     signInWithGoogle: () -> Unit,
     signInWithPhoneNumber: (String) -> Unit,
+    validatePhoneCode: (String, String) -> Unit
 ) {
     val signInUiState by loginVM.signInUiStateSTF.collectAsStateWithLifecycle()
     val context = LocalContext.current
