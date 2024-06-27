@@ -1,6 +1,7 @@
 package com.asm.taken.di
 
 import android.content.Context
+import androidx.credentials.CredentialManager
 import com.google.android.gms.auth.api.identity.Identity
 import com.google.android.gms.auth.api.identity.SignInClient
 import com.google.firebase.auth.FirebaseAuth
@@ -14,7 +15,7 @@ import dagger.hilt.components.SingletonComponent
 @InstallIn(SingletonComponent::class)
 object AuthenticationModule {
     @Provides
-    fun provideSignInClient(@ApplicationContext context: Context): SignInClient = Identity.getSignInClient(context)
+    fun provideCredentialManager(@ApplicationContext context: Context): CredentialManager = CredentialManager.create(context)
 
     @Provides
     fun provideFirebaseAuth(): FirebaseAuth = FirebaseAuth.getInstance()

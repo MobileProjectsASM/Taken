@@ -1,5 +1,6 @@
 package com.asm.taken.ui.page
 
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -22,13 +23,14 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Card
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
@@ -43,6 +45,8 @@ import androidx.navigation.NavHostController
 import com.asm.taken.R
 import com.asm.taken.model.FormUiState
 import com.asm.taken.model.PasswordUiState
+import com.asm.taken.model.SignInError
+import com.asm.taken.model.SignInState
 import com.asm.taken.model.UserIdUiState
 import com.asm.taken.ui.DefaultButton
 import com.asm.taken.ui.DefaultImageButton
@@ -63,6 +67,18 @@ fun LoginPage(
     navController: NavHostController,
     signInWithGoogle: () -> Unit,
 ) {
+    val signInUiState by loginVM.signInUiStateSTF.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    LaunchedEffect(key1 = signInUiState) {
+        if (signInUiState != null && signInUiState is SignInState.SignInFail) {
+            val signInFail = signInUiState as SignInState.SignInFail
+            when (signInFail.signInError) {
+                SignInError.AUTH_ERROR -> Toast.makeText(context, "Authentication error", Toast.LENGTH_SHORT).show()
+                SignInError.REGISTER_ERROR -> Toast.makeText(context, "Register error", Toast.LENGTH_SHORT).show()
+            }
+            loginVM.resetSignInState()
+        }
+    }
     Box(
         modifier = Modifier.fillMaxSize()
     ) {
@@ -114,15 +130,15 @@ fun LoginPage(
                 .verticalScroll(rememberScrollState())
         ) {
             Box(modifier = Modifier.height(250.dp))
-            CardLogin(loginVM, resourceResolver)
-            CardSocialMedia(signInWithGoogle)
+            PanelLogin(loginVM, resourceResolver)
+            PanelSocialMedia(signInWithGoogle)
             Box(modifier = Modifier.height(250.dp))
         }
     }
 }
 
 @Composable
-fun CardLogin(loginVM: LoginVM, resourceResolver: ResourceResolver) {
+fun PanelLogin(loginVM: LoginVM, resourceResolver: ResourceResolver) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -224,7 +240,7 @@ fun FormLoginContent(
 }
 
 @Composable
-fun CardSocialMedia(signInWithGoogle: () -> Unit) {
+fun PanelSocialMedia(signInWithGoogle: () -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()

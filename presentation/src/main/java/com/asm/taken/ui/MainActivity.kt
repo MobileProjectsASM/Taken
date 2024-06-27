@@ -2,15 +2,16 @@ package com.asm.taken.ui
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.IntentSenderRequest
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -46,14 +47,11 @@ class MainActivity : ComponentActivity() {
                 val navigationController = rememberNavController()
                 NavHost(navController = navigationController, startDestination = Login.route) {
                     composable(Login.route) {
-                        val launcherActivity = rememberLauncherForActivityResult(
-                            contract = ActivityResultContracts.StartIntentSenderForResult()
-                        ) { activityResult ->
-                            if (activityResult.resultCode == RESULT_OK) lifecycleScope.launch {
-                                val intent = activityResult.data ?: return@launch
-                                val signInResult = googleAuthUiClient.signInWithIntent(intent)
-                                loginVM.loginUser(signInResult)
-                            }
+                        val signInState by loginVM.signInUiStateSTF.collectAsStateWithLifecycle()
+
+
+                        LaunchedEffect(key1 = signInState) {
+
                         }
 
                         LoginPage(
@@ -62,11 +60,8 @@ class MainActivity : ComponentActivity() {
                             navigationController,
                             signInWithGoogle = {
                                 lifecycleScope.launch {
-                                    val intentSender =
-                                        googleAuthUiClient.getSignInIntent() ?: return@launch
-                                    val signInIntent =
-                                        IntentSenderRequest.Builder(intentSender).build()
-                                    launcherActivity.launch(signInIntent)
+                                    val signInResult = googleAuthUiClient.signInWithGoogle()
+                                    loginVM.loginUser(signInResult)
                                 }
                             }
                         )

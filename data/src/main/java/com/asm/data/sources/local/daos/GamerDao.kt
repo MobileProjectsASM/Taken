@@ -11,7 +11,7 @@ interface GamerDao {
     suspend fun insertGamer(gamerRoom: GamerRoom)
 
     @Query("SELECT * FROM gamers WHERE gamer_id = :gamerId")
-    suspend fun getGamerById(gamerId: String): GamerRoom
+    suspend fun getGamerById(gamerId: String): GamerRoom?
 
     @Query("SELECT exists(SELECT 1 FROM gamers WHERE gamer_id = :gamerId) AS gamer_exists")
     suspend fun gamerExists(gamerId: String): Int

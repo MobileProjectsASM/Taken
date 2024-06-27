@@ -9,6 +9,7 @@ import com.asm.domain.entities.Result
 import com.asm.domain.entities.toFailure
 import com.asm.domain.entities.toSuccessful
 import com.asm.domain.errors.Error
+import com.asm.domain.errors.GamerError
 import com.asm.domain.repositories.GamerRepository
 import com.asm.domain.utils.Completed
 import com.asm.domain.utils.Logger
@@ -48,8 +49,7 @@ class GamerRepositoryImpl @Inject constructor(
 
     override suspend fun getGamerById(gamerId: String): Result<Gamer> {
         return try {
-            val gamer = gamerLocalSource.getGamer(gamerId)
-            gamer.toSuccessful()
+            gamerLocalSource.getGamer(gamerId)?.toSuccessful() ?: GamerError.GamerNotExists.toFailure()
         } catch (exception: Exception) {
             logger.logE(TAG, exception)
             Error.UnknownError.toFailure()

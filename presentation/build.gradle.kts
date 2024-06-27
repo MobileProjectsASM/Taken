@@ -53,11 +53,14 @@ android {
 }
 
 dependencies {
+
     val roomVersion = "2.6.1"
     val hiltVersion = "2.51.1"
     val navVersion = "2.7.7"
     val firebaseVersion = "33.1.0"
     val gsonVersion = "2.11.0"
+    val credentials = "1.2.2"
+    val googleId = "1.1.0"
 
     implementation(project(":domain"))
     implementation(project(":data"))
@@ -103,6 +106,8 @@ dependencies {
     // Import the BoM for the Firebase platform
     implementation("com.google.firebase:firebase-auth")
     implementation("com.google.android.gms:play-services-auth:21.2.0")
+    implementation("androidx.credentials:credentials:$credentials")
+    implementation("com.google.android.libraries.identity.googleid:googleid:$googleId")
 
     //TESTING
     testImplementation("junit:junit:4.13.2")

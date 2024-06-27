@@ -1,0 +1,12 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls",
+      "delegate_permission/common.get_login_creds"
+    ],
+    "target": {
+      "package_name": "com.asm.taken",
+      "sha256_cert_fingerprints": "AE:43:4D:4E:35:66:DF:9A:3E:A0:C1:72:74:8F:C8:24:EE:31:8A:92:CC:A2:49:F8:CF:31:3D:E1:C0:B1:2F:55"
+    }
+  }
+]

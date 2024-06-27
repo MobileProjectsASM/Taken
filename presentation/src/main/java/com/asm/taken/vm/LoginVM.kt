@@ -45,7 +45,7 @@ class LoginVM @Inject constructor(
         }
     }
 
-    fun  loginUser(signInResult: SignInResult) {
+    fun loginUser(signInResult: SignInResult) {
         viewModelScope.launch {
             if (signInResult.data == null) {
                 _signInUiStateSTF.update { SignInState.SignInFail(SignInError.AUTH_ERROR) }
@@ -66,6 +66,10 @@ class LoginVM @Inject constructor(
             _signInUiStateSTF.update { SignInState.SignInFail(SignInError.REGISTER_ERROR) }
             return@launch
         }
+    }
+
+    fun resetSignInState() {
+        _signInUiStateSTF.value = null
     }
 
     private fun validateUserId(userId: String?): UserIdUiState {

@@ -24,15 +24,15 @@ class GamerRoomSource @Inject constructor(
         }
     }
 
-    override suspend fun getGamer(gamerId: String): Gamer {
+    override suspend fun getGamer(gamerId: String): Gamer? {
         try {
-            val gamerDomain = takenDB.getGamerDao().getGamerById(gamerId)
-            return gamerMapper.toGamerDomain(gamerDomain)
+            return takenDB.getGamerDao().getGamerById(gamerId)?.let(gamerMapper::toGamerDomain)
         } catch (exception: Exception) {
             Log.e(TAG, exception.stackTraceToString())
             throw Exception("Error to getGamer local source")
         }
     }
+
 
     override suspend fun checkGamerExists(gamerId: String): Boolean {
         try {
