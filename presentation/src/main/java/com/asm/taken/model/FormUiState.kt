@@ -22,16 +22,18 @@ sealed class SignInState {
     data class RegisteredUser(val userId: String) : SignInState()
     data class UnregisteredUser(val userId: String) : SignInState()
     data class SignInFail(val signInError: SignInError) : SignInState()
+    data class PhoneCodeSent(val verificationId: String): SignInState()
 }
 
 enum class SignInError {
     AUTH_ERROR, REGISTER_ERROR
 }
 
-data class SignInResult(
-    val data: UserData?,
-    val errorMessage: String?
-)
+sealed class AuthResult {
+    data class Successful(val data: UserData): AuthResult()
+    data class PhoneCodeSent(val verificationId: String): AuthResult()
+    data class Error(val errorMessage: String): AuthResult()
+}
 
 data class UserData(
     val userId: String,

@@ -9,7 +9,7 @@ import com.asm.domain.use_cases.GetGamerUC
 import com.asm.taken.model.FormUiState
 import com.asm.taken.model.PasswordUiState
 import com.asm.taken.model.SignInError
-import com.asm.taken.model.SignInResult
+import com.asm.taken.model.AuthResult
 import com.asm.taken.model.SignInState
 import com.asm.taken.model.UserIdUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -45,26 +45,27 @@ class LoginVM @Inject constructor(
         }
     }
 
-    fun loginUser(signInResult: SignInResult) {
+    fun loginUser(authResult: AuthResult) {
         viewModelScope.launch {
-            if (signInResult.data == null) {
-                _signInUiStateSTF.update { SignInState.SignInFail(SignInError.AUTH_ERROR) }
-                return@launch
+            when (authResult) {
+                is AuthResult.Error -> _signInUiStateSTF.update { SignInState.SignInFail(SignInError.AUTH_ERROR) }
+                is AuthResult.PhoneCodeSent -> _signInUiStateSTF.update { SignInState.PhoneCodeSent(authResult.verificationId) }
+                is AuthResult.Successful -> {
+                    val userId = authResult.data.userId
+                    val gamerResult = getGamerUC.execute(userId)
+                    if (gamerResult.isSuccessful) {
+                        val gamer = gamerResult.asSuccessful().data
+                        _signInUiStateSTF.update { SignInState.RegisteredUser(gamer.gamerId) }
+                        return@launch
+                    }
+                    val failure = gamerResult.asFailure().failure
+                    if (failure is GamerError.GamerNotExists) {
+                        _signInUiStateSTF.update { SignInState.UnregisteredUser(userId) }
+                        return@launch
+                    }
+                    _signInUiStateSTF.update { SignInState.SignInFail(SignInError.REGISTER_ERROR) }
+                }
             }
-            val userId = signInResult.data.userId
-            val gamerResult = getGamerUC.execute(userId)
-            if (gamerResult.isSuccessful) {
-                val gamer = gamerResult.asSuccessful().data
-                _signInUiStateSTF.update { SignInState.RegisteredUser(gamer.gamerId) }
-                return@launch
-            }
-            val failure = gamerResult.asFailure().failure
-            if (failure is GamerError.GamerNotExists) {
-                _signInUiStateSTF.update { SignInState.UnregisteredUser(userId) }
-                return@launch
-            }
-            _signInUiStateSTF.update { SignInState.SignInFail(SignInError.REGISTER_ERROR) }
-            return@launch
         }
     }
 

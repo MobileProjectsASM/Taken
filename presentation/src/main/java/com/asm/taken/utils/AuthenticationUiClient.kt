@@ -1,5 +1,6 @@
 package com.asm.taken.utils
 
+import android.app.Activity
 import android.content.Context
 import android.util.Log
 import androidx.credentials.ClearCredentialStateRequest
@@ -9,22 +10,33 @@ import androidx.credentials.GetCredentialRequest
 import androidx.credentials.GetCredentialResponse
 import androidx.credentials.exceptions.GetCredentialException
 import androidx.credentials.exceptions.NoCredentialException
+import androidx.lifecycle.LifecycleCoroutineScope
 import com.asm.taken.R
-import com.asm.taken.model.SignInResult
+import com.asm.taken.model.AuthResult
 import com.asm.taken.model.UserData
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
+import com.google.firebase.FirebaseException
+import com.google.firebase.FirebaseTooManyRequestsException
 import com.google.firebase.auth.AuthCredential
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
+import com.google.firebase.auth.FirebaseAuthMissingActivityForRecaptchaException
 import com.google.firebase.auth.GoogleAuthProvider
+import com.google.firebase.auth.PhoneAuthCredential
+import com.google.firebase.auth.PhoneAuthOptions
+import com.google.firebase.auth.PhoneAuthProvider
+import com.google.firebase.auth.PhoneAuthProvider.OnVerificationStateChangedCallbacks
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import java.security.MessageDigest
 import java.util.UUID
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
-class GoogleAuthUiClient @Inject constructor(
+class AuthenticationUiClient @Inject constructor(
     @ApplicationContext val context: Context,
     private val auth: FirebaseAuth,
     private val credentialManager: CredentialManager
@@ -33,58 +45,81 @@ class GoogleAuthUiClient @Inject constructor(
         const val TAG: String = "GoogleAuthUiClient"
     }
 
-    suspend fun signInWithGoogle(): SignInResult {
+    suspend fun signInWithGoogle(): AuthResult {
         return try {
             signInWithCredential(true)
         } catch (exception: GetCredentialException ) {
             if (exception !is NoCredentialException) {
                 Log.e(TAG, exception.stackTraceToString())
-                SignInResult(
-                    null,
-                    "Credential request fail"
-                )
+                AuthResult.Error("Credential request fail")
             }
             signInWithCredential()
         } catch (exception: CredentialException) {
             Log.e(TAG, exception.stackTraceToString())
-            SignInResult(
-                null,
-                "Credential handle fail"
-            )
+            AuthResult.Error("Credential handle fail")
         }
     }
 
-    private suspend fun signInWithCredential(authorizedAccounts: Boolean = false): SignInResult {
+    fun signInWithPhoneNumber(
+        activity: Activity,
+        lifeCycleCoroutineScope: LifecycleCoroutineScope,
+        phoneNumber: String,
+        onSignInResult: (AuthResult) -> Unit
+    ) {
+        val phoneAuthOptions = getPhoneAuthOptions(
+            activity,
+            phoneNumber,
+            object : OnVerificationStateChangedCallbacks() {
+                override fun onVerificationCompleted(phoneAuthCredential: PhoneAuthCredential) {
+                    lifeCycleCoroutineScope.launch {
+                        val signInResult = signInWithCredential(phoneAuthCredential)
+                        onSignInResult(signInResult)
+                    }
+                }
+
+                override fun onVerificationFailed(firebaseException: FirebaseException) {
+                    Log.e(TAG, firebaseException.stackTraceToString())
+                    val authResult = AuthResult.Error( when (firebaseException) {
+                        is FirebaseAuthInvalidCredentialsException -> "Invalid request"
+                        is FirebaseTooManyRequestsException -> "The SMS quota for the project has been"
+                        is FirebaseAuthMissingActivityForRecaptchaException -> "reCAPTCHA verification attempted with null Activity"
+                        else -> "Unknown"
+                    })
+                    onSignInResult(authResult)
+                }
+
+                override fun onCodeSent(verificationId: String, token: PhoneAuthProvider.ForceResendingToken) {
+                    Log.d(TAG, "onCodeSent:$verificationId")
+                    val authResult = AuthResult.PhoneCodeSent(verificationId)
+                    onSignInResult(authResult)
+                }
+            }
+        )
+        PhoneAuthProvider.verifyPhoneNumber(phoneAuthOptions)
+    }
+
+    private suspend fun signInWithCredential(authorizedAccounts: Boolean = false): AuthResult {
         val credentialRequest = getCredentialRequest(authorizedAccounts)
         val credentialResponse = credentialManager.getCredential(context, credentialRequest)
         val authCredential = handleCredentialResponse(credentialResponse)
         return signInWithCredential(authCredential)
     }
 
-    private suspend fun signInWithCredential(authCredential: AuthCredential): SignInResult {
+    private suspend fun signInWithCredential(authCredential: AuthCredential): AuthResult {
         try {
             val firebaseUser = auth.signInWithCredential(authCredential).await().user
             if (firebaseUser == null) {
                 Log.e(TAG, "FirebaseUser is null")
-                return SignInResult(
-                    null,
-                    "Error to authenticate"
-                )
+                return AuthResult.Error( "Error to authenticate")
             }
-            return SignInResult(
-                UserData(
-                    firebaseUser.uid,
-                    firebaseUser.email,
-                    firebaseUser.photoUrl?.toString()
-                ),
-                null
-            )
+            return AuthResult.Successful(UserData(
+                firebaseUser.uid,
+                firebaseUser.email,
+                firebaseUser.photoUrl?.toString()
+            ))
         } catch (exception: Exception) {
             Log.e(TAG, exception.stackTraceToString())
-            return SignInResult(
-                null,
-                "Error to authenticate"
-            )
+            return AuthResult.Error("Error to authenticate")
         }
     }
 
@@ -111,6 +146,19 @@ class GoogleAuthUiClient @Inject constructor(
             .build()
         return GetCredentialRequest.Builder()
             .addCredentialOption(googleIdOption)
+            .build()
+    }
+
+    private fun getPhoneAuthOptions(
+        activity: Activity,
+        phoneNumber: String,
+        onVerificationStateChangedCallbacks: PhoneAuthProvider.OnVerificationStateChangedCallbacks
+    ): PhoneAuthOptions {
+        return PhoneAuthOptions.newBuilder(auth)
+            .setPhoneNumber(phoneNumber)
+            .setTimeout(60L, TimeUnit.SECONDS)
+            .setActivity(activity)
+            .setCallbacks(onVerificationStateChangedCallbacks)
             .build()
     }
 

@@ -67,6 +67,7 @@ fun LoginPage(
     resourceResolver: ResourceResolver,
     navController: NavHostController,
     signInWithGoogle: () -> Unit,
+    signInWithPhoneNumber: (String) -> Unit,
 ) {
     val signInUiState by loginVM.signInUiStateSTF.collectAsStateWithLifecycle()
     val context = LocalContext.current
@@ -85,6 +86,9 @@ fun LoginPage(
                     SignInError.AUTH_ERROR -> Toast.makeText(context, "Authentication error", Toast.LENGTH_SHORT).show()
                     SignInError.REGISTER_ERROR -> Toast.makeText(context, "Register error", Toast.LENGTH_SHORT).show()
                 }
+            }
+            is SignInState.PhoneCodeSent -> {
+
             }
         }
         loginVM.resetSignInState()
@@ -141,7 +145,10 @@ fun LoginPage(
         ) {
             Box(modifier = Modifier.height(250.dp))
             PanelLogin(loginVM, resourceResolver)
-            PanelSocialMedia(signInWithGoogle)
+            PanelSocialMedia(
+                signInWithGoogle = signInWithGoogle,
+                signInWithPhoneNumber = signInWithPhoneNumber
+            )
             Box(modifier = Modifier.height(250.dp))
         }
     }
@@ -250,7 +257,10 @@ fun FormLoginContent(
 }
 
 @Composable
-fun PanelSocialMedia(signInWithGoogle: () -> Unit) {
+fun PanelSocialMedia(
+    signInWithGoogle: () -> Unit,
+    signInWithPhoneNumber: (String) -> Unit
+) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -286,7 +296,7 @@ fun PanelSocialMedia(signInWithGoogle: () -> Unit) {
                 DefaultImageButton(
                     imageSize = 40.dp,
                     iconButton = R.drawable.phone,
-                    cdIconButton = R.string.txt_cd_icon_button
+                    cdIconButton = R.string.txt_cd_icon_button,
                 )
             }
             DefaultTextButton(

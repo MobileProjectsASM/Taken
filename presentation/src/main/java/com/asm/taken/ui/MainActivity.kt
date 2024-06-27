@@ -3,15 +3,11 @@ package com.asm.taken.ui
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.result.IntentSenderRequest
 import androidx.activity.viewModels
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -23,9 +19,12 @@ import com.asm.taken.model.SignInGamer
 import com.asm.taken.ui.page.CreateAccountPage
 import com.asm.taken.ui.page.LoginPage
 import com.asm.taken.ui.theme.TakenTheme
-import com.asm.taken.utils.GoogleAuthUiClient
+import com.asm.taken.utils.AuthenticationUiClient
 import com.asm.taken.utils.ResourceResolver
 import com.asm.taken.vm.LoginVM
+import com.google.firebase.FirebaseException
+import com.google.firebase.auth.PhoneAuthCredential
+import com.google.firebase.auth.PhoneAuthProvider.OnVerificationStateChangedCallbacks
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -38,7 +37,7 @@ class MainActivity : ComponentActivity() {
     lateinit var resourceResolver: ResourceResolver
 
     @Inject
-    lateinit var googleAuthUiClient: GoogleAuthUiClient
+    lateinit var authenticationUiClient: AuthenticationUiClient
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -53,8 +52,17 @@ class MainActivity : ComponentActivity() {
                             navigationController,
                             signInWithGoogle = {
                                 lifecycleScope.launch {
-                                    val signInResult = googleAuthUiClient.signInWithGoogle()
+                                    val signInResult = authenticationUiClient.signInWithGoogle()
                                     loginVM.loginUser(signInResult)
+                                }
+                            },
+                            signInWithPhoneNumber = { phoneNumber ->
+                                authenticationUiClient.signInWithPhoneNumber(
+                                    this@MainActivity,
+                                    lifecycleScope,
+                                    phoneNumber,
+                                ) {
+                                    loginVM.loginUser(it)
                                 }
                             }
                         )
