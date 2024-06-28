@@ -23,4 +23,5 @@
     <string name="err_does_not_meet_pattern_password">Debe tener al menos una mayuscula, un numero y un caracter</string>
     <string name="err_does_not_meet_pattern_phone">Deben ser 10 digitos</string>
     <string name="default_web_client_id">537568996262-c7nrhuvi4s9jaukcg9uh0hvm98l9ubls.apps.googleusercontent.com</string>
+    <string name="ds">1274|gSQVz5Qf9OfRRwUhxEbDBhzz2c48b21KbXDjvnPB</string>
 </resources>
