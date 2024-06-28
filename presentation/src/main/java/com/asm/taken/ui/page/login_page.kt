@@ -20,11 +20,15 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.PhoneAndroid
 import androidx.compose.material3.Card
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -40,15 +44,18 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import com.asm.taken.R
 import com.asm.taken.model.CreateAccount
-import com.asm.taken.model.FormUiState
+import com.asm.taken.model.LoginFormUiState
 import com.asm.taken.model.PasswordUiState
+import com.asm.taken.model.PhoneNumberUiState
 import com.asm.taken.model.SignInError
 import com.asm.taken.model.SignInState
 import com.asm.taken.model.UserIdUiState
+import com.asm.taken.model.SendPhoneFormUiState
 import com.asm.taken.ui.DefaultButton
 import com.asm.taken.ui.DefaultImageButton
 import com.asm.taken.ui.DefaultOutlinedTextFieldLI
@@ -70,7 +77,8 @@ fun LoginPage(
     signInWithPhoneNumber: (String) -> Unit,
     validatePhoneCode: (String, String) -> Unit
 ) {
-    val signInUiState by loginVM.signInUiStateSTF.collectAsStateWithLifecycle()
+    val signInUiState by loginVM.signInSTF.collectAsStateWithLifecycle()
+    var showDialog: Boolean? by rememberSaveable { mutableStateOf(null) }
     val context = LocalContext.current
     LaunchedEffect(key1 = signInUiState) {
         if (signInUiState == null) return@LaunchedEffect
@@ -93,6 +101,20 @@ fun LoginPage(
             }
         }
         loginVM.resetSignInState()
+    }
+    if (showDialog != null && showDialog!!) {
+        FormPhoneDialog(
+            loginVM = loginVM,
+            resourceResolver = resourceResolver,
+            title = stringResource(id = R.string.txt_ttl_form_phone_dialog),
+            onDismissRequest = {
+                showDialog = false
+                loginVM.resetSendPhoneForm()
+            },
+        ) {
+            showDialog = false
+            loginVM.resetSendPhoneForm()
+        }
     }
     Box(
         modifier = Modifier.fillMaxSize()
@@ -148,7 +170,9 @@ fun LoginPage(
             PanelLogin(loginVM, resourceResolver)
             PanelSocialMedia(
                 signInWithGoogle = signInWithGoogle,
-                signInWithPhoneNumber = signInWithPhoneNumber
+                signInWithPhoneNumber = {
+                    showDialog = true
+                }
             )
             Box(modifier = Modifier.height(250.dp))
         }
@@ -169,7 +193,7 @@ fun PanelLogin(loginVM: LoginVM, resourceResolver: ResourceResolver) {
         ) {
             PuzzleGeneralTitle(
                 modifier = Modifier.fillMaxWidth(),
-                text = stringResource(id = R.string.txt_title_login_dialog)
+                text = stringResource(id = R.string.txt_ttl_login_dialog)
             )
             DefaultText(
                 modifier = Modifier.fillMaxWidth(),
@@ -184,12 +208,12 @@ fun PanelLogin(loginVM: LoginVM, resourceResolver: ResourceResolver) {
 
 @Composable
 fun FormLogin(loginVM: LoginVM, resourceResolver: ResourceResolver) {
-    val formUiState: FormUiState by loginVM.formUiStateSTF.collectAsStateWithLifecycle()
-    val userId = formUiState.userIdUiState.value ?: "";
-    val userIdErrorMessage =  getUserIdErrorMessage(resourceResolver, formUiState.userIdUiState)
-    val password = formUiState.passwordUiState.value ?: ""
-    val passwordErrorMessage = getPasswordErrorMessage(resourceResolver, formUiState.passwordUiState)
-    val isBtnLoginEnable = formUiState.userIdUiState is UserIdUiState.IsValid && formUiState.passwordUiState is PasswordUiState.IsValid
+    val loginFormUiState: LoginFormUiState by loginVM.loginFormSTF.collectAsStateWithLifecycle()
+    val userId = loginFormUiState.userIdUiState.value ?: "";
+    val userIdErrorMessage =  getUserIdErrorMessage(resourceResolver, loginFormUiState.userIdUiState)
+    val password = loginFormUiState.passwordUiState.value ?: ""
+    val passwordErrorMessage = getPasswordErrorMessage(resourceResolver, loginFormUiState.passwordUiState)
+    val isBtnLoginEnable = loginFormUiState.userIdUiState is UserIdUiState.IsValid && loginFormUiState.passwordUiState is PasswordUiState.IsValid
     FormLoginContent(
         userId = userId,
         userIdErrorMessage = userIdErrorMessage,
@@ -197,10 +221,10 @@ fun FormLogin(loginVM: LoginVM, resourceResolver: ResourceResolver) {
         passwordErrorMessage = passwordErrorMessage,
         isBtnLoginEnable = isBtnLoginEnable,
         onUserIdChange = {
-            loginVM.updateDataLogin(it, formUiState.passwordUiState.value)
+            loginVM.validateLoginForm(it, loginFormUiState.passwordUiState.value)
         },
         onPasswordChange =  {
-            loginVM.updateDataLogin(formUiState.userIdUiState.value, it)
+            loginVM.validateLoginForm(loginFormUiState.userIdUiState.value, it)
         }
     ) {
 
@@ -227,7 +251,7 @@ fun FormLoginContent(
             label = R.string.txt_label_user_id_login,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
             leadingIcon = Icons.Default.Person,
-            cdLeadingIcon = R.string.txt_cd_icon_user_id,
+            cdLeadingIcon = R.string.txt_cd_li_user_id,
             message = userIdErrorMessage,
             isError = userIdErrorMessage != null,
             onValueChange = onUserIdChange
@@ -260,7 +284,7 @@ fun FormLoginContent(
 @Composable
 fun PanelSocialMedia(
     signInWithGoogle: () -> Unit,
-    signInWithPhoneNumber: (String) -> Unit
+    signInWithPhoneNumber: () -> Unit
 ) {
     Card(
         modifier = Modifier
@@ -298,6 +322,7 @@ fun PanelSocialMedia(
                     imageSize = 40.dp,
                     iconButton = R.drawable.phone,
                     cdIconButton = R.string.txt_cd_icon_button,
+                    onClickButton = signInWithPhoneNumber
                 )
             }
             DefaultTextButton(
@@ -306,6 +331,102 @@ fun PanelSocialMedia(
 
             }
         }
+    }
+}
+
+@Composable
+fun FormPhoneDialog(
+    loginVM: LoginVM,
+    resourceResolver: ResourceResolver,
+    title: String,
+    onDismissRequest: () -> Unit,
+    sendPhone: (String) -> Unit
+) {
+    Dialog(
+        onDismissRequest = onDismissRequest
+    ) {
+        Card(
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(
+                modifier = Modifier.padding(
+                    horizontal = 16.dp,
+                    vertical = 20.dp
+                )
+            ) {
+                Text(
+                    modifier = Modifier.fillMaxWidth(),
+                    fontSize = dimensionResource(
+                        id = R.dimen.title_text_size
+                    ).value.sp,
+                    text = title,
+                    fontFamily = puzzleFontFamily,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center
+                )
+                Spacer(modifier = Modifier.height(20.dp))
+                FormPhoneNumber(
+                    loginVM = loginVM,
+                    resourceResolver = resourceResolver,
+                    sendPhone = sendPhone
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun FormPhoneNumber(
+    loginVM: LoginVM,
+    resourceResolver: ResourceResolver,
+    sendPhone: (String) -> Unit
+) {
+    val sendPhoneFormUiState: SendPhoneFormUiState by loginVM.sendPhoneFormSTF.collectAsStateWithLifecycle()
+    val phoneNumber = sendPhoneFormUiState.phoneNumberUiState.value ?: ""
+    val phoneNumberErrorMessage = getPhoneNumberErrorMessage(resourceResolver, sendPhoneFormUiState.phoneNumberUiState)
+    FormPhoneNumberContent(
+        phoneNumber = phoneNumber,
+        phoneNumberErrorMessage = phoneNumberErrorMessage,
+        isBtnVerifyEnable = sendPhoneFormUiState.phoneNumberUiState is PhoneNumberUiState.IsValid,
+        onPhoneNumberChange = {
+            loginVM.validatePhoneNumberFrom(it)
+        },
+        sendPhone = {
+            sendPhone(phoneNumber)
+        }
+    )
+}
+
+@Composable
+fun FormPhoneNumberContent(
+    phoneNumber: String,
+    phoneNumberErrorMessage: String? = null,
+    onPhoneNumberChange: (String) -> Unit,
+    isBtnVerifyEnable: Boolean,
+    sendPhone: () -> Unit
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        DefaultOutlinedTextFieldLI(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 10.dp),
+            value = phoneNumber,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+            label = R.string.txt_label_pn,
+            leadingIcon = Icons.Default.PhoneAndroid,
+            cdLeadingIcon = R.string.txt_cd_li_phone_number,
+            isError = phoneNumberErrorMessage != null,
+            message = phoneNumberErrorMessage,
+            onValueChange = onPhoneNumberChange
+        )
+        Spacer(modifier = Modifier.height(30.dp))
+        DefaultButton(
+            text = stringResource(R.string.txt_btn_verify_pn),
+            enable = isBtnVerifyEnable,
+            onClickButton = sendPhone
+        )
     }
 }
 
@@ -318,4 +439,10 @@ fun getPasswordErrorMessage(resourceResolver: ResourceResolver, passwordUiState:
     PasswordUiState.Init, is PasswordUiState.IsValid -> null
     PasswordUiState.IsEmpty -> resourceResolver.getString(R.string.err_empty_field)
     is PasswordUiState.IsInvalid -> resourceResolver.getString(R.string.err_does_not_meet_pattern_password)
+}
+
+fun getPhoneNumberErrorMessage(resourceResolver: ResourceResolver, phoneNumberUiState: PhoneNumberUiState): String? = when (phoneNumberUiState) {
+    PhoneNumberUiState.Init, is PhoneNumberUiState.IsValid -> null
+    PhoneNumberUiState.IsEmpty -> resourceResolver.getString(R.string.err_empty_field)
+    is PhoneNumberUiState.IsInvalid -> resourceResolver.getString(R.string.err_does_not_meet_pattern_phone)
 }

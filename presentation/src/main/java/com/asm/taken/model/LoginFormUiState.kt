@@ -1,8 +1,12 @@
 package com.asm.taken.model
 
-data class FormUiState(
+data class LoginFormUiState(
     val userIdUiState: UserIdUiState = UserIdUiState.Init,
     val passwordUiState: PasswordUiState = PasswordUiState.Init,
+)
+
+data class SendPhoneFormUiState(
+    val phoneNumberUiState: PhoneNumberUiState = PhoneNumberUiState.Init
 )
 
 sealed class UserIdUiState(val value: String?) {
@@ -16,6 +20,13 @@ sealed class PasswordUiState(val value: String?) {
     data object IsEmpty : PasswordUiState("")
     data class IsInvalid(val password: String) : PasswordUiState(password)
     data class IsValid(val password: String) : PasswordUiState(password)
+}
+
+sealed class PhoneNumberUiState(val value: String?) {
+    data object Init: PhoneNumberUiState(null)
+    data object IsEmpty: PhoneNumberUiState("")
+    data class IsInvalid(val phoneNumber: String): PhoneNumberUiState(phoneNumber)
+    data class IsValid(val phoneNumber: String): PhoneNumberUiState(phoneNumber)
 }
 
 sealed class SignInState {
