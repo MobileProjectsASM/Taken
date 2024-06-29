@@ -4,7 +4,7 @@ import com.asm.data.sources.hardware.ConnectionSource
 import com.asm.domain.entities.Result
 import com.asm.domain.entities.toFailure
 import com.asm.domain.entities.toSuccessful
-import com.asm.domain.errors.Error
+import com.asm.domain.errors.Failure
 import com.asm.domain.repositories.ConnectionRepository
 import com.asm.domain.utils.Logger
 import javax.inject.Inject
@@ -23,7 +23,7 @@ class ConnectionRepositoryImpl @Inject constructor(
             connectionSource.isNetworkAvailable().toSuccessful()
         } catch (exception: Exception) {
             logger.logE(TAG, exception)
-            Error.NetworkConnection.toFailure()
+            Failure.NetworkConnection.toFailure()
         }
     }
 }

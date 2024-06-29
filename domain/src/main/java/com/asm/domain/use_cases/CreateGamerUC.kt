@@ -9,8 +9,8 @@ import com.asm.domain.entities.Result
 import com.asm.domain.entities.asFailure
 import com.asm.domain.entities.asSuccessful
 import com.asm.domain.entities.toFailure
-import com.asm.domain.errors.Error
-import com.asm.domain.errors.RegisterError
+import com.asm.domain.errors.Failure
+import com.asm.domain.errors.RegisterFailure
 import com.asm.domain.repositories.ConnectionRepository
 import com.asm.domain.repositories.GameRepository
 import com.asm.domain.repositories.GamerRepository
@@ -53,10 +53,10 @@ class CreateGamerUC @Inject constructor(
         return try {
             val connectionResult = connectionRepository.isNetworkAvailable()
             if (connectionResult.isFailure) return connectionResult.asFailure().toFailure()
-            if (!connectionResult.asSuccessful().data) return Error.NetworkConnection.toFailure()
+            if (!connectionResult.asSuccessful().data) return Failure.NetworkConnection.toFailure()
             val resultGamerExists = gamerRepository.checkIfGamerExists(params.gamerId)
             if (resultGamerExists.isFailure) return resultGamerExists.asFailure().toFailure()
-            if (resultGamerExists.asSuccessful().data) return RegisterError.GamerExists.toFailure()
+            if (resultGamerExists.asSuccessful().data) return RegisterFailure.GamerExists.toFailure()
             val resultImage = if (params.image == null) {
                 multimediaRepository.getDefaultUserImage()
             } else {
@@ -79,7 +79,7 @@ class CreateGamerUC @Inject constructor(
             gameRepository.saveGamerGames(initialGames, params.gamerId)
         } catch (exception: Exception) {
             logger.logE(TAG, exception)
-            Error.UnknownError.toFailure()
+            Failure.UnknownFailure.toFailure()
         }
     }
 

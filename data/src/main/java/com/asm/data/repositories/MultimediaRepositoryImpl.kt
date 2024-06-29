@@ -6,7 +6,7 @@ import com.asm.data.sources.remote.interfaces.MultimediaRemoteSource
 import com.asm.domain.entities.Result
 import com.asm.domain.entities.toFailure
 import com.asm.domain.entities.toSuccessful
-import com.asm.domain.errors.Error
+import com.asm.domain.errors.Failure
 import com.asm.domain.repositories.MultimediaRepository
 import com.asm.domain.utils.Logger
 import javax.inject.Inject
@@ -26,14 +26,14 @@ class MultimediaRepositoryImpl @Inject constructor(
     }
     override suspend fun uploadUserImage(userId: String, profileImageName: String, base64: String): Result<String> {
         return try {
-            if (!connectionSource.isNetworkAvailable()) return Error.NetworkConnection.toFailure()
+            if (!connectionSource.isNetworkAvailable()) return Failure.NetworkConnection.toFailure()
             val folderPath = "$userId/$DEFAULT_PATH_USER_IMAGES"
             multimediaRemoteSource.uploadImage(folderPath, profileImageName, base64)
             val imagePath = multimediaLocalSource.saveImage(folderPath, profileImageName, base64)
             imagePath.toSuccessful()
         } catch (exception: Exception) {
             logger.logE(TAG, exception)
-            Error.UnknownError.toFailure()
+            Failure.UnknownFailure.toFailure()
         }
     }
 
@@ -42,7 +42,7 @@ class MultimediaRepositoryImpl @Inject constructor(
             val fullPath = "$DEFAULT_FOLDER_PATH_USER_IMAGE_PROFILE/$DEFAULT_IMAGE_NAME_PROFILE"
             val existsImage = multimediaLocalSource.existsImage(fullPath)
             if (existsImage) return fullPath.toSuccessful()
-            if (!connectionSource.isNetworkAvailable()) return Error.NetworkConnection.toFailure()
+            if (!connectionSource.isNetworkAvailable()) return Failure.NetworkConnection.toFailure()
             val base64 = multimediaRemoteSource.downloadImage(fullPath)
             return multimediaLocalSource.saveImage(
                 DEFAULT_FOLDER_PATH_USER_IMAGE_PROFILE,
@@ -51,7 +51,7 @@ class MultimediaRepositoryImpl @Inject constructor(
             ).toSuccessful()
         } catch (exception: Exception) {
             logger.logE(TAG, exception)
-            Error.UnknownError.toFailure()
+            Failure.UnknownFailure.toFailure()
         }
     }
 }

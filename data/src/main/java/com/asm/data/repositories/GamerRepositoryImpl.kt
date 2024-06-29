@@ -8,8 +8,8 @@ import com.asm.domain.entities.Gamer
 import com.asm.domain.entities.Result
 import com.asm.domain.entities.toFailure
 import com.asm.domain.entities.toSuccessful
-import com.asm.domain.errors.Error
-import com.asm.domain.errors.GamerError
+import com.asm.domain.errors.Failure
+import com.asm.domain.errors.GamerFailure
 import com.asm.domain.repositories.GamerRepository
 import com.asm.domain.utils.Completed
 import com.asm.domain.utils.Logger
@@ -27,13 +27,13 @@ class GamerRepositoryImpl @Inject constructor(
 
     override suspend fun registerGamer(gamer: Gamer): Result<Completed> {
         return try {
-            if (!connectionSource.isNetworkAvailable()) return Error.NetworkConnection.toFailure()
+            if (!connectionSource.isNetworkAvailable()) return Failure.NetworkConnection.toFailure()
             gamerRemoteSource.saveGamer(gamer)
             gamerLocalSource.saveGamer(gamer)
             Completed.toSuccessful()
         } catch (exception: Exception) {
             Log.e(TAG, exception.stackTraceToString())
-            Error.UnknownError.toFailure()
+            Failure.UnknownFailure.toFailure()
         }
     }
 
@@ -43,16 +43,16 @@ class GamerRepositoryImpl @Inject constructor(
             gamerExists.toSuccessful()
         } catch (exception: Exception) {
             logger.logE(TAG, exception)
-            Error.UnknownError.toFailure()
+            Failure.UnknownFailure.toFailure()
         }
     }
 
     override suspend fun getGamerById(gamerId: String): Result<Gamer> {
         return try {
-            gamerLocalSource.getGamer(gamerId)?.toSuccessful() ?: GamerError.GamerNotExists.toFailure()
+            gamerLocalSource.getGamer(gamerId)?.toSuccessful() ?: GamerFailure.GamerNotExists.toFailure()
         } catch (exception: Exception) {
             logger.logE(TAG, exception)
-            Error.UnknownError.toFailure()
+            Failure.UnknownFailure.toFailure()
         }
     }
 

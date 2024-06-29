@@ -7,7 +7,7 @@ import com.asm.domain.entities.Game
 import com.asm.domain.entities.Result
 import com.asm.domain.entities.toFailure
 import com.asm.domain.entities.toSuccessful
-import com.asm.domain.errors.Error
+import com.asm.domain.errors.Failure
 import com.asm.domain.repositories.GameRepository
 import com.asm.domain.utils.Completed
 import com.asm.domain.utils.Logger
@@ -26,13 +26,13 @@ class GameRepositoryImpl @Inject constructor(
 
     override suspend fun saveGamerGames(games: List<Game>, gamerId: String): Result<Completed> {
         return try {
-            if (!connectionSource.isNetworkAvailable()) return Error.NetworkConnection.toFailure()
+            if (!connectionSource.isNetworkAvailable()) return Failure.NetworkConnection.toFailure()
             gameRemoteSource.insertGames(games, gamerId)
             gameLocalSource.saveGamesByGamerId(games, gamerId)
             Completed.toSuccessful()
         } catch (exception: Exception) {
             logger.logE(TAG, exception)
-            Error.UnknownError.toFailure()
+            Failure.UnknownFailure.toFailure()
         }
     }
 }

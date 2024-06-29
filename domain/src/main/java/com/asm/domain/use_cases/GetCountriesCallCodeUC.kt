@@ -2,8 +2,9 @@ package com.asm.domain.use_cases
 
 import com.asm.domain.entities.CountryCallCode
 import com.asm.domain.entities.Result
+import com.asm.domain.entities.asFailure
 import com.asm.domain.entities.toFailure
-import com.asm.domain.errors.Error
+import com.asm.domain.errors.Failure
 import com.asm.domain.repositories.CountryRepository
 import com.asm.domain.use_cases.base.UseCaseSync
 import com.asm.domain.utils.Logger
@@ -20,10 +21,14 @@ class GetCountriesCallCodeUC @Inject constructor(
 
     override suspend fun run(params: Unit): Result<List<CountryCallCode>> {
         return try {
-            countryRepository.getCountriesCallCode()
+            val resultCountriesCallCode = countryRepository.getCountriesCallCode()
+            if (resultCountriesCallCode.isSuccessful) return resultCountriesCallCode
+            val resultFailure = resultCountriesCallCode.asFailure()
+            if (resultFailure.failure !is Failure.NetworkConnection) return resultFailure
+            countryRepository.downloadCountriesCallCode()
         } catch (exception: Exception) {
             logger.logE(TAG, exception)
-            Error.UnknownError.toFailure()
+            Failure.UnknownFailure.toFailure()
         }
     }
 }

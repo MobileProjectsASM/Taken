@@ -7,7 +7,7 @@ import com.asm.domain.entities.Level
 import com.asm.domain.entities.Result
 import com.asm.domain.entities.toFailure
 import com.asm.domain.entities.toSuccessful
-import com.asm.domain.errors.Error
+import com.asm.domain.errors.Failure
 import com.asm.domain.repositories.LevelRepository
 import com.asm.domain.utils.Logger
 import javax.inject.Inject
@@ -25,13 +25,13 @@ class LevelRepositoryImpl @Inject constructor(
 
     override suspend fun downloadLevelsByOrderCriteria(ids: List<Int>): Result<List<Level>> {
         return try {
-            if (!connectionSource.isNetworkAvailable()) return Error.NetworkConnection.toFailure()
+            if (!connectionSource.isNetworkAvailable()) return Failure.NetworkConnection.toFailure()
             val levels = levelRemoteSource.getLevelsByOrders(ids)
             levelLocalSource.saveLevels(levels)
             levels.toSuccessful()
         } catch (exception: Exception) {
             logger.logE(TAG, exception)
-            Error.UnknownError.toFailure()
+            Failure.UnknownFailure.toFailure()
         }
 
     }

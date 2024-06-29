@@ -12,8 +12,8 @@ import com.asm.domain.entities.asFailure
 import com.asm.domain.entities.asSuccessful
 import com.asm.domain.entities.toFailure
 import com.asm.domain.entities.toSuccessful
-import com.asm.domain.errors.Error
-import com.asm.domain.errors.RegisterError
+import com.asm.domain.errors.Failure
+import com.asm.domain.errors.RegisterFailure
 import com.asm.domain.repositories.ConnectionRepository
 import com.asm.domain.repositories.GameRepository
 import com.asm.domain.repositories.GamerRepository
@@ -25,10 +25,7 @@ import io.mockk.MockKAnnotations
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.impl.annotations.MockK
-import io.mockk.just
-import io.mockk.runs
 import kotlinx.coroutines.test.runTest
-import kotlin.reflect.typeOf
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 
@@ -78,7 +75,7 @@ class CreateGamerUCTest {
             country = "MX",
             image  = null
         )
-        coEvery { connectionRepository.isNetworkAvailable() } returns Error.UnknownError.toFailure()
+        coEvery { connectionRepository.isNetworkAvailable() } returns Failure.UnknownFailure.toFailure()
 
         //Act
         val result = signInUC.execute(param)
@@ -107,7 +104,7 @@ class CreateGamerUCTest {
         coVerify(exactly = 1) { connectionRepository.isNetworkAvailable() }
         assert(result.isFailure)
         val failure = result.asFailure().failure
-        assert(failure is Error.NetworkConnection)
+        assert(failure is Failure.NetworkConnection)
     }
 
     @Test
@@ -121,7 +118,7 @@ class CreateGamerUCTest {
             image  = null
         )
         coEvery { connectionRepository.isNetworkAvailable() } returns true.toSuccessful()
-        coEvery { gamerRepository.checkIfGamerExists(ofType(String::class)) } returns Error.UnknownError.toFailure()
+        coEvery { gamerRepository.checkIfGamerExists(ofType(String::class)) } returns Failure.UnknownFailure.toFailure()
 
         //Act
         val result = signInUC.execute(param)
@@ -153,7 +150,7 @@ class CreateGamerUCTest {
         coVerify(exactly = 1) { gamerRepository.checkIfGamerExists(ofType(String::class)) }
         assert(result.isFailure)
         val failure = result.asFailure().failure
-        assert(failure is RegisterError.GamerExists)
+        assert(failure is RegisterFailure.GamerExists)
     }
 
     @Test
@@ -171,7 +168,7 @@ class CreateGamerUCTest {
         )
         coEvery { connectionRepository.isNetworkAvailable() } returns true.toSuccessful()
         coEvery { gamerRepository.checkIfGamerExists(ofType(String::class)) } returns false.toSuccessful()
-        coEvery { multimediaRepository.uploadUserImage(ofType(String::class), ofType(String::class), ofType(String::class)) } returns Error.UnknownError.toFailure()
+        coEvery { multimediaRepository.uploadUserImage(ofType(String::class), ofType(String::class), ofType(String::class)) } returns Failure.UnknownFailure.toFailure()
 
         //Act
         val result = signInUC.execute(param)
@@ -196,7 +193,7 @@ class CreateGamerUCTest {
         )
         coEvery { connectionRepository.isNetworkAvailable() } returns true.toSuccessful()
         coEvery { gamerRepository.checkIfGamerExists(ofType(String::class)) } returns false.toSuccessful()
-        coEvery { multimediaRepository.getDefaultUserImage() } returns Error.UnknownError.toFailure()
+        coEvery { multimediaRepository.getDefaultUserImage() } returns Failure.UnknownFailure.toFailure()
 
         //Act
         val result = signInUC.execute(param)
@@ -222,7 +219,7 @@ class CreateGamerUCTest {
         coEvery { connectionRepository.isNetworkAvailable() } returns true.toSuccessful()
         coEvery { gamerRepository.checkIfGamerExists(ofType(String::class)) } returns false.toSuccessful()
         coEvery { multimediaRepository.getDefaultUserImage() } returns "/example/path".toSuccessful()
-        coEvery { gamerRepository.registerGamer(ofType(Gamer::class)) } returns Error.UnknownError.toFailure()
+        coEvery { gamerRepository.registerGamer(ofType(Gamer::class)) } returns Failure.UnknownFailure.toFailure()
 
         //Act
         val result = signInUC.execute(param)
@@ -250,7 +247,7 @@ class CreateGamerUCTest {
         coEvery { gamerRepository.checkIfGamerExists(ofType(String::class)) } returns false.toSuccessful()
         coEvery { multimediaRepository.getDefaultUserImage() } returns "/example/path".toSuccessful()
         coEvery { gamerRepository.registerGamer(ofType(Gamer::class)) } returns Completed.toSuccessful()
-        coEvery { levelRepository.downloadLevelsByOrderCriteria(listOf(1, 2)) } returns Error.UnknownError.toFailure()
+        coEvery { levelRepository.downloadLevelsByOrderCriteria(listOf(1, 2)) } returns Failure.UnknownFailure.toFailure()
 
         //Act
         val result = signInUC.execute(param)
@@ -315,7 +312,7 @@ class CreateGamerUCTest {
         coEvery { multimediaRepository.getDefaultUserImage() } returns "/example/path".toSuccessful()
         coEvery { gamerRepository.registerGamer(ofType(Gamer::class)) } returns Completed.toSuccessful()
         coEvery { levelRepository.downloadLevelsByOrderCriteria(listOf(1, 2)) } returns initLevels.toSuccessful()
-        coEvery { gameRepository.saveGamerGames(any(), ofType(String::class)) } returns Error.UnknownError.toFailure()
+        coEvery { gameRepository.saveGamerGames(any(), ofType(String::class)) } returns Failure.UnknownFailure.toFailure()
 
         //Act
         val result = signInUC.execute(param)

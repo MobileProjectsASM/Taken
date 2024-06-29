@@ -3,8 +3,7 @@ package com.asm.domain.use_cases
 import com.asm.domain.entities.PasswordState
 import com.asm.domain.entities.Result
 import com.asm.domain.entities.toFailure
-import com.asm.domain.entities.toSuccessful
-import com.asm.domain.errors.Error
+import com.asm.domain.errors.Failure
 import com.asm.domain.use_cases.base.UseCaseSync
 import com.asm.domain.utils.Logger
 import javax.inject.Inject
@@ -23,6 +22,6 @@ class ValidateUserPasswordUC @Inject constructor(
             logger.logE { exception }
             Error.UnknownError.toFailure()
         }*/
-        return Error.UnknownError.toFailure()
+        return Failure.UnknownFailure.toFailure()
     }
 }
