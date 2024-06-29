@@ -5,7 +5,7 @@ import javax.inject.Inject
 import com.asm.domain.entities.Gamer as GamerDomain
 
 class GamerMapper @Inject constructor() {
-    fun getGamer(gamerDomain: GamerDomain): GamerRoom = GamerRoom(
+    fun getGamerRoom(gamerDomain: GamerDomain): GamerRoom = GamerRoom(
         gamerDomain.gamerId,
         gamerDomain.gamerNickName,
         gamerDomain.gamerAge,
@@ -13,7 +13,7 @@ class GamerMapper @Inject constructor() {
         gamerDomain.gamerImage
     )
 
-    fun toGamerDomain(gamerRoom: GamerRoom): GamerDomain = GamerDomain(
+    fun getGamer(gamerRoom: GamerRoom): GamerDomain = GamerDomain(
         gamerRoom.gamerId,
         gamerRoom.gamerNickname,
         gamerRoom.gamerAge,

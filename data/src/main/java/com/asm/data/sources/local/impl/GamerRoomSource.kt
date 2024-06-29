@@ -17,7 +17,7 @@ class GamerRoomSource @Inject constructor(
     }
     override suspend fun saveGamer(gamer: Gamer) {
         try {
-            takenDB.getGamerDao().insertGamer(gamerMapper.getGamer(gamer))
+            takenDB.getGamerDao().insertGamer(gamerMapper.getGamerRoom(gamer))
         } catch (exception: Exception) {
             Log.e(TAG, exception.stackTraceToString())
             throw Exception("Error to saveGamer local source")
@@ -26,7 +26,7 @@ class GamerRoomSource @Inject constructor(
 
     override suspend fun getGamer(gamerId: String): Gamer? {
         try {
-            return takenDB.getGamerDao().getGamerById(gamerId)?.let(gamerMapper::toGamerDomain)
+            return takenDB.getGamerDao().getGamerById(gamerId)?.let(gamerMapper::getGamer)
         } catch (exception: Exception) {
             Log.e(TAG, exception.stackTraceToString())
             throw Exception("Error to getGamer local source")
