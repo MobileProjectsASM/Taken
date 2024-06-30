@@ -1,0 +1,40 @@
+package com.asm.data.sources.remote.impl.rest
+
+import android.util.Log
+import com.asm.data.sources.remote.impl.rest.api_service.CountryInfoClient
+import com.asm.data.sources.remote.interfaces.CountryInfoRemoteSource
+import com.asm.data.sources.remote.mappers.CountryInfoMapper
+import com.asm.data.sources.remote.model.CountryError
+import com.asm.domain.entities.CountryInfo
+import com.google.gson.Gson
+import javax.inject.Inject
+
+class CountryInfoRestService @Inject constructor(
+    private val countryInfoClient: CountryInfoClient,
+    private val countryInfoMapper: CountryInfoMapper,
+    private val gson: Gson
+): CountryInfoRemoteSource {
+
+    companion object {
+        const val TAG = "CountryInfoRestService"
+    }
+
+    override suspend fun getCountriesCallCode(): List<CountryInfo> {
+        return try {
+            val response = countryInfoClient.getCountriesInfo()
+            if (!response.isSuccessful) {
+                val errorBody = response.errorBody()?.string()
+                if (errorBody.isNullOrBlank()) {
+                    throw Exception("Unknown error")
+                }
+                val apiError = gson.fromJson(errorBody, CountryError::class.java)
+                throw Exception("Error ${apiError.status}: ${apiError.message}")
+            }
+            val countriesResponse = response.body() ?: throw Exception("Empty response")
+            countriesResponse.map(countryInfoMapper::getCountryInfo)
+        } catch(exception: Exception) {
+            Log.e(TAG, exception.stackTraceToString())
+            throw Exception("Error to get countries")
+        }
+    }
+}

@@ -39,6 +39,7 @@ dependencies {
     val hiltVersion = "2.51.1"
     val firebaseVersion = "33.0.0"
     val gsonVersion = "2.11.0"
+    val retrofitVersion = "2.11.0"
 
     implementation(project(":domain"))
 
@@ -59,6 +60,9 @@ dependencies {
 
     //Gson
     implementation("com.google.code.gson:gson:$gsonVersion")
+
+    //Rest services
+    implementation("com.squareup.retrofit2:retrofit:$retrofitVersion")
 
     implementation("androidx.core:core-ktx:1.13.1")
     implementation("androidx.appcompat:appcompat:1.6.1")

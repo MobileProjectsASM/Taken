@@ -1,4 +1,4 @@
-package com.asm.data.sources.remote.impl
+package com.asm.data.sources.remote.impl.firebase
 
 import android.util.Log
 import com.asm.data.sources.remote.interfaces.GamerRemoteSource

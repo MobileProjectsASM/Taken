@@ -61,6 +61,7 @@ dependencies {
     val gsonVersion = "2.11.0"
     val credentials = "1.2.2"
     val googleId = "1.1.0"
+    val retrofitVersion = "2.11.0"
 
     implementation(project(":domain"))
     implementation(project(":data"))
@@ -101,6 +102,10 @@ dependencies {
 
     //Gson
     implementation("com.google.code.gson:gson:$gsonVersion")
+
+    //Rest services
+    implementation("com.squareup.retrofit2:retrofit:$retrofitVersion")
+    implementation("com.squareup.retrofit2:converter-gson:$retrofitVersion")
 
     //AUTHENTICATION
     // Import the BoM for the Firebase platform

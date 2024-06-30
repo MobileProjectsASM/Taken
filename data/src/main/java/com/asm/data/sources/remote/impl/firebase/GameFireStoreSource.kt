@@ -1,8 +1,7 @@
-package com.asm.data.sources.remote.impl
+package com.asm.data.sources.remote.impl.firebase
 
 import android.util.Log
 import com.asm.data.sources.remote.interfaces.GameRemoteSource
-import com.asm.data.sources.remote.interfaces.GamerRemoteSource
 import com.asm.data.sources.remote.mappers.GameMapper
 import com.asm.domain.entities.Game
 import com.google.firebase.firestore.FirebaseFirestore
@@ -21,7 +20,9 @@ class GameFireStoreSource @Inject constructor(
     override suspend fun insertGames(games: List<Game>, gamerId: String) {
         try {
             val gamesFireStore = games.map(gameMapper::getGameFireStore)
-            val collectionPath = fs.collection(GamerFireStoreSource.GAMER_COLLECTION).document(gamerId).collection(GAME_COLLECTION)
+            val collectionPath = fs.collection(GamerFireStoreSource.GAMER_COLLECTION).document(gamerId).collection(
+                GAME_COLLECTION
+            )
             fs.runBatch { batch ->
                 gamesFireStore.forEach {
                     val gameReference = collectionPath.document(it.gameId)

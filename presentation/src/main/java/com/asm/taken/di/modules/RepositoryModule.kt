@@ -1,4 +1,4 @@
-package com.asm.taken.di
+package com.asm.taken.di.modules
 
 import com.asm.data.repositories.ConnectionRepositoryImpl
 import com.asm.data.repositories.CountryInfoRepositoryImpl
