@@ -6,6 +6,7 @@ data class LoginFormUiState(
 )
 
 data class SendPhoneFormUiState(
+    val phoneCodeState: PhoneCodeState = PhoneCodeState.Init,
     val phoneNumberUiState: PhoneNumberUiState = PhoneNumberUiState.Init
 )
 
@@ -29,11 +30,23 @@ sealed class PhoneNumberUiState(val value: String?) {
     data class IsValid(val phoneNumber: String): PhoneNumberUiState(phoneNumber)
 }
 
+sealed class PhoneCodeState(val value: String?) {
+    data object Init: PhoneCodeState(null)
+    data class IsInvalid(val phoneCode: String): PhoneCodeState(phoneCode)
+    data class IsValid(val phoneCode: String): PhoneCodeState(phoneCode)
+}
+
 sealed class SignInState {
     data class RegisteredUser(val userId: String) : SignInState()
     data class UnregisteredUser(val userId: String) : SignInState()
-    data class SignInFail(val signInError: SignInError) : SignInState()
     data class PhoneCodeSent(val verificationId: String): SignInState()
+    data class SignInFail(val signInError: SignInError) : SignInState()
+}
+
+sealed class PhoneCodesState {
+    data object Loading: PhoneCodesState()
+    data class Successful(val phoneCodesInfo: List<InfoPhoneCode>) : PhoneCodesState()
+    data class Failure(val errorMessage: String) : PhoneCodesState()
 }
 
 enum class SignInError {
@@ -43,11 +56,17 @@ enum class SignInError {
 sealed class AuthResult {
     data class Successful(val data: UserData): AuthResult()
     data class PhoneCodeSent(val verificationId: String): AuthResult()
-    data class Error(val errorMessage: String): AuthResult()
+    data class Failure(val errorMessage: String): AuthResult()
 }
 
 data class UserData(
     val userId: String,
     val username: String?,
     val profilePictureUrl: String?
+)
+
+data class InfoPhoneCode(
+    val country: String,
+    val phoneCode: String,
+    val flag: String
 )

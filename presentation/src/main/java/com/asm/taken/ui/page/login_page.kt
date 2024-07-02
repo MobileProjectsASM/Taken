@@ -1,6 +1,7 @@
 package com.asm.taken.ui.page
 
 import android.widget.Toast
+import androidx.annotation.StringRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -13,15 +14,23 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Numbers
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PhoneAndroid
 import androidx.compose.material3.Card
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -33,6 +42,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
@@ -47,10 +57,13 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
+import coil.compose.AsyncImage
 import com.asm.taken.R
 import com.asm.taken.model.CreateAccount
+import com.asm.taken.model.InfoPhoneCode
 import com.asm.taken.model.LoginFormUiState
 import com.asm.taken.model.PasswordUiState
+import com.asm.taken.model.PhoneCodesState
 import com.asm.taken.model.PhoneNumberUiState
 import com.asm.taken.model.SignInError
 import com.asm.taken.model.SignInState
@@ -89,15 +102,15 @@ fun LoginPage(
             is SignInState.UnregisteredUser -> {
                 navController.navigate(CreateAccount.route)
             }
+            is SignInState.PhoneCodeSent -> {
+
+            }
             is SignInState.SignInFail -> {
                 val signInFail = signInUiState as SignInState.SignInFail
                 when (signInFail.signInError) {
                     SignInError.AUTH_ERROR -> Toast.makeText(context, "Authentication error", Toast.LENGTH_SHORT).show()
                     SignInError.REGISTER_ERROR -> Toast.makeText(context, "Register error", Toast.LENGTH_SHORT).show()
                 }
-            }
-            is SignInState.PhoneCodeSent -> {
-
             }
         }
         loginVM.resetSignInState()
@@ -172,6 +185,7 @@ fun LoginPage(
                 signInWithGoogle = signInWithGoogle,
                 signInWithPhoneNumber = {
                     showDialog = true
+                    loginVM.getCountriesInfo()
                 }
             )
             Box(modifier = Modifier.height(250.dp))
@@ -381,15 +395,34 @@ fun FormPhoneNumber(
     resourceResolver: ResourceResolver,
     sendPhone: (String) -> Unit
 ) {
-    val sendPhoneFormUiState: SendPhoneFormUiState by loginVM.sendPhoneFormSTF.collectAsStateWithLifecycle()
-    val phoneNumber = sendPhoneFormUiState.phoneNumberUiState.value ?: ""
-    val phoneNumberErrorMessage = getPhoneNumberErrorMessage(resourceResolver, sendPhoneFormUiState.phoneNumberUiState)
+    val sendPhoneFormState: SendPhoneFormUiState by loginVM.sendPhoneFormSTF.collectAsStateWithLifecycle()
+    val phoneCodesState by loginVM.phoneCodesSTF.collectAsStateWithLifecycle()
+    val phoneNumber = sendPhoneFormState.phoneNumberUiState.value ?: ""
+    val phoneCode = sendPhoneFormState.phoneCodeState.value ?: ""
+    val phoneNumberErrorMessage = getPhoneNumberErrorMessage(resourceResolver, sendPhoneFormState.phoneNumberUiState)
+    val isLoading = phoneCodesState != null && phoneCodesState is PhoneCodesState.Loading
+    val readOnlyPhoneCode = phoneCodesState != null && phoneCodesState is PhoneCodesState.Successful
+    val phoneCodes = if (phoneCodesState != null && phoneCodesState is PhoneCodesState.Successful) {
+        (phoneCodesState as PhoneCodesState.Successful).phoneCodesInfo
+    } else {
+        listOf()
+    }
     FormPhoneNumberContent(
         phoneNumber = phoneNumber,
+        phoneCodeValue = phoneCode,
         phoneNumberErrorMessage = phoneNumberErrorMessage,
-        isBtnVerifyEnable = sendPhoneFormUiState.phoneNumberUiState is PhoneNumberUiState.IsValid,
+        isLoading = isLoading,
+        phoneCodes = phoneCodes,
+        isBtnVerifyEnable = sendPhoneFormState.phoneNumberUiState is PhoneNumberUiState.IsValid,
+        readOnlyPhoneCode = readOnlyPhoneCode,
         onPhoneNumberChange = {
-            loginVM.validatePhoneNumberFrom(it)
+            loginVM.validatePhoneNumberForm(sendPhoneFormState.phoneCodeState.value, it)
+        },
+        onSelectPhoneCode = {
+            loginVM.validatePhoneNumberForm(it.phoneCode, sendPhoneFormState.phoneNumberUiState.value)
+        },
+        onPhoneCodeChange =  {
+            loginVM.validatePhoneNumberForm(it, sendPhoneFormState.phoneNumberUiState.value)
         },
         sendPhone = {
             sendPhone(phoneNumber)
@@ -400,33 +433,127 @@ fun FormPhoneNumber(
 @Composable
 fun FormPhoneNumberContent(
     phoneNumber: String,
+    phoneCodeValue: String,
+    isLoading: Boolean = true,
+    phoneCodes: List<InfoPhoneCode> = listOf(),
     phoneNumberErrorMessage: String? = null,
     onPhoneNumberChange: (String) -> Unit,
+    onSelectPhoneCode: (InfoPhoneCode) -> Unit,
+    onPhoneCodeChange: (String) -> Unit,
     isBtnVerifyEnable: Boolean,
+    readOnlyPhoneCode: Boolean = false,
     sendPhone: () -> Unit
 ) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally
+    Box(modifier = Modifier.height(500.dp)) {
+        if (isLoading) {
+            CircularProgressIndicator(
+                modifier = Modifier.width(64.dp),
+                color = MaterialTheme.colorScheme.secondary,
+                trackColor = MaterialTheme.colorScheme.surfaceVariant,
+            )
+        } else {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Row {
+                    ExposedDropdownMenuCountriesContent(
+                        modifier = Modifier.width(50.dp),
+                        label = R.string.txt_label_cpn,
+                        leadingIcon = Icons.Filled.Numbers,
+                        cdLeadingIcon = R.string.txt_cd_li_code,
+                        phoneCodeValue = phoneCodeValue,
+                        phoneCodes = phoneCodes,
+                        readOnly = readOnlyPhoneCode,
+                        onSelectedPhoneCode = onSelectPhoneCode,
+                        onPhoneCodeChange = onPhoneCodeChange
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    DefaultOutlinedTextFieldLI(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 10.dp),
+                        value = phoneNumber,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                        label = R.string.txt_label_pn,
+                        leadingIcon = Icons.Default.PhoneAndroid,
+                        cdLeadingIcon = R.string.txt_cd_li_phone_number,
+                        isError = phoneNumberErrorMessage != null,
+                        message = phoneNumberErrorMessage,
+                        onValueChange = onPhoneNumberChange
+                    )
+                }
+                Spacer(modifier = Modifier.height(30.dp))
+                DefaultButton(
+                    text = stringResource(R.string.txt_btn_verify_pn),
+                    enable = isBtnVerifyEnable,
+                    onClickButton = sendPhone
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ExposedDropdownMenuCountriesContent(
+    modifier: Modifier = Modifier,
+    phoneCodeValue: String,
+    @StringRes label: Int,
+    leadingIcon: ImageVector,
+    @StringRes cdLeadingIcon: Int,
+    phoneCodes: List<InfoPhoneCode>,
+    readOnly: Boolean = false,
+    onSelectedPhoneCode: (InfoPhoneCode) -> Unit,
+    onPhoneCodeChange: (String) -> Unit
+) {
+    var expanded: Boolean by rememberSaveable { mutableStateOf(false) }
+    ExposedDropdownMenuBox(
+        modifier = modifier,
+        expanded = expanded,
+        onExpandedChange = { expanded = !expanded }
     ) {
         DefaultOutlinedTextFieldLI(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 10.dp),
-            value = phoneNumber,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
-            label = R.string.txt_label_pn,
-            leadingIcon = Icons.Default.PhoneAndroid,
-            cdLeadingIcon = R.string.txt_cd_li_phone_number,
-            isError = phoneNumberErrorMessage != null,
-            message = phoneNumberErrorMessage,
-            onValueChange = onPhoneNumberChange
+                .menuAnchor()
+                .fillMaxWidth(),
+            label = label,
+            leadingIcon = leadingIcon,
+            cdLeadingIcon = cdLeadingIcon,
+            trailingIcon = {
+                if (phoneCodes.isNotEmpty()) ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+            },
+            value = phoneCodeValue,
+            readOnly = readOnly,
+            onValueChange = onPhoneCodeChange
         )
-        Spacer(modifier = Modifier.height(30.dp))
-        DefaultButton(
-            text = stringResource(R.string.txt_btn_verify_pn),
-            enable = isBtnVerifyEnable,
-            onClickButton = sendPhone
-        )
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+        ) {
+            phoneCodes.forEach { phoneCode ->
+                DropdownMenuItem(
+                    text = {
+                        Row {
+                            AsyncImage(
+                                modifier = Modifier
+                                    .width(24.dp)
+                                    .height(24.dp),
+                                model = phoneCode.flag,
+                                contentDescription = stringResource(id = R.string.txt_cd_country_flag),
+                            )
+                            Spacer(modifier = Modifier.width(5.dp))
+                            DefaultText(
+                                text = phoneCode.country,
+                            )
+                        }
+                    },
+                    onClick = {
+                        expanded = false
+                        onSelectedPhoneCode(phoneCode)
+                    }
+                )
+            }
+        }
     }
 }
 

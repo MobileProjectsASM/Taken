@@ -7,12 +7,15 @@
     <string name="txt_label_user_id_login">User ID</string>
     <string name="txt_label_password">Password</string>
     <string name="txt_label_pn">Phone number</string>
+    <string name="txt_label_cpn">Code</string>
     <string name="txt_cd_ti_password">Password visibility</string>
     <string name="txt_cd_li_password">Password icon</string>
     <string name="txt_cd_li_user_id">User ID icon</string>
     <string name="txt_cd_li_phone_number">Phone icon</string>
     <string name="txt_cd_icon_button">Icon button</string>
     <string name="txt_cd_icon_app">Icon app</string>
+    <string name="txt_cd_li_code">Code icon</string>
+    <string name="txt_cd_country_flag">Flag country</string>
     <string name="txt_btn_login">LOGIN</string>
     <string name="txt_btn_verify_pn">VERIFY</string>
     <string name="txt_btn_with_email">EMAIL</string>
@@ -24,5 +27,5 @@
     <string name="err_does_not_meet_pattern_phone">Deben ser 10 digitos</string>
     <string name="default_web_client_id">537568996262-c7nrhuvi4s9jaukcg9uh0hvm98l9ubls.apps.googleusercontent.com</string>
     <string name="api_key_country_service">1274|gSQVz5Qf9OfRRwUhxEbDBhzz2c48b21KbXDjvnPB</string>
-    <string name="api_base_url_country_service">https://restfulcountries.com/api/v1</string>
+    <string name="api_base_url_country_service">https://restfulcountries.com/</string>
 </resources>

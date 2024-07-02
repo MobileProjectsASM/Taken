@@ -62,6 +62,7 @@ dependencies {
     val credentials = "1.2.2"
     val googleId = "1.1.0"
     val retrofitVersion = "2.11.0"
+    val coilVersion = "2.6.0"
 
     implementation(project(":domain"))
     implementation(project(":data"))
@@ -113,6 +114,9 @@ dependencies {
     implementation("com.google.android.gms:play-services-auth:21.2.0")
     implementation("androidx.credentials:credentials:$credentials")
     implementation("com.google.android.libraries.identity.googleid:googleid:$googleId")
+
+    //Load image
+    implementation("io.coil-kt:coil-compose:${coilVersion}")
 
     //TESTING
     testImplementation("junit:junit:4.13.2")

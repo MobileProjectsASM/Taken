@@ -1,6 +1,7 @@
 package com.asm.data.sources.remote.impl.rest.deserializer
 
 import android.util.Log
+import com.asm.data.sources.remote.model.CountriesInfoRest
 import com.asm.data.sources.remote.model.CountryInfoRest
 import com.google.gson.JsonDeserializationContext
 import com.google.gson.JsonDeserializer
@@ -8,7 +9,7 @@ import com.google.gson.JsonElement
 import java.lang.reflect.Type
 import javax.inject.Inject
 
-class CountryInfoDeserializer @Inject constructor(): JsonDeserializer<List<CountryInfoRest>> {
+class CountryInfoDeserializer @Inject constructor(): JsonDeserializer<CountriesInfoRest> {
     companion object {
         const val TAG = "CountryInfoRestDeserializer"
         const val DATA = "data"
@@ -23,11 +24,11 @@ class CountryInfoDeserializer @Inject constructor(): JsonDeserializer<List<Count
         json: JsonElement?,
         typeOfT: Type?,
         context: JsonDeserializationContext?
-    ): List<CountryInfoRest> {
+    ): CountriesInfoRest {
         return try {
             val jObject = json?.asJsonObject ?: throw Exception("json is null")
             val djArray = jObject.getAsJsonArray(DATA) ?: throw Exception("Not exists member")
-            djArray.map { countryElement ->
+            val countriesList = djArray.map { countryElement ->
                 val countryObject = countryElement?.asJsonObject
                 val name = countryObject?.get(COUNTRY_NAME)?.asString ?: ""
                 val iso3 = countryObject?.get(ISO_3)?.asString ?: ""
@@ -37,10 +38,13 @@ class CountryInfoDeserializer @Inject constructor(): JsonDeserializer<List<Count
                 CountryInfoRest(
                     countryName = name,
                     iso3 = iso3,
-                    callCode = callCode,
+                    phoneCode = callCode,
                     flag = flag
                 )
             }
+            CountriesInfoRest(
+                countriesList
+            )
         } catch (exception: Exception) {
             Log.e(TAG, exception.stackTraceToString())
             throw Exception("Error to deserialize object")

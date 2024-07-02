@@ -15,8 +15,8 @@ import com.asm.data.sources.local.entities.LevelRoom
     GamerRoom::class,
     GameRoom::class,
     LevelRoom::class,
-    CountryInfoRoom::class]
-    ,version = 1
+    CountryInfoRoom::class],
+    version = 1
 )
 abstract class TakenDB: RoomDatabase() {
     abstract fun getGamerDao(): GamerDao

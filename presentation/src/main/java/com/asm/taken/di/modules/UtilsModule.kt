@@ -6,13 +6,12 @@ import com.asm.data.sources.local.TakenDB
 import com.asm.data.sources.remote.impl.rest.api_service.CountryInfoClient
 import com.asm.data.sources.remote.impl.rest.deserializer.CountryInfoDeserializer
 import com.asm.data.sources.remote.impl.rest.interceptors.CountryInfoInterceptor
-import com.asm.data.sources.remote.model.CountryInfoRest
+import com.asm.data.sources.remote.model.CountriesInfoRest
 import com.asm.taken.R
 import com.asm.taken.di.CountryInfoRetrofit
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
-import com.google.gson.reflect.TypeToken
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -53,16 +52,15 @@ class UtilsModule {
         okHttpClient: OkHttpClient,
         gson: Gson
     ): Retrofit = Retrofit.Builder()
-        .baseUrl(context.getString(R.string.api_base_url_country_service))
+        .baseUrl("https://restfulcountries.com/api/v1/")
         .client(okHttpClient)
         .addConverterFactory(GsonConverterFactory.create(gson))
         .build()
 
     @Provides
     fun providesGson(countryInfoDeserializer: CountryInfoDeserializer): Gson {
-        val type= object: TypeToken<List<CountryInfoRest>>(){}.type
         return GsonBuilder()
-            .registerTypeAdapter(type, countryInfoDeserializer)
+            .registerTypeAdapter(CountriesInfoRest::class.java, countryInfoDeserializer)
             .create()
     }
 

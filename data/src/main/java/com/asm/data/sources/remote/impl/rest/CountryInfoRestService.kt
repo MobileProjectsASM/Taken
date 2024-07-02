@@ -31,7 +31,7 @@ class CountryInfoRestService @Inject constructor(
                 throw Exception("Error ${apiError.status}: ${apiError.message}")
             }
             val countriesResponse = response.body() ?: throw Exception("Empty response")
-            countriesResponse.map(countryInfoMapper::getCountryInfo)
+            countriesResponse.countries.map(countryInfoMapper::getCountryInfo)
         } catch(exception: Exception) {
             Log.e(TAG, exception.stackTraceToString())
             throw Exception("Error to get countries")

@@ -6,16 +6,16 @@ import javax.inject.Inject
 
 class CountryInfoMapper @Inject constructor() {
     fun getCountryInfo(countryInfoRoom: CountryInfoRoom): CountryInfo = CountryInfo(
-        countryInfoRoom.callCode,
-        countryInfoRoom.countryName,
-        countryInfoRoom.iso3,
-        countryInfoRoom.flag
+        code = countryInfoRoom.phoneCode,
+        name = countryInfoRoom.countryName,
+        iso3 = countryInfoRoom.iso3,
+        flag = countryInfoRoom.flag
     )
 
     fun getCountryInfoRoom(countryInfo: CountryInfo): CountryInfoRoom = CountryInfoRoom(
-        countryInfo.callCode,
-        countryInfo.name,
-        countryInfo.iso3,
-        countryInfo.flag
+        phoneCode = countryInfo.code,
+        countryName = countryInfo.name,
+        iso3 = countryInfo.iso3,
+        flag = countryInfo.flag
     )
 }

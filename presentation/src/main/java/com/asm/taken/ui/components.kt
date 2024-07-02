@@ -90,6 +90,7 @@ fun DefaultOutlinedTextField(
     trailingIcon: @Composable (() -> Unit)? = null,
     message: String? = null,
     isError: Boolean = false,
+    readOnly: Boolean = false,
     onValueChange: (String) -> Unit,
 ) {
     OutlinedTextField(
@@ -104,6 +105,7 @@ fun DefaultOutlinedTextField(
         textStyle = TextStyle(fontFamily = puzzleFontFamily),
         supportingText = message?.toDefaultText(),
         isError = isError,
+        readOnly = readOnly,
         singleLine = true,
     )
 }
@@ -120,6 +122,7 @@ fun DefaultOutlinedTextFieldLI(
     trailingIcon: @Composable (() -> Unit)? = null,
     message: String? = null,
     isError: Boolean = false,
+    readOnly: Boolean = false,
     onValueChange: (String) -> Unit,
 ) {
     DefaultOutlinedTextField(
@@ -138,6 +141,7 @@ fun DefaultOutlinedTextFieldLI(
         trailingIcon = trailingIcon,
         message = message,
         isError = isError,
+        readOnly = readOnly,
         onValueChange = onValueChange,
     )
 }

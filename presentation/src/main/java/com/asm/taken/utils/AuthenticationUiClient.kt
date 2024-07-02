@@ -51,12 +51,12 @@ class AuthenticationUiClient @Inject constructor(
         } catch (exception: GetCredentialException ) {
             if (exception !is NoCredentialException) {
                 Log.e(TAG, exception.stackTraceToString())
-                AuthResult.Error("Credential request fail")
+                AuthResult.Failure("Credential request fail")
             }
             signInWithCredential()
         } catch (exception: CredentialException) {
             Log.e(TAG, exception.stackTraceToString())
-            AuthResult.Error("Credential handle fail")
+            AuthResult.Failure("Credential handle fail")
         }
     }
 
@@ -79,7 +79,7 @@ class AuthenticationUiClient @Inject constructor(
 
                 override fun onVerificationFailed(firebaseException: FirebaseException) {
                     Log.e(TAG, firebaseException.stackTraceToString())
-                    val authResult = AuthResult.Error( when (firebaseException) {
+                    val authResult = AuthResult.Failure( when (firebaseException) {
                         is FirebaseAuthInvalidCredentialsException -> "Invalid request"
                         is FirebaseTooManyRequestsException -> "The SMS quota for the project has been"
                         is FirebaseAuthMissingActivityForRecaptchaException -> "reCAPTCHA verification attempted with null Activity"
@@ -115,7 +115,7 @@ class AuthenticationUiClient @Inject constructor(
             val firebaseUser = auth.signInWithCredential(authCredential).await().user
             if (firebaseUser == null) {
                 Log.e(TAG, "FirebaseUser is null")
-                return AuthResult.Error( "Error to authenticate")
+                return AuthResult.Failure( "Error to authenticate")
             }
             return AuthResult.Successful(UserData(
                 firebaseUser.uid,
@@ -124,7 +124,7 @@ class AuthenticationUiClient @Inject constructor(
             ))
         } catch (exception: Exception) {
             Log.e(TAG, exception.stackTraceToString())
-            return AuthResult.Error("Error to authenticate")
+            return AuthResult.Failure("Error to authenticate")
         }
     }
 

@@ -2,7 +2,6 @@ package com.asm.domain.use_cases
 
 import com.asm.domain.entities.CountryInfo
 import com.asm.domain.entities.Result
-import com.asm.domain.entities.asFailure
 import com.asm.domain.entities.asSuccessful
 import com.asm.domain.entities.toFailure
 import com.asm.domain.entities.toSuccessful
@@ -12,7 +11,7 @@ import com.asm.domain.use_cases.base.UseCaseSync
 import com.asm.domain.utils.Logger
 import javax.inject.Inject
 
-class GetCountriesCallCodeUC @Inject constructor(
+class GetCountriesInfoUC @Inject constructor(
     private val logger: Logger,
     private val countryInfoRepository: CountryInfoRepository
 ): UseCaseSync<List<CountryInfo>, Unit>() {

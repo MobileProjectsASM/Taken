@@ -27,7 +27,8 @@ class CountryInfoRoomSource @Inject constructor(
     override suspend fun saveCountriesInfo(countriesInfo: List<CountryInfo>) {
         try {
             val countriesInfoRoom = countriesInfo.map(countryInfoMapper::getCountryInfoRoom)
-            takenDB.getCountryInfoDao().saveCountriesInfo(countriesInfoRoom)
+            val sorted = countriesInfoRoom.sortedBy { it.phoneCode }
+            takenDB.getCountryInfoDao().saveCountriesInfo(sorted)
         } catch (exception: Exception) {
             Log.e(TAG, exception.stackTraceToString())
             throw Exception("Error to saveCountriesCallCode local source")
