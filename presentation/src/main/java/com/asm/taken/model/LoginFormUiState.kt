@@ -7,7 +7,7 @@ data class LoginFormUiState(
 
 data class SendPhoneFormUiState(
     val phoneCodeState: PhoneCodeState = PhoneCodeState.Init,
-    val phoneNumberUiState: PhoneNumberUiState = PhoneNumberUiState.Init
+    val phoneNumberState: PhoneNumberState = PhoneNumberState.Init
 )
 
 sealed class UserIdUiState(val value: String?) {
@@ -23,15 +23,16 @@ sealed class PasswordUiState(val value: String?) {
     data class IsValid(val password: String) : PasswordUiState(password)
 }
 
-sealed class PhoneNumberUiState(val value: String?) {
-    data object Init: PhoneNumberUiState(null)
-    data object IsEmpty: PhoneNumberUiState("")
-    data class IsInvalid(val phoneNumber: String): PhoneNumberUiState(phoneNumber)
-    data class IsValid(val phoneNumber: String): PhoneNumberUiState(phoneNumber)
+sealed class PhoneNumberState(val value: String?) {
+    data object Init: PhoneNumberState(null)
+    data object IsEmpty: PhoneNumberState("")
+    data class IsInvalid(val phoneNumber: String): PhoneNumberState(phoneNumber)
+    data class IsValid(val phoneNumber: String): PhoneNumberState(phoneNumber)
 }
 
 sealed class PhoneCodeState(val value: String?) {
     data object Init: PhoneCodeState(null)
+    data object IsEmpty: PhoneCodeState("")
     data class IsInvalid(val phoneCode: String): PhoneCodeState(phoneCode)
     data class IsValid(val phoneCode: String): PhoneCodeState(phoneCode)
 }
@@ -43,10 +44,10 @@ sealed class SignInState {
     data class SignInFail(val signInError: SignInError) : SignInState()
 }
 
-sealed class PhoneCodesState {
-    data object Loading: PhoneCodesState()
-    data class Successful(val phoneCodesInfo: List<InfoPhoneCode>) : PhoneCodesState()
-    data class Failure(val errorMessage: String) : PhoneCodesState()
+sealed class CountriesInfoState {
+    data object Loading: CountriesInfoState()
+    data class Successful(val countriesInfo: List<CountryInfoState>) : CountriesInfoState()
+    data class Failure(val errorMessage: String) : CountriesInfoState()
 }
 
 enum class SignInError {
@@ -65,7 +66,7 @@ data class UserData(
     val profilePictureUrl: String?
 )
 
-data class InfoPhoneCode(
+data class CountryInfoState(
     val country: String,
     val phoneCode: String,
     val flag: String

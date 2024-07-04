@@ -14,8 +14,8 @@ import com.asm.taken.model.PasswordUiState
 import com.asm.taken.model.SignInError
 import com.asm.taken.model.AuthResult
 import com.asm.taken.model.PhoneCodeState
-import com.asm.taken.model.PhoneCodesState
-import com.asm.taken.model.PhoneNumberUiState
+import com.asm.taken.model.CountriesInfoState
+import com.asm.taken.model.PhoneNumberState
 import com.asm.taken.model.SignInState
 import com.asm.taken.model.UserIdUiState
 import com.asm.taken.model.SendPhoneFormUiState
@@ -40,14 +40,14 @@ class LoginVM @Inject constructor(
     private val _loginFormSTF = MutableStateFlow(LoginFormUiState())
     private val _sendPhoneFormSTF = MutableStateFlow(SendPhoneFormUiState())
     private val _signInSTF = MutableStateFlow<SignInState?>(null)
-    private val _phoneCodesSTF = MutableStateFlow<PhoneCodesState?>(null)
+    private val _countriesInfoSTF = MutableStateFlow<CountriesInfoState>(CountriesInfoState.Loading)
     //endregion
 
     //region StateFlows
     val loginFormSTF: StateFlow<LoginFormUiState> = _loginFormSTF
     val sendPhoneFormSTF: StateFlow<SendPhoneFormUiState> = _sendPhoneFormSTF
     val signInSTF: StateFlow<SignInState?> = _signInSTF
-    val phoneCodesSTF: StateFlow<PhoneCodesState?> = _phoneCodesSTF
+    val countriesInfoSTF: StateFlow<CountriesInfoState> = _countriesInfoSTF
     //endregion
 
     fun validateLoginForm(userId: String?, password: String?) {
@@ -67,21 +67,21 @@ class LoginVM @Inject constructor(
         _sendPhoneFormSTF.update {
             it.copy(
                 phoneCodeState = phoneCodeState,
-                phoneNumberUiState = phoneNumberUiState
+                phoneNumberState = phoneNumberUiState
             )
         }
     }
 
     fun getCountriesInfo() {
         viewModelScope.launch {
-            val phoneCodesState: PhoneCodesState = when (val countriesResult = getCountriesInfoUC.execute(Unit)) {
-                is Result.Failure -> PhoneCodesState.Failure("Error to get codes")
+            val countriesInfoState: CountriesInfoState = when (val countriesResult = getCountriesInfoUC.execute(Unit)) {
+                is Result.Failure -> CountriesInfoState.Failure("Error to get codes")
                 is Result.Successful -> {
                     val phoneCodes = countriesResult.data.map(phoneCodeMapper::getPhoneCode)
-                    PhoneCodesState.Successful(phoneCodes)
+                    CountriesInfoState.Successful(phoneCodes)
                 }
             }
-            _phoneCodesSTF.update { phoneCodesState }
+            _countriesInfoSTF.update { countriesInfoState }
         }
     }
 
@@ -118,15 +118,16 @@ class LoginVM @Inject constructor(
         _sendPhoneFormSTF.value = SendPhoneFormUiState()
     }
 
-    private fun validatePhoneNumber(phoneNumber: String?): PhoneNumberUiState {
-        if (phoneNumber == null) return PhoneNumberUiState.Init
-        if (phoneNumber.isEmpty()) return PhoneNumberUiState.IsEmpty
-        if (!phoneNumber.matches(phoneNumberPattern)) return PhoneNumberUiState.IsInvalid(phoneNumber)
-        return PhoneNumberUiState.IsValid(phoneNumber)
+    private fun validatePhoneNumber(phoneNumber: String?): PhoneNumberState {
+        if (phoneNumber == null) return PhoneNumberState.Init
+        if (phoneNumber.isEmpty()) return PhoneNumberState.IsEmpty
+        if (!phoneNumber.matches(phoneNumberPattern)) return PhoneNumberState.IsInvalid(phoneNumber)
+        return PhoneNumberState.IsValid(phoneNumber)
     }
 
     private fun validatePhoneCode(phoneCode: String?): PhoneCodeState {
         if (phoneCode == null) return PhoneCodeState.Init
+        if (phoneCode.isEmpty()) return PhoneCodeState.IsEmpty
         if (!phoneCode.matches(phoneCodePattern)) return PhoneCodeState.IsInvalid(phoneCode)
         return PhoneCodeState.IsValid(phoneCode)
     }

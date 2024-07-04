@@ -88,8 +88,7 @@ fun DefaultOutlinedTextField(
     visualTransformation: VisualTransformation = VisualTransformation.None,
     leadingIcon: @Composable (() -> Unit)? = null,
     trailingIcon: @Composable (() -> Unit)? = null,
-    message: String? = null,
-    isError: Boolean = false,
+    errorMessage: String? = null,
     readOnly: Boolean = false,
     onValueChange: (String) -> Unit,
 ) {
@@ -103,8 +102,8 @@ fun DefaultOutlinedTextField(
         trailingIcon = trailingIcon,
         onValueChange = onValueChange,
         textStyle = TextStyle(fontFamily = puzzleFontFamily),
-        supportingText = message?.toDefaultText(),
-        isError = isError,
+        supportingText = errorMessage?.toDefaultText(),
+        isError = errorMessage != null,
         readOnly = readOnly,
         singleLine = true,
     )
@@ -120,8 +119,7 @@ fun DefaultOutlinedTextFieldLI(
     leadingIcon: ImageVector,
     @StringRes cdLeadingIcon: Int,
     trailingIcon: @Composable (() -> Unit)? = null,
-    message: String? = null,
-    isError: Boolean = false,
+    errorMessage: String? = null,
     readOnly: Boolean = false,
     onValueChange: (String) -> Unit,
 ) {
@@ -139,8 +137,7 @@ fun DefaultOutlinedTextFieldLI(
             )
         },
         trailingIcon = trailingIcon,
-        message = message,
-        isError = isError,
+        errorMessage = errorMessage,
         readOnly = readOnly,
         onValueChange = onValueChange,
     )
@@ -158,8 +155,7 @@ fun DefaultOutlinedTextFieldTI(
     trailingIcon: ImageVector,
     @StringRes cdTrailingIcon: Int,
     onClickTrailingIcon: (() -> Unit)? = null,
-    message: String? = null,
-    isError: Boolean = false,
+    errorMessage: String? = null,
     onValueChange: (String) -> Unit,
 ) {
     DefaultOutlinedTextFieldLI(
@@ -180,8 +176,7 @@ fun DefaultOutlinedTextFieldTI(
                 )
             }
         },
-        message = message,
-        isError = isError,
+        errorMessage = errorMessage,
         onValueChange = onValueChange,
     )
 }
@@ -209,8 +204,7 @@ fun PasswordOutlinedTextField(
         onClickTrailingIcon = {
             isPasswordVisible = !isPasswordVisible
         },
-        message = passwordErrorMessage,
-        isError = passwordErrorMessage != null,
+        errorMessage = passwordErrorMessage,
         onValueChange = onPasswordChange
     )
 }
