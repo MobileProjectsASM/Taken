@@ -25,12 +25,12 @@
     <string name="txt_btn_create_account">CREATE ACCOUNT</string>
     
     <!-- Errors -->
-    <string name="err_empty_field">Campo vacio</string>
-    <string name="err_min_8_characters">Debe tener al menos 8 caracteres</string>
-    <string name="err_least_one_uppercase">Debe tener al menos una mayuscula</string>
-    <string name="err_least_one_number">Debe tener al menos un numero</string>
-    <string name="err_least_one_character">Debe tener al menos uno de los siguientes caracteres: @$!%*?&amp;#</string>
-    <string name="err_does_not_meet_pattern_phone">Deben ser 10 digitos</string>
+    <string name="err_empty_field">Empty field</string>
+    <string name="err_min_8_characters">Must be at least 8 characters long</string>
+    <string name="err_least_one_uppercase">Must have at least one capital letter</string>
+    <string name="err_least_one_number">Must have at least one number</string>
+    <string name="err_least_one_character">Must have at least one of the following characters: @$!%*?&amp;#</string>
+    <string name="err_does_not_meet_pattern_phone">Must be 10 digits</string>
     <string name="err_does_not_meet_pattern_phone_code">Invalid code</string>
     <string name="err_choose_country">Choose country</string>
     <string name="default_web_client_id">537568996262-c7nrhuvi4s9jaukcg9uh0hvm98l9ubls.apps.googleusercontent.com</string>
