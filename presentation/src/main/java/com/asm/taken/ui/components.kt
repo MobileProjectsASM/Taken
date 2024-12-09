@@ -1,10 +1,14 @@
 package com.asm.taken.ui
 
+import androidx.annotation.DimenRes
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -67,17 +71,19 @@ fun DefaultText(
     text: String,
     modifier: Modifier = Modifier,
     color: Color = Color.Unspecified,
+    @DimenRes fontSize: Int = R.dimen.default_text_size,
     textAlign: TextAlign = TextAlign.Start
 ) {
     Text(
         modifier = modifier,
         color = color,
         fontSize = dimensionResource(
-            id = R.dimen.default_text_size
+            id = fontSize
         ).value.sp,
         text = text,
         fontFamily = puzzleFontFamily,
-        textAlign = textAlign
+        textAlign = textAlign,
+        lineHeight = 15.sp
     )
 }
 
@@ -108,21 +114,25 @@ fun DefaultOutlinedTextField(
             isError = errors.isNotEmpty(),
             readOnly = readOnly,
             singleLine = true,
-            colors = OutlinedTextFieldDefaults.colors(
-                errorBorderColor = colorResource(R.color.input_error_color)
-            )
         )
-        errors.forEach { error ->
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    imageVector = Icons.Outlined.Cancel,
-                    contentDescription = stringResource(R.string.txt_cd_error_input_icon),
-                    tint = colorResource(id = R.color.input_error_color)
-                )
-                DefaultText(
-                    error,
-                    color = colorResource(id = R.color.input_error_color)
-                )
+        if (errors.isNotEmpty()) {
+            Spacer(modifier = Modifier.height(5.dp))
+            errors.forEach { error ->
+                Row(
+                    modifier = Modifier.padding(horizontal = 10.dp),
+                ) {
+                    Icon(
+                        modifier = Modifier.size(size = 16.dp),
+                        imageVector = Icons.Outlined.Cancel,
+                        contentDescription = stringResource(R.string.txt_cd_error_input_icon),
+                        tint = OutlinedTextFieldDefaults.colors().errorIndicatorColor
+                    )
+                    DefaultText(
+                        error,
+                        color = OutlinedTextFieldDefaults.colors().errorIndicatorColor,
+                        fontSize = R.dimen.small_text_size
+                    )
+                }
             }
         }
     }
