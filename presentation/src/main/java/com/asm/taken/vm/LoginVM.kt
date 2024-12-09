@@ -3,22 +3,16 @@ package com.asm.taken.vm
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.asm.domain.entities.Result
-import com.asm.domain.entities.asFailure
-import com.asm.domain.entities.asSuccessful
-import com.asm.domain.errors.GamerFailure
 import com.asm.domain.use_cases.GetCountriesInfoUC
 import com.asm.domain.use_cases.GetGamerUC
 import com.asm.taken.mappers.PhoneCodeMapper
+import com.asm.taken.model.CountriesUiState
+import com.asm.taken.model.CountryUiState
+import com.asm.taken.model.InputPasswordError
+import com.asm.taken.model.InputState
+import com.asm.taken.model.InputUiState
+import com.asm.taken.model.InputUserIdError
 import com.asm.taken.model.LoginFormUiState
-import com.asm.taken.model.PasswordUiState
-import com.asm.taken.model.SignInError
-import com.asm.taken.model.AuthResult
-import com.asm.taken.model.PhoneCodeState
-import com.asm.taken.model.CountriesInfoState
-import com.asm.taken.model.PhoneNumberState
-import com.asm.taken.model.SignInState
-import com.asm.taken.model.UserIdUiState
-import com.asm.taken.model.SendPhoneFormUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -32,22 +26,84 @@ class LoginVM @Inject constructor(
     private val getCountriesInfoUC: GetCountriesInfoUC,
     private val phoneCodeMapper: PhoneCodeMapper
 ) : ViewModel() {
-    private val passwordPattern = Regex("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&#])[A-Za-z\\d@$!%*?&#]{8,}$")
     private val phoneNumberPattern = Regex("^[0-9]{10}$")
     private val phoneCodePattern = Regex("^[0-9]{1,3}$")
+    private val validateCodePattern = Regex("^[0-9]{6}$")
 
     //region MutableStateFlows
-    private val _loginFormSTF = MutableStateFlow(LoginFormUiState())
-    private val _sendPhoneFormSTF = MutableStateFlow(SendPhoneFormUiState())
-    private val _signInSTF = MutableStateFlow<SignInState?>(null)
-    private val _countriesInfoSTF = MutableStateFlow<CountriesInfoState>(CountriesInfoState.Loading)
+    private val _loginFormUiState = MutableStateFlow(LoginFormUiState(userIdUiState = InputUiState(), passwordUiState = InputUiState()))
+    private val _countriesUiState: MutableStateFlow<CountriesUiState> = MutableStateFlow(CountriesUiState.Loading)
+
     //endregion
 
     //region StateFlows
-    val loginFormSTF: StateFlow<LoginFormUiState> = _loginFormSTF
-    val sendPhoneFormSTF: StateFlow<SendPhoneFormUiState> = _sendPhoneFormSTF
+    val loginFormUiState: StateFlow<LoginFormUiState> = _loginFormUiState
+    val countriesUiState: StateFlow<CountriesUiState> = _countriesUiState
+
+    //endregion
+
+    fun validateLoginForm(userId: String, password: String) {
+        val errorsUserId = validateUserId(userId)
+        val errorsPassword = validatePassword(password)
+        _loginFormUiState.update {
+            val userIdUiState = errorsUserId.run {
+                if (isEmpty()) InputUiState(userId, InputState.Success)
+                else InputUiState(userId, InputState.Error(errorsUserId))
+            }
+            val passwordUiState = errorsPassword.run {
+                if (isEmpty()) InputUiState(password, InputState.Success)
+                else InputUiState(password, InputState.Error(errorsPassword))
+            }
+            it.copy(
+                userIdUiState = userIdUiState,
+                passwordUiState = passwordUiState,
+            )
+        }
+    }
+
+    fun getCountriesInfo() {
+        viewModelScope.launch {
+            val countriesState: CountriesUiState = when (val countriesResult = getCountriesInfoUC.execute(Unit)) {
+                is Result.Failure -> CountriesUiState.Failure("Error to get codes")
+                is Result.Successful -> {
+                    val phoneCodes = countriesResult.data.map(phoneCodeMapper::getPhoneCode)
+                    CountriesUiState.Successful(phoneCodes)
+                }
+            }
+            _countriesUiState.update { countriesState }
+        }
+    }
+
+    private fun validateUserId(userId: String): List<InputUserIdError> {
+        val errors = mutableListOf<InputUserIdError>()
+        if (userId.isEmpty()) errors.add(InputUserIdError.EMPTY)
+        return errors
+    }
+
+    private fun validatePassword(password: String): List<InputPasswordError> {
+        val errors = mutableListOf<InputPasswordError>()
+        if (password.isEmpty()) errors.add(InputPasswordError.EMPTY)
+        if (password.count() < 8) errors.add(InputPasswordError.LEAST_THAN_8_CHARACTERS)
+        if (!password.contains("[A-Z]".toRegex())) errors.add(InputPasswordError.LEAST_ONE_UPPERCASE)
+        if (!password.contains("\\d".toRegex())) errors.add(InputPasswordError.LEAST_ONE_NUMBER)
+        if (!password.contains("[@$!%*?&#]".toRegex())) errors.add(InputPasswordError.LEAST_ONE_SPECIAL_CHARACTER)
+        return errors
+    }
+
+   /* //region MutableStateFlows
+    private val _loginFormSTF = MutableStateFlow(LoginFormState())
+    private val _sendPhoneFormSTF = MutableStateFlow<SendPhoneFormState>(SendPhoneFormState.Loading)
+    private val _countriesInfoSTF = MutableStateFlow<GetCountriesInfoState>(GetCountriesInfoState.Loading)
+    private val _sentCodeFormSTF = MutableStateFlow(SentCodeFormState())
+    private val _signInSTF = MutableStateFlow<SignInState?>(null)
+    //endregion
+
+    //region StateFlows
+    val loginFormSTF: StateFlow<LoginFormState> = _loginFormSTF
+    val sendPhoneFormSTF: StateFlow<SendPhoneFormState> = _sendPhoneFormSTF
+    val countriesInfoSTF: StateFlow<GetCountriesInfoState> = _countriesInfoSTF
+    val sentCodeFormSTF: StateFlow<SentCodeFormState> = _sentCodeFormSTF
     val signInSTF: StateFlow<SignInState?> = _signInSTF
-    val countriesInfoSTF: StateFlow<CountriesInfoState> = _countriesInfoSTF
     //endregion
 
     fun validateLoginForm(userId: String?, password: String?) {
@@ -72,16 +128,25 @@ class LoginVM @Inject constructor(
         }
     }
 
+    fun validateSentCodeForm(codeSent: String?) {
+        val sentCodeState = validateSentCode(codeSent)
+        _sentCodeFormSTF.update {
+            it.copy(
+                sentCodeState = sentCodeState
+            )
+        }
+    }
+
     fun getCountriesInfo() {
         viewModelScope.launch {
-            val countriesInfoState: CountriesInfoState = when (val countriesResult = getCountriesInfoUC.execute(Unit)) {
-                is Result.Failure -> CountriesInfoState.Failure("Error to get codes")
+            val getCountriesInfoState: GetCountriesInfoState = when (val countriesResult = getCountriesInfoUC.execute(Unit)) {
+                is Result.Failure -> GetCountriesInfoState.Failure("Error to get codes")
                 is Result.Successful -> {
                     val phoneCodes = countriesResult.data.map(phoneCodeMapper::getPhoneCode)
-                    CountriesInfoState.Successful(phoneCodes)
+                    GetCountriesInfoState.Successful(phoneCodes)
                 }
             }
-            _countriesInfoSTF.update { countriesInfoState }
+            _countriesInfoSTF.update { getCountriesInfoState }
         }
     }
 
@@ -115,7 +180,7 @@ class LoginVM @Inject constructor(
     }
 
     fun resetSendPhoneForm() {
-        _sendPhoneFormSTF.value = SendPhoneFormUiState()
+        _sendPhoneFormSTF.value = SendPhoneFormState()
     }
 
     private fun validatePhoneNumber(phoneNumber: String?): PhoneNumberState {
@@ -132,6 +197,13 @@ class LoginVM @Inject constructor(
         return PhoneCodeState.IsValid(phoneCode)
     }
 
+    private fun validateSentCode(code: String?): SentCodeState {
+        if (code == null) return SentCodeState.Init
+        if (code.isEmpty()) return SentCodeState.IsEmpty
+        if (!code.matches(validateCodePattern)) return SentCodeState.IsInvalid(code)
+        return SentCodeState.IsInvalid(code)
+    }
+
     private fun validateUserId(userId: String?): UserIdUiState {
         if (userId == null) return UserIdUiState.Init
         if (userId.isEmpty()) return UserIdUiState.IsEmpty
@@ -143,6 +215,6 @@ class LoginVM @Inject constructor(
         if (password.isEmpty()) return PasswordUiState.IsEmpty
         if (!password.matches(passwordPattern)) return PasswordUiState.IsInvalid(password)
         return PasswordUiState.IsValid(password)
-    }
+    }*/
 
 }

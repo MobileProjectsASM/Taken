@@ -51,28 +51,28 @@ class MainActivity : ComponentActivity() {
                             resourceResolver,
                             navigationController,
                             signInWithGoogle = {
-                                lifecycleScope.launch {
-                                    val authResult = authenticationUiClient.signInWithGoogle()
-                                    loginVM.loginUser(authResult)
-                                }
+//                                lifecycleScope.launch {
+//                                    val authResult = authenticationUiClient.signInWithGoogle()
+//                                    loginVM.loginUser(authResult)
+//                                }
                             },
                             signInWithPhoneNumber = { phoneNumber ->
-                                authenticationUiClient.automaticSignInPhoneNumber(
-                                    this@MainActivity,
-                                    lifecycleScope,
-                                    phoneNumber,
-                                ) {
-                                    loginVM.loginUser(it)
-                                }
+//                                authenticationUiClient.automaticSignInPhoneNumber(
+//                                    this@MainActivity,
+//                                    lifecycleScope,
+//                                    phoneNumber,
+//                                ) {
+//                                    //loginVM.loginUser(it)
+//                                }
                             },
                             validatePhoneCode = { verificationId, phoneCode ->
-                                lifecycleScope.launch {
-                                    val authResult = authenticationUiClient.manualSignInPhoneNumber(
-                                        verificationId,
-                                        phoneCode
-                                    )
-                                    loginVM.loginUser(authResult)
-                                }
+//                                lifecycleScope.launch {
+//                                    val authResult = authenticationUiClient.manualSignInPhoneNumber(
+//                                        verificationId,
+//                                        phoneCode
+//                                    )
+//                                    //loginVM.loginUser(authResult)
+//                                }
                             }
                         )
                     }

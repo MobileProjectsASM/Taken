@@ -3,19 +3,20 @@ package com.asm.taken.ui
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material.icons.outlined.Cancel
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -23,6 +24,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -40,9 +42,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.asm.taken.R
-import com.asm.taken.ui.theme.Purple40
 import com.asm.taken.ui.theme.Purple80
-import com.asm.taken.ui.theme.PurpleGrey80
 
 @Composable
 fun PuzzleGeneralTitle(
@@ -66,10 +66,12 @@ fun PuzzleGeneralTitle(
 fun DefaultText(
     text: String,
     modifier: Modifier = Modifier,
+    color: Color = Color.Unspecified,
     textAlign: TextAlign = TextAlign.Start
 ) {
     Text(
         modifier = modifier,
+        color = color,
         fontSize = dimensionResource(
             id = R.dimen.default_text_size
         ).value.sp,
@@ -88,25 +90,42 @@ fun DefaultOutlinedTextField(
     visualTransformation: VisualTransformation = VisualTransformation.None,
     leadingIcon: @Composable (() -> Unit)? = null,
     trailingIcon: @Composable (() -> Unit)? = null,
-    errorMessage: String? = null,
+    errors: List<String> = listOf(),
     readOnly: Boolean = false,
     onValueChange: (String) -> Unit,
 ) {
-    OutlinedTextField(
-        modifier = modifier,
-        value = value,
-        label = stringResource(id = label).toDefaultText(),
-        keyboardOptions = keyboardOptions,
-        visualTransformation = visualTransformation,
-        leadingIcon = leadingIcon,
-        trailingIcon = trailingIcon,
-        onValueChange = onValueChange,
-        textStyle = TextStyle(fontFamily = puzzleFontFamily),
-        supportingText = errorMessage?.toDefaultText(),
-        isError = errorMessage != null,
-        readOnly = readOnly,
-        singleLine = true,
-    )
+    Column {
+        OutlinedTextField(
+            modifier = modifier,
+            value = value,
+            label = stringResource(id = label).toDefaultText(),
+            keyboardOptions = keyboardOptions,
+            visualTransformation = visualTransformation,
+            leadingIcon = leadingIcon,
+            trailingIcon = trailingIcon,
+            onValueChange = onValueChange,
+            textStyle = TextStyle(fontFamily = puzzleFontFamily),
+            isError = errors.isNotEmpty(),
+            readOnly = readOnly,
+            singleLine = true,
+            colors = OutlinedTextFieldDefaults.colors(
+                errorBorderColor = colorResource(R.color.input_error_color)
+            )
+        )
+        errors.forEach { error ->
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Outlined.Cancel,
+                    contentDescription = stringResource(R.string.txt_cd_error_input_icon),
+                    tint = colorResource(id = R.color.input_error_color)
+                )
+                DefaultText(
+                    error,
+                    color = colorResource(id = R.color.input_error_color)
+                )
+            }
+        }
+    }
 }
 
 @Composable
@@ -119,7 +138,7 @@ fun DefaultOutlinedTextFieldLI(
     leadingIcon: ImageVector,
     @StringRes cdLeadingIcon: Int,
     trailingIcon: @Composable (() -> Unit)? = null,
-    errorMessage: String? = null,
+    errors: List<String> = listOf(),
     readOnly: Boolean = false,
     onValueChange: (String) -> Unit,
 ) {
@@ -137,7 +156,7 @@ fun DefaultOutlinedTextFieldLI(
             )
         },
         trailingIcon = trailingIcon,
-        errorMessage = errorMessage,
+        errors = errors,
         readOnly = readOnly,
         onValueChange = onValueChange,
     )
@@ -155,7 +174,7 @@ fun DefaultOutlinedTextFieldTI(
     trailingIcon: ImageVector,
     @StringRes cdTrailingIcon: Int,
     onClickTrailingIcon: (() -> Unit)? = null,
-    errorMessage: String? = null,
+    errors: List<String> = listOf(),
     onValueChange: (String) -> Unit,
 ) {
     DefaultOutlinedTextFieldLI(
@@ -176,7 +195,7 @@ fun DefaultOutlinedTextFieldTI(
                 )
             }
         },
-        errorMessage = errorMessage,
+        errors = errors,
         onValueChange = onValueChange,
     )
 }
@@ -187,7 +206,7 @@ fun PasswordOutlinedTextField(
     @StringRes label: Int,
     password: String,
     leadingIcon: ImageVector,
-    passwordErrorMessage: String? = null,
+    errors: List<String> = listOf(),
     onPasswordChange: (String) -> Unit
 ) {
     var isPasswordVisible: Boolean by rememberSaveable { mutableStateOf(false) }
@@ -204,7 +223,7 @@ fun PasswordOutlinedTextField(
         onClickTrailingIcon = {
             isPasswordVisible = !isPasswordVisible
         },
-        errorMessage = passwordErrorMessage,
+        errors = errors,
         onValueChange = onPasswordChange
     )
 }
