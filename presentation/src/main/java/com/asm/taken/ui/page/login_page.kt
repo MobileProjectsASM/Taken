@@ -58,8 +58,6 @@ import com.asm.taken.vm.LoginVM
 @Composable
 fun LoginPage(
     loginVM: LoginVM,
-    resourceResolver: ResourceResolver,
-    navController: NavHostController,
     signInWithGoogle: () -> Unit,
     signInWithPhoneNumber: (String) -> Unit,
     validatePhoneCode: (String, String) -> Unit
@@ -158,7 +156,9 @@ fun LoginPage(
             PanelLogin(loginVM)
             PanelSocialMedia(
                 signInWithGoogle = signInWithGoogle,
-                signInWithPhoneNumber = { }
+                signInWithPhoneNumber = {
+
+                }
             )
             Box(modifier = Modifier.height(250.dp))
         }
