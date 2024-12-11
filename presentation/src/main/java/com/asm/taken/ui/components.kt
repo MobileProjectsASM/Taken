@@ -5,6 +5,9 @@ import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -107,8 +110,21 @@ fun DefaultOutlinedTextField(
     trailingIcon: @Composable (() -> Unit)? = null,
     errors: List<String> = listOf(),
     readOnly: Boolean = false,
-    onValueChange: (String) -> Unit,
+    onClickable: (() -> Unit)? = null,
+    onValueChange: ((String) -> Unit)? = null,
 ) {
+    val mutableInteractionSource = remember { MutableInteractionSource() }
+    if (onClickable != null) {
+        LaunchedEffect(mutableInteractionSource) {
+            val x = 0
+            mutableInteractionSource.interactions.collect { interaction ->
+                if (interaction is PressInteraction) {
+                    onClickable.invoke()
+                }
+            }
+        }
+    }
+
     Column {
         OutlinedTextField(
             modifier = modifier,
@@ -118,11 +134,12 @@ fun DefaultOutlinedTextField(
             visualTransformation = visualTransformation,
             leadingIcon = leadingIcon,
             trailingIcon = trailingIcon,
-            onValueChange = onValueChange,
+            onValueChange = onValueChange ?: {},
             textStyle = TextStyle(fontFamily = puzzleFontFamily),
             isError = errors.isNotEmpty(),
             readOnly = readOnly,
             singleLine = true,
+            interactionSource = mutableInteractionSource
         )
         if (errors.isNotEmpty()) {
             Spacer(modifier = Modifier.height(5.dp))
@@ -159,7 +176,8 @@ fun DefaultOutlinedTextFieldLI(
     trailingIcon: @Composable (() -> Unit)? = null,
     errors: List<String> = listOf(),
     readOnly: Boolean = false,
-    onValueChange: (String) -> Unit,
+    onClickable: (() -> Unit)? = null,
+    onValueChange: ((String) -> Unit)? = null,
 ) {
     DefaultOutlinedTextField(
         modifier = modifier,
@@ -177,6 +195,7 @@ fun DefaultOutlinedTextFieldLI(
         trailingIcon = trailingIcon,
         errors = errors,
         readOnly = readOnly,
+        onClickable = onClickable,
         onValueChange = onValueChange,
     )
 }

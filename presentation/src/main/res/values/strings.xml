@@ -2,6 +2,7 @@
     <string name="app_name">PUZZLE</string>
     <string name="txt_ttl_login_dialog">Welcome to Puzzle!!</string>
     <string name="txt_ttl_login_with_phone_number">Login with phone number!</string>
+    <string name="txt_ttl_choose_phone_code">Choose phone code</string>
     <string name="txt_ttl_form_phone_dialog">Verify phone number</string>"
     <string name="txt_inf_login_dialog">Login to continue</string>
     <string name="txt_inf_sign_in">Or sign in with …</string>
