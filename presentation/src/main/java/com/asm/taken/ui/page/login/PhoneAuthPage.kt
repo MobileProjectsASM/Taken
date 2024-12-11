@@ -32,6 +32,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -237,10 +238,9 @@ fun ChoosePhoneCodeDialog(
                 Column(
                     modifier = Modifier
                         .padding(
-                            horizontal = 16.dp,
-                            vertical = 10.dp
+                            vertical = 20.dp
                         )
-                        .height(500.dp)
+                        .height(400.dp)
                 ) {
                     Text(
                         modifier = Modifier.fillMaxWidth(),
@@ -270,14 +270,16 @@ fun ChoosePhoneCodeDialog(
 fun ItemCountry(countryUiState: CountryUiState, onClick: (CountryUiState) -> Unit) {
     Row(
         modifier = Modifier
-            .padding()
-            .clickable { onClick(countryUiState) },
+            .clickable { onClick(countryUiState) }
+            .padding(horizontal = 16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         AsyncImage(
             modifier = Modifier.size(50.dp),
             model = countryUiState.flag,
-            contentDescription = stringResource(id = R.string.txt_cd_country_flag)
+            contentDescription = stringResource(id = R.string.txt_cd_country_flag),
+            placeholder = painterResource(id = R.drawable.american_flag),
+            error = painterResource(id = R.drawable.american_flag)
         )
         Spacer(modifier = Modifier.width(10.dp))
         DefaultText(
