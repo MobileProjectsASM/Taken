@@ -86,16 +86,21 @@ fun PanelAuthPhone(countriesUiState: List<CountryUiState>?, loginVM: LoginVM) {
                 .fillMaxWidth()
                 .padding(20.dp)
         ) {
-            PuzzleGeneralTitle(
-                modifier = Modifier.fillMaxWidth(),
-                text = stringResource(id = R.string.txt_ttl_login_with_phone_number)
-            )
-            Spacer(modifier = Modifier.height(50.dp))
-            FormPhoneNumber(
-                countriesUiState = countriesUiState,
-                loginVM
+            Column(
+                modifier = Modifier
+                    .padding(vertical = 15.dp, horizontal = 10.dp)
             ) {
+                PuzzleGeneralTitle(
+                    modifier = Modifier.fillMaxWidth(),
+                    text = stringResource(id = R.string.txt_ttl_login_with_phone_number)
+                )
+                Spacer(modifier = Modifier.height(50.dp))
+                FormPhoneNumber(
+                    countriesUiState = countriesUiState,
+                    loginVM
+                ) {
 
+                }
             }
         }
         Box(modifier = Modifier.height(250.dp))
@@ -165,7 +170,7 @@ fun PhoneCodeInput(
     phoneCodeErrors: List<String>,
     loginVM: LoginVM
 ) {
-    if (countriesUiState == null) {
+    if (countriesUiState != null) {
         DefaultOutlinedTextFieldLI(
             modifier = modifier,
             value = codeValue,

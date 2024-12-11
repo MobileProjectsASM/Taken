@@ -122,7 +122,7 @@ class LoginVM @Inject constructor(
     private fun validatePhoneCode(phoneCode: String): List<InputPhoneCodeError> {
         val errors = mutableListOf<InputPhoneCodeError>()
         if (phoneCode.isEmpty()) errors.add(InputPhoneCodeError.EMPTY)
-        if (phoneCode.count() > 4) errors.add(InputPhoneCodeError.LESS_THAN_4_DIGITS)
+        if (phoneCode.count() > 3) errors.add(InputPhoneCodeError.LESS_THAN_4_DIGITS)
         if (!phoneCode.matches("^[0-9]+\$".toRegex())) errors.add(InputPhoneCodeError.ONLY_INT_NUMBERS)
         return errors
     }
