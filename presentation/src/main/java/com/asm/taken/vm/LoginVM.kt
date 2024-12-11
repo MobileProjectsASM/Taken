@@ -9,9 +9,12 @@ import com.asm.taken.mappers.PhoneCodeMapper
 import com.asm.taken.model.CountriesUiState
 import com.asm.taken.model.CountryUiState
 import com.asm.taken.model.InputPasswordError
+import com.asm.taken.model.InputPhoneCodeError
+import com.asm.taken.model.InputPhoneNumberError
 import com.asm.taken.model.InputState
 import com.asm.taken.model.InputUiState
 import com.asm.taken.model.InputUserIdError
+import com.asm.taken.model.LoginFormPhoneUiState
 import com.asm.taken.model.LoginFormUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -33,15 +36,20 @@ class LoginVM @Inject constructor(
     //region MutableStateFlows
     private val _loginFormUiState = MutableStateFlow(LoginFormUiState(userIdUiState = InputUiState(), passwordUiState = InputUiState()))
     private val _countriesUiState: MutableStateFlow<CountriesUiState> = MutableStateFlow(CountriesUiState.Loading)
+    private val _loginFormPhoneUiState: MutableStateFlow<LoginFormPhoneUiState> = MutableStateFlow(
+        LoginFormPhoneUiState(phoneCodeUiState = InputUiState(), phoneNumberUiState = InputUiState())
+    )
 
     //endregion
 
     //region StateFlows
     val loginFormUiState: StateFlow<LoginFormUiState> = _loginFormUiState
     val countriesUiState: StateFlow<CountriesUiState> = _countriesUiState
+    val loginFormPhoneUiState: StateFlow<LoginFormPhoneUiState> = _loginFormPhoneUiState
 
     //endregion
 
+    //region LoginForm
     fun validateLoginForm(userId: String, password: String) {
         val errorsUserId = validateUserId(userId)
         val errorsPassword = validatePassword(password)
@@ -89,6 +97,43 @@ class LoginVM @Inject constructor(
         if (!password.contains("[@$!%*?&#]".toRegex())) errors.add(InputPasswordError.LEAST_ONE_SPECIAL_CHARACTER)
         return errors
     }
+    //endregion
+
+    //region LoginPhoneForm
+    fun validatePhoneNumberForm(phoneCode: String, phoneNumber: String) {
+        val errorsPhoneCode = validatePhoneCode(phoneCode)
+        val errorsPhoneNumber = validatePhoneNumber(phoneNumber)
+        _loginFormPhoneUiState.update {
+            val phoneCodeUiState = errorsPhoneCode.run {
+                if (isEmpty()) InputUiState(phoneCode, InputState.Success)
+                else InputUiState(phoneCode, InputState.Error(errorsPhoneCode))
+            }
+            val phoneNumberUiState = errorsPhoneNumber.run {
+                if (isEmpty()) InputUiState(phoneNumber, InputState.Success)
+                else InputUiState(phoneNumber, InputState.Error(errorsPhoneNumber))
+            }
+            it.copy(
+                phoneCodeUiState = phoneCodeUiState,
+                phoneNumberUiState = phoneNumberUiState
+            )
+        }
+    }
+
+    private fun validatePhoneCode(phoneCode: String): List<InputPhoneCodeError> {
+        val errors = mutableListOf<InputPhoneCodeError>()
+        if (phoneCode.isEmpty()) errors.add(InputPhoneCodeError.EMPTY)
+        if (phoneCode.count() > 4) errors.add(InputPhoneCodeError.LESS_THAN_4_DIGITS)
+        if (!phoneCode.matches("^[0-9]+\$".toRegex())) errors.add(InputPhoneCodeError.ONLY_INT_NUMBERS)
+        return errors
+    }
+
+    private fun validatePhoneNumber(phoneNumber: String): List<InputPhoneNumberError> {
+        val errors = mutableListOf<InputPhoneNumberError>()
+        if (phoneNumber.isEmpty()) errors.add(InputPhoneNumberError.EMPTY)
+        if (!phoneNumber.matches("^[0-9]+\$".toRegex())) errors.add(InputPhoneNumberError.ONLY_INT_NUMBERS)
+        return errors
+    }
+    //endregion
 
    /* //region MutableStateFlows
     private val _loginFormSTF = MutableStateFlow(LoginFormState())

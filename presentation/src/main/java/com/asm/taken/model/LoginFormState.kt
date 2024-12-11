@@ -130,6 +130,11 @@ data class CountryUiState(
     val flag: String
 )
 
+data class LoginFormPhoneUiState(
+    val phoneCodeUiState: InputUiState<InputPhoneCodeError>,
+    val phoneNumberUiState: InputUiState<InputPhoneNumberError>
+)
+
 //region ERRORS
 
 enum class InputUserIdError {
@@ -142,6 +147,17 @@ enum class InputPasswordError {
     LEAST_ONE_NUMBER,
     LEAST_ONE_SPECIAL_CHARACTER,
     LEAST_ONE_UPPERCASE,
+}
+
+enum class InputPhoneCodeError {
+    EMPTY,
+    LESS_THAN_4_DIGITS,
+    ONLY_INT_NUMBERS
+}
+
+enum class InputPhoneNumberError {
+    EMPTY,
+    ONLY_INT_NUMBERS
 }
 
 enum class LoginError {

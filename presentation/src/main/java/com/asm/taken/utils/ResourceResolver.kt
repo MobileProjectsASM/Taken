@@ -1,9 +1,10 @@
 package com.asm.taken.utils
 
 import android.content.Context
-import androidx.annotation.StringRes
 import com.asm.taken.R
 import com.asm.taken.model.InputPasswordError
+import com.asm.taken.model.InputPhoneCodeError
+import com.asm.taken.model.InputPhoneNumberError
 import com.asm.taken.model.InputUserIdError
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
@@ -26,6 +27,17 @@ class MessageResolver {
             InputPasswordError.LEAST_ONE_NUMBER -> R.string.err_least_one_number
             InputPasswordError.LEAST_ONE_SPECIAL_CHARACTER -> R.string.err_least_one_character
             InputPasswordError.LEAST_ONE_UPPERCASE -> R.string.err_least_one_uppercase
+        }
+
+        fun getErrorPhoneCode(error: InputPhoneCodeError): Int = when (error) {
+            InputPhoneCodeError.EMPTY -> R.string.err_empty_field
+            InputPhoneCodeError.LESS_THAN_4_DIGITS -> R.string.err_less_than_4_digits
+            InputPhoneCodeError.ONLY_INT_NUMBERS -> R.string.err_only_int_numbers
+        }
+
+        fun getErrorPhoneNumber(error: InputPhoneNumberError): Int = when (error) {
+            InputPhoneNumberError.EMPTY -> R.string.err_empty_field
+            InputPhoneNumberError.ONLY_INT_NUMBERS -> R.string.err_only_int_numbers
         }
     }
 }
