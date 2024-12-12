@@ -24,6 +24,7 @@ import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.outlined.Cancel
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
@@ -57,6 +58,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import com.asm.taken.R
 import com.asm.taken.ui.theme.Purple80
 
@@ -116,9 +119,8 @@ fun DefaultOutlinedTextField(
     val mutableInteractionSource = remember { MutableInteractionSource() }
     if (onClickable != null) {
         LaunchedEffect(mutableInteractionSource) {
-            val x = 0
             mutableInteractionSource.interactions.collect { interaction ->
-                if (interaction is PressInteraction) {
+                if (interaction is PressInteraction.Press) {
                     onClickable.invoke()
                 }
             }
@@ -162,6 +164,27 @@ fun DefaultOutlinedTextField(
             }
         }
     }
+}
+
+@Composable
+fun SimpleOutlinedTextField(
+    modifier: Modifier = Modifier,
+    value: String,
+    keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
+    visualTransformation: VisualTransformation = VisualTransformation.None,
+    readOnly: Boolean = false,
+    onValueChange: ((String) -> Unit)? = null,
+) {
+    OutlinedTextField(
+        modifier = modifier,
+        value = value,
+        keyboardOptions = keyboardOptions,
+        visualTransformation = visualTransformation,
+        onValueChange = onValueChange ?: {},
+        textStyle = TextStyle(fontFamily = puzzleFontFamily),
+        readOnly = readOnly,
+        singleLine = true,
+    )
 }
 
 @Composable
@@ -324,6 +347,25 @@ fun DefaultImageButton(
             painter = painterResource(id = iconButton),
             contentDescription = stringResource(id = cdIconButton)
         )
+    }
+}
+
+@Composable
+fun ProgressDialog(progressContent: @Composable () -> Unit) {
+    Dialog(
+        onDismissRequest = {},
+        properties = DialogProperties(
+            dismissOnBackPress = false,
+            dismissOnClickOutside = false
+        )
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            progressContent()
+        }
     }
 }
 

@@ -135,6 +135,29 @@ data class LoginFormPhoneUiState(
     val phoneNumberUiState: InputUiState<InputPhoneNumberError>
 )
 
+//region Authentication
+
+sealed class SendOtpResult {
+    data object Loading: SendOtpResult()
+    data class SentOtp(val verificationId: String): SendOtpResult()
+    data class AutomaticAuthWithPhone(val userData: UserData): SendOtpResult()
+    data class Failure(val sendOtpError: SendOtpError): SendOtpResult()
+}
+
+sealed class AuthResult {
+    data class Successful(val userData: UserData): AuthResult()
+    data class PhoneCodeSent(val verificationId: String): AuthResult()
+    data class Failure(val authError: AuthError): AuthResult()
+}
+
+data class UserData(
+    val userId: String,
+    val username: String?,
+    val profilePictureUrl: String?
+)
+
+//endregion
+
 //region ERRORS
 
 enum class InputUserIdError {
@@ -166,4 +189,20 @@ enum class LoginError {
     UNKNOWN_ERROR
 }
 
+enum class SendOtpError {
+    SEND_OTP_ERROR,
+    AUTH_ERROR,
+    UNKNOWN_ERROR
+}
+
+enum class AuthError {
+    AUTH_ERROR,
+    UNKNOWN_ERROR
+}
+
+enum class InputOtpError {
+    EMPTY,
+    BE_6_DIGITS,
+    ONLY_INT_NUMBERS
+}
 //endregion

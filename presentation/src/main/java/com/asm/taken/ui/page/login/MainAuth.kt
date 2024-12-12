@@ -24,6 +24,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavHostController
 import com.asm.taken.R
 import com.asm.taken.model.InputState
 import com.asm.taken.model.LoginFormUiState
@@ -34,14 +35,15 @@ import com.asm.taken.ui.DefaultText
 import com.asm.taken.ui.DefaultTextButton
 import com.asm.taken.ui.PasswordOutlinedTextField
 import com.asm.taken.ui.PuzzleGeneralTitle
+import com.asm.taken.ui.navigation.AuthenticationPhone
 import com.asm.taken.utils.MessageResolver
 import com.asm.taken.vm.LoginVM
 
 @Composable
 fun MainAuthPage(
     loginVM: LoginVM,
-    signInWithGoogle: () -> Unit,
-    navigateToPhoneNumberScreen: () -> Unit,
+    navController: NavHostController,
+    signInWithGoogle: () -> Unit
 ) {
     /*LaunchedEffect(key1 = signInUiState) {
         if (signInUiState == null) return@LaunchedEffect
@@ -91,8 +93,9 @@ fun MainAuthPage(
         PanelLogin(loginVM)
         PanelSocialMedia(
             signInWithGoogle = signInWithGoogle,
-            signInWithPhoneNumber = navigateToPhoneNumberScreen
-        )
+        ) {
+            navController.navigate(AuthenticationPhone.route)
+        }
         Box(modifier = Modifier.height(250.dp))
     }
 }

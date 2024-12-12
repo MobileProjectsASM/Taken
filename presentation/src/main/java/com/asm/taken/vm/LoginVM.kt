@@ -8,6 +8,7 @@ import com.asm.domain.use_cases.GetGamerUC
 import com.asm.taken.mappers.PhoneCodeMapper
 import com.asm.taken.model.CountriesUiState
 import com.asm.taken.model.CountryUiState
+import com.asm.taken.model.InputOtpError
 import com.asm.taken.model.InputPasswordError
 import com.asm.taken.model.InputPhoneCodeError
 import com.asm.taken.model.InputPhoneNumberError
@@ -16,6 +17,7 @@ import com.asm.taken.model.InputUiState
 import com.asm.taken.model.InputUserIdError
 import com.asm.taken.model.LoginFormPhoneUiState
 import com.asm.taken.model.LoginFormUiState
+import com.asm.taken.model.SendOtpResult
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -39,6 +41,10 @@ class LoginVM @Inject constructor(
     private val _loginFormPhoneUiState: MutableStateFlow<LoginFormPhoneUiState> = MutableStateFlow(
         LoginFormPhoneUiState(phoneCodeUiState = InputUiState(), phoneNumberUiState = InputUiState())
     )
+    private val _sendOtpResultUiState: MutableStateFlow<SendOtpResult?> = MutableStateFlow(null)
+    private val _otpFormUiState: MutableStateFlow<InputUiState<InputOtpError>> = MutableStateFlow(
+        InputUiState()
+    )
 
     //endregion
 
@@ -46,6 +52,8 @@ class LoginVM @Inject constructor(
     val loginFormUiState: StateFlow<LoginFormUiState> = _loginFormUiState
     val countriesUiState: StateFlow<CountriesUiState> = _countriesUiState
     val loginFormPhoneUiState: StateFlow<LoginFormPhoneUiState> = _loginFormPhoneUiState
+    val sendOtpResultUiState: StateFlow<SendOtpResult?> = _sendOtpResultUiState
+    val otpFormUiState: StateFlow<InputUiState<InputOtpError>> = _otpFormUiState
 
     //endregion
 
@@ -80,6 +88,10 @@ class LoginVM @Inject constructor(
             }
             _countriesUiState.update { countriesState }
         }
+    }
+
+    fun updateSendOtpResult(sendOtpResult: SendOtpResult?) {
+        _sendOtpResultUiState.update { sendOtpResult }
     }
 
     private fun validateUserId(userId: String): List<InputUserIdError> {
@@ -119,6 +131,16 @@ class LoginVM @Inject constructor(
         }
     }
 
+    fun validateOtpForm(otp: String) {
+        val errorsOtp = validateOtp(otp)
+        _otpFormUiState.update {
+            it.copy(
+                value = otp,
+                state = if (errorsOtp.isEmpty()) InputState.Success else InputState.Error(errorsOtp)
+            )
+        }
+    }
+
     private fun validatePhoneCode(phoneCode: String): List<InputPhoneCodeError> {
         val errors = mutableListOf<InputPhoneCodeError>()
         if (phoneCode.isEmpty()) errors.add(InputPhoneCodeError.EMPTY)
@@ -133,23 +155,17 @@ class LoginVM @Inject constructor(
         if (!phoneNumber.matches("^[0-9]+\$".toRegex())) errors.add(InputPhoneNumberError.ONLY_INT_NUMBERS)
         return errors
     }
+
+    private fun validateOtp(otp: String): List<InputOtpError> {
+        val errors = mutableListOf<InputOtpError>()
+        if (otp.isEmpty()) errors.add(InputOtpError.EMPTY)
+        if (otp.count() != 6) errors.add(InputOtpError.BE_6_DIGITS)
+        if (!otp.matches("^[0-9]+\$".toRegex())) errors.add(InputOtpError.ONLY_INT_NUMBERS)
+        return errors
+    }
     //endregion
 
    /* //region MutableStateFlows
-    private val _loginFormSTF = MutableStateFlow(LoginFormState())
-    private val _sendPhoneFormSTF = MutableStateFlow<SendPhoneFormState>(SendPhoneFormState.Loading)
-    private val _countriesInfoSTF = MutableStateFlow<GetCountriesInfoState>(GetCountriesInfoState.Loading)
-    private val _sentCodeFormSTF = MutableStateFlow(SentCodeFormState())
-    private val _signInSTF = MutableStateFlow<SignInState?>(null)
-    //endregion
-
-    //region StateFlows
-    val loginFormSTF: StateFlow<LoginFormState> = _loginFormSTF
-    val sendPhoneFormSTF: StateFlow<SendPhoneFormState> = _sendPhoneFormSTF
-    val countriesInfoSTF: StateFlow<GetCountriesInfoState> = _countriesInfoSTF
-    val sentCodeFormSTF: StateFlow<SentCodeFormState> = _sentCodeFormSTF
-    val signInSTF: StateFlow<SignInState?> = _signInSTF
-    //endregion
 
     fun validateLoginForm(userId: String?, password: String?) {
         val userIdUiState = validateUserId(userId)
@@ -179,19 +195,6 @@ class LoginVM @Inject constructor(
             it.copy(
                 sentCodeState = sentCodeState
             )
-        }
-    }
-
-    fun getCountriesInfo() {
-        viewModelScope.launch {
-            val getCountriesInfoState: GetCountriesInfoState = when (val countriesResult = getCountriesInfoUC.execute(Unit)) {
-                is Result.Failure -> GetCountriesInfoState.Failure("Error to get codes")
-                is Result.Successful -> {
-                    val phoneCodes = countriesResult.data.map(phoneCodeMapper::getPhoneCode)
-                    GetCountriesInfoState.Successful(phoneCodes)
-                }
-            }
-            _countriesInfoSTF.update { getCountriesInfoState }
         }
     }
 
@@ -226,40 +229,6 @@ class LoginVM @Inject constructor(
 
     fun resetSendPhoneForm() {
         _sendPhoneFormSTF.value = SendPhoneFormState()
-    }
-
-    private fun validatePhoneNumber(phoneNumber: String?): PhoneNumberState {
-        if (phoneNumber == null) return PhoneNumberState.Init
-        if (phoneNumber.isEmpty()) return PhoneNumberState.IsEmpty
-        if (!phoneNumber.matches(phoneNumberPattern)) return PhoneNumberState.IsInvalid(phoneNumber)
-        return PhoneNumberState.IsValid(phoneNumber)
-    }
-
-    private fun validatePhoneCode(phoneCode: String?): PhoneCodeState {
-        if (phoneCode == null) return PhoneCodeState.Init
-        if (phoneCode.isEmpty()) return PhoneCodeState.IsEmpty
-        if (!phoneCode.matches(phoneCodePattern)) return PhoneCodeState.IsInvalid(phoneCode)
-        return PhoneCodeState.IsValid(phoneCode)
-    }
-
-    private fun validateSentCode(code: String?): SentCodeState {
-        if (code == null) return SentCodeState.Init
-        if (code.isEmpty()) return SentCodeState.IsEmpty
-        if (!code.matches(validateCodePattern)) return SentCodeState.IsInvalid(code)
-        return SentCodeState.IsInvalid(code)
-    }
-
-    private fun validateUserId(userId: String?): UserIdUiState {
-        if (userId == null) return UserIdUiState.Init
-        if (userId.isEmpty()) return UserIdUiState.IsEmpty
-        return UserIdUiState.IsValid(userId)
-    }
-
-    private fun validatePassword(password: String?): PasswordUiState {
-        if (password == null) return PasswordUiState.Init
-        if (password.isEmpty()) return PasswordUiState.IsEmpty
-        if (!password.matches(passwordPattern)) return PasswordUiState.IsInvalid(password)
-        return PasswordUiState.IsValid(password)
     }*/
 
 }

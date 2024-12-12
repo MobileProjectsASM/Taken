@@ -1,12 +1,15 @@
 package com.asm.taken.ui.navigation
 
+import android.app.Activity
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
@@ -17,12 +20,14 @@ import androidx.navigation.navigation
 import com.asm.taken.ui.page.login.BackgroundLogin
 import com.asm.taken.ui.page.login.MainAuthPage
 import com.asm.taken.ui.page.login.PhoneAuthPage
+import com.asm.taken.utils.AuthenticationUiClient
 import com.asm.taken.vm.LoginVM
 
 @Composable
 fun MainNavigation(
     innerPadding: PaddingValues,
-    snackBarHostState: SnackbarHostState
+    snackBarHostState: SnackbarHostState,
+    authenticationUiClient: AuthenticationUiClient
 ) {
     val navigationController = rememberNavController()
     NavHost(
@@ -32,14 +37,16 @@ fun MainNavigation(
     ) {
         navigationLogin(
             navController = navigationController,
-            snackBarHostState = snackBarHostState
+            snackBarHostState = snackBarHostState,
+            authenticationUiClient = authenticationUiClient
         )
     }
 }
 
 fun NavGraphBuilder.navigationLogin(
     navController: NavHostController,
-    snackBarHostState: SnackbarHostState
+    snackBarHostState: SnackbarHostState,
+    authenticationUiClient: AuthenticationUiClient
 ) {
     navigation(
         startDestination = Authentication.route,
@@ -53,17 +60,17 @@ fun NavGraphBuilder.navigationLogin(
             BackgroundLogin {
                 MainAuthPage(
                     loginVM,
+                    navController = navController,
                     signInWithGoogle = { },
-                    navigateToPhoneNumberScreen = {
-                        navController.navigate(AuthenticationPhone.route)
-                    }
                 )
             }
         }
         composable(route = AuthenticationPhone.route) { navBackStackEntry ->
+            val coroutineScope = rememberCoroutineScope()
             val parentEntry = remember(navBackStackEntry) {
                 navController.getBackStackEntry(Login.route)
             }
+            val context = LocalContext.current
             val loginVM = hiltViewModel<LoginVM>(parentEntry)
             BackgroundLogin {
                 LaunchedEffect(true) {
@@ -71,7 +78,16 @@ fun NavGraphBuilder.navigationLogin(
                 }
                 PhoneAuthPage(
                     loginVM,
-                    snackBarHostState = snackBarHostState
+                    navController,
+                    snackBarHostState = snackBarHostState,
+                    onSentPhone = { code, phoneNumber ->
+                        authenticationUiClient.authWithPhoneNumber(
+                            context as Activity,
+                            coroutineScope = coroutineScope,
+                            phoneNumber = "$code$phoneNumber",
+                            onOtpSend = loginVM::updateSendOtpResult
+                        )
+                    }
                 )
             }
         }

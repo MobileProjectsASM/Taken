@@ -38,6 +38,12 @@
     <string name="err_less_than_4_digits">Less than 4 digits</string>
     <string name="err_invalid_phone_number">Invalid phone number</string>
     <string name="err_only_int_numbers">Only int numbers</string>
+    <string name="err_send_otp">Error to send Otp</string>
+    <string name="err_auth_with_phone">Error to auth with phone</string>
+    <string name="err_unknown">Unknown error</string>
+    <string name="err_otp_empty">Otp must not be empty</string>
+    <string name="err_otp_be_n_digits">Otp must be %d digits long</string>
+
     <string name="default_web_client_id">537568996262-c7nrhuvi4s9jaukcg9uh0hvm98l9ubls.apps.googleusercontent.com</string>
     <string name="api_key_country_service">1274|gSQVz5Qf9OfRRwUhxEbDBhzz2c48b21KbXDjvnPB</string>
     <string name="api_base_url_country_service">https://restfulcountries.com/</string>

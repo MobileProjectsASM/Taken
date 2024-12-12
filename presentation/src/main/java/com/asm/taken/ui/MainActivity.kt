@@ -28,7 +28,9 @@ class MainActivity : ComponentActivity() {
         setContent {
             TakenTheme {
                 Surface {
-                    PuzzleScaffold()
+                    PuzzleScaffold(
+                        authenticationUiClient = authenticationUiClient
+                    )
                 }
             }
         }
@@ -36,7 +38,7 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun PuzzleScaffold() {
+fun PuzzleScaffold(authenticationUiClient: AuthenticationUiClient) {
     val snackBarHostState = remember { SnackbarHostState() }
 
     Scaffold(
@@ -44,7 +46,8 @@ fun PuzzleScaffold() {
     ) { innerPadding ->
         MainNavigation(
             innerPadding,
-            snackBarHostState = snackBarHostState
+            snackBarHostState = snackBarHostState,
+            authenticationUiClient = authenticationUiClient
         )
     }
 }
