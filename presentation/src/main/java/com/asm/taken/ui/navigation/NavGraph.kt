@@ -21,13 +21,15 @@ import com.asm.taken.ui.page.login.BackgroundLogin
 import com.asm.taken.ui.page.login.MainAuthPage
 import com.asm.taken.ui.page.login.PhoneAuthPage
 import com.asm.taken.utils.AuthenticationUiClient
+import com.asm.taken.utils.MessageResolver
 import com.asm.taken.vm.LoginVM
 
 @Composable
 fun MainNavigation(
     innerPadding: PaddingValues,
     snackBarHostState: SnackbarHostState,
-    authenticationUiClient: AuthenticationUiClient
+    authenticationUiClient: AuthenticationUiClient,
+    messageResolver: MessageResolver
 ) {
     val navigationController = rememberNavController()
     NavHost(
@@ -38,7 +40,8 @@ fun MainNavigation(
         navigationLogin(
             navController = navigationController,
             snackBarHostState = snackBarHostState,
-            authenticationUiClient = authenticationUiClient
+            authenticationUiClient = authenticationUiClient,
+            messageResolver = messageResolver
         )
     }
 }
@@ -46,7 +49,8 @@ fun MainNavigation(
 fun NavGraphBuilder.navigationLogin(
     navController: NavHostController,
     snackBarHostState: SnackbarHostState,
-    authenticationUiClient: AuthenticationUiClient
+    authenticationUiClient: AuthenticationUiClient,
+    messageResolver: MessageResolver
 ) {
     navigation(
         startDestination = Authentication.route,
@@ -61,6 +65,7 @@ fun NavGraphBuilder.navigationLogin(
                 MainAuthPage(
                     loginVM,
                     navController = navController,
+                    messageResolver = messageResolver,
                     signInWithGoogle = { },
                 )
             }
@@ -77,8 +82,9 @@ fun NavGraphBuilder.navigationLogin(
                     loginVM.getCountriesInfo()
                 }
                 PhoneAuthPage(
-                    loginVM,
-                    navController,
+                    loginVM = loginVM,
+                    navController = navController,
+                    messageResolver = messageResolver,
                     snackBarHostState = snackBarHostState,
                     onSentPhone = { code, phoneNumber ->
                         authenticationUiClient.authWithPhoneNumber(

@@ -68,33 +68,53 @@ import com.asm.taken.vm.LoginVM
 fun PhoneAuthPage(
     loginVM: LoginVM,
     navController: NavHostController,
+    messageResolver: MessageResolver,
     snackBarHostState: SnackbarHostState,
     onSentPhone: (String, String) -> Unit
 ) {
     val countriesUiState: CountriesUiState by loginVM.countriesUiState.collectAsStateWithLifecycle()
     val sendOtpResultUiState: SendOtpResult? by loginVM.sendOtpResultUiState.collectAsStateWithLifecycle()
 
+    AuthWithPhone(
+        loginVM = loginVM,
+        messageResolver = messageResolver,
+        countriesUiState = countriesUiState,
+        snackBarHostState = snackBarHostState,
+        onSentPhone = onSentPhone
+    )
+    SendOtpView(
+        loginVM = loginVM,
+        messageResolver = messageResolver,
+        navController = navController,
+        sendOtpResultUiState = sendOtpResultUiState,
+        snackBarHostState = snackBarHostState
+    )
+}
+
+@Composable
+fun AuthWithPhone(
+    loginVM: LoginVM,
+    messageResolver: MessageResolver,
+    countriesUiState: CountriesUiState,
+    snackBarHostState: SnackbarHostState,
+    onSentPhone: (String, String) -> Unit
+) {
     when (countriesUiState) {
         is CountriesUiState.Failure -> ErrorCountries(
-            message = (countriesUiState as CountriesUiState.Failure).errorMessage,
+            message = countriesUiState.errorMessage,
             snackBarHostState = snackBarHostState,
             loginVM = loginVM,
+            messageResolver = messageResolver,
             onSentPhone = onSentPhone
         )
         CountriesUiState.Loading -> CircularProgressDialog()
         is CountriesUiState.Successful -> PanelAuthPhone(
-            countriesUiState = (countriesUiState as CountriesUiState.Successful).countriesInfo,
+            countriesUiState = countriesUiState.countriesInfo,
             loginVM = loginVM,
+            messageResolver = messageResolver,
             onSentPhone = onSentPhone
         )
     }
-    OtpDialog(loginVM = loginVM)
-    /*SendOtpView(
-        loginVM = loginVM,
-        navController = navController,
-        sendOtpResultUiState = sendOtpResultUiState,
-        snackBarHostState = snackBarHostState
-    )*/
 }
 
 @Composable
@@ -102,6 +122,7 @@ fun ErrorCountries(
     message: String,
     snackBarHostState: SnackbarHostState,
     loginVM: LoginVM,
+    messageResolver: MessageResolver,
     onSentPhone: (String, String) -> Unit
 ) {
     LaunchedEffect(true) {
@@ -110,6 +131,7 @@ fun ErrorCountries(
     PanelAuthPhone(
         countriesUiState = null,
         loginVM = loginVM,
+        messageResolver = messageResolver,
         onSentPhone = onSentPhone
     )
 }
@@ -118,6 +140,7 @@ fun ErrorCountries(
 fun PanelAuthPhone(
     countriesUiState: List<CountryUiState>?,
     loginVM: LoginVM,
+    messageResolver: MessageResolver,
     onSentPhone: (String, String) -> Unit
 ) {
     Column(
@@ -143,6 +166,7 @@ fun PanelAuthPhone(
                 FormPhoneNumber(
                     countriesUiState = countriesUiState,
                     loginVM = loginVM,
+                    messageResolver = messageResolver,
                     onSentPhone = onSentPhone
                 )
             }
@@ -155,15 +179,16 @@ fun PanelAuthPhone(
 fun FormPhoneNumber(
     countriesUiState: List<CountryUiState>?,
     loginVM: LoginVM,
+    messageResolver: MessageResolver,
     onSentPhone: (String, String) -> Unit
 ) {
     val loginPhoneFormState by loginVM.loginFormPhoneUiState.collectAsStateWithLifecycle()
     val phoneCodeErrors: List<String> = when (val phoneCodeUiState = loginPhoneFormState.phoneCodeUiState.state) {
-        is InputState.Error -> phoneCodeUiState.errors.map { stringResource(MessageResolver.getErrorPhoneCode(it)) }
+        is InputState.Error -> phoneCodeUiState.errors.map { messageResolver.getErrorPhoneCode(it) }
         InputState.Init, InputState.Success -> listOf()
     }
     val phoneNumberErrors: List<String> = when (val phoneNumberUiState = loginPhoneFormState.phoneNumberUiState.state) {
-        is InputState.Error -> phoneNumberUiState.errors.map { stringResource(MessageResolver.getErrorPhoneNumber(it)) }
+        is InputState.Error -> phoneNumberUiState.errors.map { messageResolver.getErrorPhoneNumber(it) }
         InputState.Init, InputState.Success -> listOf()
     }
     Column {
@@ -320,6 +345,7 @@ fun ItemCountry(countryUiState: CountryUiState, onClick: (CountryUiState) -> Uni
 @Composable
 fun SendOtpView(
     loginVM: LoginVM,
+    messageResolver: MessageResolver,
     navController: NavHostController,
     sendOtpResultUiState: SendOtpResult?,
     snackBarHostState: SnackbarHostState
@@ -332,14 +358,15 @@ fun SendOtpView(
                 }
             }
             is SendOtpResult.Failure -> {
-                val message = stringResource(id = MessageResolver.getErrorSendOtp(sendOtpResultUiState.sendOtpError))
+                val message = messageResolver.getErrorSendOtp(sendOtpResultUiState.sendOtpError)
                 LaunchedEffect(true) {
                     snackBarHostState.showSnackbar(message, withDismissAction = true)
                 }
             }
             SendOtpResult.Loading -> CircularProgressDialog()
             is SendOtpResult.SentOtp -> OtpDialog(
-                loginVM = loginVM
+                loginVM = loginVM,
+                messageResolver = messageResolver
             )
         }
     }
@@ -358,10 +385,13 @@ fun CircularProgressDialog() {
 }
 
 @Composable
-fun OtpDialog(loginVM: LoginVM) {
+fun OtpDialog(
+    loginVM: LoginVM,
+    messageResolver: MessageResolver
+) {
     val otpFormUiState by loginVM.otpFormUiState.collectAsStateWithLifecycle()
     val otpErrors: List<String> = when (val otpFormState = otpFormUiState.state) {
-        is InputState.Error -> otpFormState.errors.map { stringResource(MessageResolver.getErrorVerifyOtp(it)) }
+        is InputState.Error -> otpFormState.errors.map { messageResolver.getErrorVerifyOtp(it) }
         InputState.Init, InputState.Success -> listOf()
     }
 
@@ -434,7 +464,7 @@ fun OtpDialog(loginVM: LoginVM) {
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     DefaultButton(
-                        text = stringResource(id = R.string.txt_btn_send),
+                        text = stringResource(id = R.string.txt_btn_verify),
                         enable = otpFormUiState.state is InputState.Success,
                     ) {
 

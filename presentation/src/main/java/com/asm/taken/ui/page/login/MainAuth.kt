@@ -43,6 +43,7 @@ import com.asm.taken.vm.LoginVM
 fun MainAuthPage(
     loginVM: LoginVM,
     navController: NavHostController,
+    messageResolver: MessageResolver,
     signInWithGoogle: () -> Unit
 ) {
     /*LaunchedEffect(key1 = signInUiState) {
@@ -90,7 +91,10 @@ fun MainAuthPage(
             .verticalScroll(rememberScrollState())
     ) {
         Box(modifier = Modifier.height(250.dp))
-        PanelLogin(loginVM)
+        PanelLogin(
+            loginVM = loginVM,
+            messageResolver = messageResolver
+        )
         PanelSocialMedia(
             signInWithGoogle = signInWithGoogle,
         ) {
@@ -101,7 +105,10 @@ fun MainAuthPage(
 }
 
 @Composable
-fun PanelLogin(loginVM: LoginVM) {
+fun PanelLogin(
+    loginVM: LoginVM,
+    messageResolver: MessageResolver
+) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -124,6 +131,7 @@ fun PanelLogin(loginVM: LoginVM) {
             Spacer(modifier = Modifier.height(50.dp))
             FormLogin(
                 loginVM = loginVM,
+                messageResolver = messageResolver
             ) {
 
             }
@@ -134,16 +142,17 @@ fun PanelLogin(loginVM: LoginVM) {
 @Composable
 fun FormLogin(
     loginVM: LoginVM,
+    messageResolver: MessageResolver,
     onSubmit: () -> Unit,
 ) {
     val loginFormState: LoginFormUiState by loginVM.loginFormUiState.collectAsStateWithLifecycle()
     val userIdErrors: List<String> = when (val userIdUiState = loginFormState.userIdUiState.state) {
-        is InputState.Error -> userIdUiState.errors.map { stringResource(MessageResolver.getErrorUserId(it)) }
+        is InputState.Error -> userIdUiState.errors.map { messageResolver.getErrorUserId(it) }
         InputState.Init -> listOf()
         InputState.Success -> listOf()
     }
     val passwordErrors: List<String> = when (val passwordUiState = loginFormState.passwordUiState.state) {
-        is InputState.Error -> passwordUiState.errors.map { stringResource(MessageResolver.getErrorPassword(it)) }
+        is InputState.Error -> passwordUiState.errors.map { messageResolver.getErrorPassword(it) }
         InputState.Init -> listOf()
         InputState.Success -> listOf()
     }

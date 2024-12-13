@@ -18,41 +18,41 @@ class ResourceResolver @Inject constructor(
     fun getString(resource: Int): String = context.getString(resource)
 }
 
-class MessageResolver {
-    companion object {
-        fun getErrorUserId(error: InputUserIdError): Int = when (error) {
-            InputUserIdError.EMPTY -> R.string.err_empty_field
-        }
+class MessageResolver @Inject constructor(
+    @ApplicationContext val context: Context
+) {
+    fun getErrorUserId(error: InputUserIdError): String = when (error) {
+        InputUserIdError.EMPTY -> context.getString(R.string.err_empty_field)
+    }
 
-        fun getErrorPassword(error: InputPasswordError): Int = when (error) {
-            InputPasswordError.EMPTY -> R.string.err_empty_field
-            InputPasswordError.LEAST_THAN_8_CHARACTERS -> R.string.err_min_8_characters
-            InputPasswordError.LEAST_ONE_NUMBER -> R.string.err_least_one_number
-            InputPasswordError.LEAST_ONE_SPECIAL_CHARACTER -> R.string.err_least_one_character
-            InputPasswordError.LEAST_ONE_UPPERCASE -> R.string.err_least_one_uppercase
-        }
+    fun getErrorPassword(error: InputPasswordError): String = when (error) {
+        InputPasswordError.EMPTY -> context.getString(R.string.err_empty_field)
+        InputPasswordError.LEAST_THAN_8_CHARACTERS -> context.getString(R.string.err_min_8_characters)
+        InputPasswordError.LEAST_ONE_NUMBER -> context.getString(R.string.err_least_one_number)
+        InputPasswordError.LEAST_ONE_SPECIAL_CHARACTER -> context.getString(R.string.err_least_one_character)
+        InputPasswordError.LEAST_ONE_UPPERCASE -> context.getString(R.string.err_least_one_uppercase)
+    }
 
-        fun getErrorPhoneCode(error: InputPhoneCodeError): Int = when (error) {
-            InputPhoneCodeError.EMPTY -> R.string.err_empty_field
-            InputPhoneCodeError.LESS_THAN_4_DIGITS -> R.string.err_less_than_4_digits
-            InputPhoneCodeError.ONLY_INT_NUMBERS -> R.string.err_only_int_numbers
-        }
+    fun getErrorPhoneCode(error: InputPhoneCodeError): String = when (error) {
+        InputPhoneCodeError.EMPTY -> context.getString(R.string.err_empty_field)
+        InputPhoneCodeError.LESS_THAN_4_DIGITS -> context.getString(R.string.err_less_than_4_digits)
+        InputPhoneCodeError.ONLY_INT_NUMBERS -> context.getString(R.string.err_only_int_numbers)
+    }
 
-        fun getErrorPhoneNumber(error: InputPhoneNumberError): Int = when (error) {
-            InputPhoneNumberError.EMPTY -> R.string.err_empty_field
-            InputPhoneNumberError.ONLY_INT_NUMBERS -> R.string.err_only_int_numbers
-        }
+    fun getErrorPhoneNumber(error: InputPhoneNumberError): String = when (error) {
+        InputPhoneNumberError.EMPTY -> context.getString(R.string.err_empty_field)
+        InputPhoneNumberError.ONLY_INT_NUMBERS -> context.getString(R.string.err_only_int_numbers)
+    }
 
-        fun getErrorSendOtp(error: SendOtpError): Int = when (error) {
-            SendOtpError.SEND_OTP_ERROR -> R.string.err_send_otp
-            SendOtpError.AUTH_ERROR -> R.string.err_auth_with_phone
-            SendOtpError.UNKNOWN_ERROR -> R.string.err_unknown
-        }
+    fun getErrorSendOtp(error: SendOtpError): String = when (error) {
+        SendOtpError.SEND_OTP_ERROR -> context.getString(R.string.err_send_otp)
+        SendOtpError.AUTH_ERROR -> context.getString(R.string.err_auth_with_phone)
+        SendOtpError.UNKNOWN_ERROR -> context.getString(R.string.err_unknown)
+    }
 
-        fun getErrorVerifyOtp(error: InputOtpError): Int = when (error) {
-            InputOtpError.EMPTY -> R.string.err_otp_empty
-            InputOtpError.BE_6_DIGITS -> R.string.err_otp_be_n_digits
-            InputOtpError.ONLY_INT_NUMBERS -> R.string.err_only_int_numbers
-        }
+    fun getErrorVerifyOtp(error: InputOtpError): String = when (error) {
+        InputOtpError.EMPTY -> context.getString(R.string.err_otp_empty)
+        InputOtpError.BE_6_DIGITS -> context.getString(R.string.err_otp_be_6_digits)
+        InputOtpError.ONLY_INT_NUMBERS -> context.getString(R.string.err_only_int_numbers)
     }
 }
