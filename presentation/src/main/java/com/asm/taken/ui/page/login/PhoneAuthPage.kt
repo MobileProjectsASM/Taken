@@ -37,12 +37,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.modifier.modifierLocalConsumer
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -89,12 +91,13 @@ fun PhoneAuthPage(
             onSentPhone = onSentPhone
         )
     }
-    SendOtpView(
+    OtpDialog(loginVM = loginVM)
+    /*SendOtpView(
         loginVM = loginVM,
         navController = navController,
         sendOtpResultUiState = sendOtpResultUiState,
         snackBarHostState = snackBarHostState
-    )
+    )*/
 }
 
 @Composable
@@ -381,22 +384,22 @@ fun OtpDialog(loginVM: LoginVM) {
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.End
                 ) {
-                    IconButton(onClick = {
-                        loginVM.updateSendOtpResult(null)
-                    }) {
+                    IconButton(
+                        modifier = Modifier
+                            .size(size = 32.dp)
+                            .padding(top = 10.dp, end = 10.dp),
+                        onClick = { loginVM.updateSendOtpResult(null) }
+                    ) {
                         Icon(
-                            modifier = Modifier
-                                .size(size = 24.dp)
-                                .padding(top = 10.dp, end = 10.dp),
                             imageVector = Icons.Outlined.Cancel,
                             contentDescription = stringResource(R.string.txt_cd_error_input_icon),
                             tint = Color.Red
                         )
                     }
                 }
-                Spacer(modifier = Modifier.height(20.dp))
+                Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
                     fontSize = dimensionResource(
                         id = R.dimen.title_text_size
                     ).value.sp,
@@ -407,13 +410,20 @@ fun OtpDialog(loginVM: LoginVM) {
                 )
                 Spacer(modifier = Modifier.height(20.dp))
                 OtpInput(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
+                    heightOtpInput = 56.dp,
+                    widthOtpInput = 32.dp,
                     errors = otpErrors
                 ) {
                     loginVM.validateOtpForm(it)
                 }
                 Spacer(modifier = Modifier.height(20.dp))
                 Column(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     DefaultButton(
@@ -423,6 +433,7 @@ fun OtpDialog(loginVM: LoginVM) {
 
                     }
                 }
+                Spacer(modifier = Modifier.height(20.dp))
             }
         }
     }
@@ -430,6 +441,9 @@ fun OtpDialog(loginVM: LoginVM) {
 
 @Composable
 fun OtpInput(
+    modifier: Modifier,
+    heightOtpInput: Dp,
+    widthOtpInput: Dp,
     errors: List<String> = listOf(),
     onChange: (String) -> Unit
 ) {
@@ -440,17 +454,30 @@ fun OtpInput(
         mutableStateOf("")
     }
 
-    Column {
+    Column(
+        modifier = modifier
+    ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceAround
+            horizontalArrangement = Arrangement.spacedBy(8.dp, alignment = Alignment.CenterHorizontally)
         ) {
-            SimpleOutlinedTextField(value = one) {
+            SimpleOutlinedTextField(
+                modifier = Modifier
+                    .height(heightOtpInput)
+                    .width(widthOtpInput),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                value = one
+            ) {
                 one = it
                 onChange("$one$second")
             }
-            SimpleOutlinedTextField(value = second) {
+            SimpleOutlinedTextField(
+                modifier = Modifier
+                    .height(heightOtpInput)
+                    .width(widthOtpInput),
+                value = second
+            ) {
                 second = it
             }
         }
@@ -458,7 +485,7 @@ fun OtpInput(
             Spacer(modifier = Modifier.height(5.dp))
             errors.forEach { error ->
                 Row(
-                    modifier = Modifier.padding(horizontal = 10.dp),
+                    modifier = Modifier.fillMaxWidth(),
                 ) {
                     Icon(
                         modifier = Modifier.size(size = 16.dp),

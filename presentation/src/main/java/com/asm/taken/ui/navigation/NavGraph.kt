@@ -84,7 +84,7 @@ fun NavGraphBuilder.navigationLogin(
                         authenticationUiClient.authWithPhoneNumber(
                             context as Activity,
                             coroutineScope = coroutineScope,
-                            phoneNumber = "$code$phoneNumber",
+                            phoneNumber = "+$code$phoneNumber",
                             onOtpSend = loginVM::updateSendOtpResult
                         )
                     }

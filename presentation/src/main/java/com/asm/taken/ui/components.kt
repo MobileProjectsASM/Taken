@@ -1,15 +1,19 @@
 package com.asm.taken.ui
 
+import android.util.Log
 import androidx.annotation.DimenRes
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.PressInteraction
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -17,6 +21,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
@@ -25,16 +31,22 @@ import androidx.compose.material.icons.outlined.Cancel
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ColorScheme
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldColors
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -42,19 +54,28 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.FocusState
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -166,6 +187,7 @@ fun DefaultOutlinedTextField(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SimpleOutlinedTextField(
     modifier: Modifier = Modifier,
@@ -173,18 +195,148 @@ fun SimpleOutlinedTextField(
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     visualTransformation: VisualTransformation = VisualTransformation.None,
     readOnly: Boolean = false,
-    onValueChange: ((String) -> Unit)? = null,
+    enabled: Boolean = true,
+    colors: TextFieldColors = OutlinedTextFieldDefaults.colors(),
+    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
+    onValueChange: ((String) -> Unit),
 ) {
-    OutlinedTextField(
+    BasicTextField(
         modifier = modifier,
         value = value,
+        enabled = enabled,
         keyboardOptions = keyboardOptions,
         visualTransformation = visualTransformation,
-        onValueChange = onValueChange ?: {},
-        textStyle = TextStyle(fontFamily = puzzleFontFamily),
+        onValueChange = onValueChange,
+        textStyle = TextStyle(
+            textAlign = TextAlign.Center,
+            fontFamily = puzzleFontFamily
+        ),
         readOnly = readOnly,
+        interactionSource = interactionSource,
+        singleLine = true
+    ) { innerTextField ->
+        OutlinedTextFieldDefaults.DecorationBox(
+            value = value,
+            innerTextField = innerTextField,
+            enabled = enabled,
+            singleLine = true,
+            visualTransformation = visualTransformation,
+            interactionSource = interactionSource,
+            colors = colors,
+            contentPadding = PaddingValues(
+                horizontal = 10.dp
+            )
+        )
+    }
+}
+
+@Composable
+fun OtpInput(
+    size: Dp = 40.dp,
+    text: TextFieldValue,
+    colorScheme: ColorScheme,
+    focusRequester: FocusRequester,
+    interactionSource: MutableInteractionSource = remember {
+        MutableInteractionSource()
+    },
+    onValueChange: (TextFieldValue) -> Unit,
+) {
+    val focused by interactionSource.collectIsFocusedAsState()
+    BasicTextField(
+        modifier = Modifier
+            .size(size)
+            .border(
+                width = 1.5.dp,
+                color = if (focused) colorScheme.primary else colorScheme.error,
+                shape = RoundedCornerShape(8.dp)
+            )
+            .background(colorScheme.surfaceContainer, RoundedCornerShape(8.dp))
+            .focusRequester(focusRequester),
+        value = text,
+        onValueChange = onValueChange,
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+        textStyle = TextStyle(
+            fontFamily = puzzleFontFamily,
+            textAlign = TextAlign.Center
+        ),
         singleLine = true,
-    )
+        interactionSource = interactionSource,
+        cursorBrush = SolidColor(colorScheme.primary)
+    ) { innerTextField ->
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            innerTextField()
+        }
+    }
+}
+
+@Composable
+fun OtpMultiple(
+    numberInputs: Int = 6
+) {
+    val otpInputStates = rememberSaveable {
+        List(numberInputs) {
+            Pair(mutableStateOf(TextFieldValue("", TextRange(0, 0))), FocusRequester())
+        }
+    }
+
+    Row {
+        for (currentPosition in 0..<numberInputs) {
+            val textInputMutableState = otpInputStates[currentPosition].first
+            val focusRequester = otpInputStates[currentPosition].second
+            OtpInput(
+                size = 30.dp,
+                text = textInputMutableState.value,
+                colorScheme = MaterialTheme.colorScheme,
+                focusRequester = focusRequester,
+            ) { newValue ->
+                if (newValue.text.isEmpty()) {
+                    textInputMutableState.value = newValue
+                    if (currentPosition > 0) {
+                        val beforeFocusRequester = otpInputStates[currentPosition - 1].second
+                        beforeFocusRequester.requestFocus()
+                    }
+                } else if (newValue.text.length == 1) {
+                    textInputMutableState.value = newValue.copy(
+                        selection = TextRange(1)
+                    )
+                    if (currentPosition < numberInputs - 1) {
+                        val nextFocusRequester = otpInputStates[currentPosition + 1].second
+                        nextFocusRequester.requestFocus()
+                    }
+                } else {
+                    var otpIndex = currentPosition
+                    var stringIndex = 0
+                    while (otpIndex < numberInputs && stringIndex < newValue.text.length) {
+                        val currentMutableState = otpInputStates[otpIndex].first
+                        val auxString = newValue.text[stringIndex].toString()
+                        currentMutableState.value = TextFieldValue(auxString, TextRange(1))
+                        otpIndex++
+                        stringIndex++
+                    }
+                    val currentFocusRequester = if (otpIndex < numberInputs) {
+                        otpInputStates[otpIndex].second
+                    } else {
+                        otpInputStates[numberInputs - 1].second
+                    }
+                    currentFocusRequester.requestFocus()
+                }
+            }
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun TestOtpInput() {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        OtpMultiple()
+    }
 }
 
 @Composable
