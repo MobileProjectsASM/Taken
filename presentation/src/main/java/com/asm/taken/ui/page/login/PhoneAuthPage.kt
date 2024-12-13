@@ -25,7 +25,6 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -37,14 +36,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.modifier.modifierLocalConsumer
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -60,9 +57,9 @@ import com.asm.taken.model.SendOtpResult
 import com.asm.taken.ui.DefaultButton
 import com.asm.taken.ui.DefaultOutlinedTextFieldLI
 import com.asm.taken.ui.DefaultText
+import com.asm.taken.ui.OtpMultiple
 import com.asm.taken.ui.ProgressDialog
 import com.asm.taken.ui.PuzzleGeneralTitle
-import com.asm.taken.ui.SimpleOutlinedTextField
 import com.asm.taken.ui.puzzleFontFamily
 import com.asm.taken.utils.MessageResolver
 import com.asm.taken.vm.LoginVM
@@ -399,22 +396,32 @@ fun OtpDialog(loginVM: LoginVM) {
                 }
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
                     fontSize = dimensionResource(
                         id = R.dimen.title_text_size
                     ).value.sp,
-                    text = stringResource(id = R.string.txt_ttl_choose_phone_code),
+                    text = stringResource(id = R.string.txt_ttl_enter_otp),
                     fontFamily = puzzleFontFamily,
                     fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.Center
                 )
                 Spacer(modifier = Modifier.height(20.dp))
-                OtpInput(
+                DefaultText(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp),
-                    heightOtpInput = 56.dp,
-                    widthOtpInput = 32.dp,
+                    text = "${stringResource(id = R.string.txt_inf_enter_otp)} 9354",
+                    textAlign = TextAlign.Center
+                )
+                Spacer(modifier = Modifier.height(20.dp))
+                OtpMultiple(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
+                    size = 40.dp,
+                    numberInputs = 6,
                     errors = otpErrors
                 ) {
                     loginVM.validateOtpForm(it)
@@ -438,69 +445,3 @@ fun OtpDialog(loginVM: LoginVM) {
         }
     }
 }
-
-@Composable
-fun OtpInput(
-    modifier: Modifier,
-    heightOtpInput: Dp,
-    widthOtpInput: Dp,
-    errors: List<String> = listOf(),
-    onChange: (String) -> Unit
-) {
-    var one by rememberSaveable {
-        mutableStateOf("")
-    }
-    var second by rememberSaveable {
-        mutableStateOf("")
-    }
-
-    Column(
-        modifier = modifier
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp, alignment = Alignment.CenterHorizontally)
-        ) {
-            SimpleOutlinedTextField(
-                modifier = Modifier
-                    .height(heightOtpInput)
-                    .width(widthOtpInput),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                value = one
-            ) {
-                one = it
-                onChange("$one$second")
-            }
-            SimpleOutlinedTextField(
-                modifier = Modifier
-                    .height(heightOtpInput)
-                    .width(widthOtpInput),
-                value = second
-            ) {
-                second = it
-            }
-        }
-        if (errors.isNotEmpty()) {
-            Spacer(modifier = Modifier.height(5.dp))
-            errors.forEach { error ->
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Icon(
-                        modifier = Modifier.size(size = 16.dp),
-                        imageVector = Icons.Outlined.Cancel,
-                        contentDescription = stringResource(R.string.txt_cd_error_input_icon),
-                        tint = OutlinedTextFieldDefaults.colors().errorIndicatorColor
-                    )
-                    DefaultText(
-                        error,
-                        color = OutlinedTextFieldDefaults.colors().errorIndicatorColor,
-                        fontSize = R.dimen.small_text_size
-                    )
-                }
-            }
-        }
-    }
-}
-
