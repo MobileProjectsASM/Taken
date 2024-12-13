@@ -10,13 +10,8 @@ import androidx.credentials.GetCredentialRequest
 import androidx.credentials.GetCredentialResponse
 import androidx.credentials.exceptions.GetCredentialException
 import androidx.credentials.exceptions.NoCredentialException
-import androidx.lifecycle.LifecycleCoroutineScope
 import com.asm.taken.R
 import com.asm.taken.model.AuthError
-import com.asm.taken.model.AuthResult
-import com.asm.taken.model.SendOtpError
-import com.asm.taken.model.SendOtpResult
-import com.asm.taken.model.UserData
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
@@ -78,18 +73,7 @@ class AuthenticationUiClient @Inject constructor(
                     Log.d(TAG, "onVerificationCompleted")
                     coroutineScope.launch {
                         val authResult = signInWithCredential(phoneAuthCredential)
-                        val sendOtpResult = when (authResult) {
-                            is AuthResult.Failure -> {
-                                val sendOtpError = when (authResult.authError) {
-                                    AuthError.AUTH_ERROR -> SendOtpError.AUTH_ERROR
-                                    AuthError.UNKNOWN_ERROR -> SendOtpError.UNKNOWN_ERROR
-                                }
-                                SendOtpResult.Failure(sendOtpError)
-                            }
-                            is AuthResult.PhoneCodeSent -> SendOtpResult.SentOtp(authResult.verificationId)
-                            is AuthResult.Successful -> SendOtpResult.AutomaticAuthWithPhone(authResult.userData)
-                        }
-                        onOtpSend(sendOtpResult)
+                        onOtpSend(authResultToSendOtpResult(authResult))
                     }
                 }
 
@@ -113,9 +97,20 @@ class AuthenticationUiClient @Inject constructor(
         PhoneAuthProvider.verifyPhoneNumber(phoneAuthOptions)
     }
 
-    suspend fun manualSignInPhoneNumber(verificationId: String, code: String): AuthResult {
-        val phoneAuthCredential = PhoneAuthProvider.getCredential(verificationId, code)
+    suspend fun verifyOtp(verificationId: String, otp: String): AuthResult {
+        val phoneAuthCredential = PhoneAuthProvider.getCredential(verificationId, otp)
         return signInWithCredential(phoneAuthCredential)
+    }
+
+    fun authResultToSendOtpResult(authResult: AuthResult): SendOtpResult = when (authResult) {
+        is AuthResult.Failure -> {
+            val sendOtpError = when (authResult.authError) {
+                AuthError.AUTH_ERROR -> SendOtpError.AUTH_ERROR
+                AuthError.UNKNOWN_ERROR -> SendOtpError.UNKNOWN_ERROR
+            }
+            SendOtpResult.Failure(sendOtpError)
+        }
+        is AuthResult.Successful -> SendOtpResult.AuthenticatedWithPhone(authResult.userData)
     }
 
     private suspend fun signInWithCredential(authorizedAccounts: Boolean = false): AuthResult {
@@ -210,3 +205,31 @@ class AuthenticationUiClient @Inject constructor(
 }
 
 class CredentialException(message: String): Exception(message)
+
+//region Authentication
+
+sealed class SendOtpResult {
+    data object Loading: SendOtpResult()
+    data class SentOtp(val verificationId: String): SendOtpResult()
+    data class AuthenticatedWithPhone(val userData: UserData): SendOtpResult()
+    data class Failure(val sendOtpError: SendOtpError): SendOtpResult()
+}
+
+sealed class AuthResult {
+    data class Successful(val userData: UserData): AuthResult()
+    data class Failure(val authError: AuthError): AuthResult()
+}
+
+data class UserData(
+    val userId: String,
+    val username: String?,
+    val profilePictureUrl: String?
+)
+
+enum class SendOtpError {
+    SEND_OTP_ERROR,
+    AUTH_ERROR,
+    UNKNOWN_ERROR
+}
+
+//endregion

@@ -42,6 +42,7 @@
     <string name="err_only_int_numbers">Only int numbers</string>
     <string name="err_send_otp">Error to send Otp</string>
     <string name="err_auth_with_phone">Error to auth with phone</string>
+    <string name="err_process_gamer">Error to process gamer</string>
     <string name="err_unknown">Unknown error</string>
     <string name="err_otp_empty">Otp must not be empty</string>
     <string name="err_otp_be_6_digits">Otp must be 6 digits long</string>

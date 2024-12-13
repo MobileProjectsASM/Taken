@@ -3,11 +3,13 @@ package com.asm.taken.vm
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.asm.domain.entities.Result
+import com.asm.domain.entities.asFailure
+import com.asm.domain.entities.asSuccessful
+import com.asm.domain.errors.GamerFailure
 import com.asm.domain.use_cases.GetCountriesInfoUC
 import com.asm.domain.use_cases.GetGamerUC
 import com.asm.taken.mappers.PhoneCodeMapper
 import com.asm.taken.model.CountriesUiState
-import com.asm.taken.model.CountryUiState
 import com.asm.taken.model.InputOtpError
 import com.asm.taken.model.InputPasswordError
 import com.asm.taken.model.InputPhoneCodeError
@@ -17,7 +19,11 @@ import com.asm.taken.model.InputUiState
 import com.asm.taken.model.InputUserIdError
 import com.asm.taken.model.LoginFormPhoneUiState
 import com.asm.taken.model.LoginFormUiState
-import com.asm.taken.model.SendOtpResult
+import com.asm.taken.model.LoginWithPhoneError
+import com.asm.taken.model.LoginWithPhoneUiState
+import com.asm.taken.utils.SendOtpError
+import com.asm.taken.utils.SendOtpResult
+import com.asm.taken.utils.UserData
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -41,7 +47,7 @@ class LoginVM @Inject constructor(
     private val _loginFormPhoneUiState: MutableStateFlow<LoginFormPhoneUiState> = MutableStateFlow(
         LoginFormPhoneUiState(phoneCodeUiState = InputUiState(), phoneNumberUiState = InputUiState())
     )
-    private val _sendOtpResultUiState: MutableStateFlow<SendOtpResult?> = MutableStateFlow(null)
+    private val _loginWithPhoneUiState: MutableStateFlow<LoginWithPhoneUiState?> = MutableStateFlow(null)
     private val _otpFormUiState: MutableStateFlow<InputUiState<InputOtpError>> = MutableStateFlow(
         InputUiState()
     )
@@ -52,7 +58,7 @@ class LoginVM @Inject constructor(
     val loginFormUiState: StateFlow<LoginFormUiState> = _loginFormUiState
     val countriesUiState: StateFlow<CountriesUiState> = _countriesUiState
     val loginFormPhoneUiState: StateFlow<LoginFormPhoneUiState> = _loginFormPhoneUiState
-    val sendOtpResultUiState: StateFlow<SendOtpResult?> = _sendOtpResultUiState
+    val loginWithPhoneUiState: StateFlow<LoginWithPhoneUiState?> = _loginWithPhoneUiState
     val otpFormUiState: StateFlow<InputUiState<InputOtpError>> = _otpFormUiState
 
     //endregion
@@ -91,7 +97,16 @@ class LoginVM @Inject constructor(
     }
 
     fun updateSendOtpResult(sendOtpResult: SendOtpResult?) {
-        _sendOtpResultUiState.update { sendOtpResult }
+        viewModelScope.launch {
+            val loginWithPhoneUiState = when (sendOtpResult) {
+                is SendOtpResult.AuthenticatedWithPhone -> verifyGamerExists(sendOtpResult.userData)
+                is SendOtpResult.Failure -> LoginWithPhoneUiState.Failure(sendOtpErrorToLoginWithPhoneError(sendOtpResult.sendOtpError))
+                SendOtpResult.Loading -> LoginWithPhoneUiState.Loading
+                is SendOtpResult.SentOtp -> LoginWithPhoneUiState.SentOtp(sendOtpResult.verificationId)
+                null -> null
+            }
+            _loginWithPhoneUiState.update { loginWithPhoneUiState }
+        }
     }
 
     private fun validateUserId(userId: String): List<InputUserIdError> {
@@ -163,31 +178,28 @@ class LoginVM @Inject constructor(
         if (!otp.matches("^[0-9]+\$".toRegex())) errors.add(InputOtpError.ONLY_INT_NUMBERS)
         return errors
     }
+
+    private suspend fun verifyGamerExists(userData: UserData): LoginWithPhoneUiState {
+        val gamerResult = getGamerUC.execute(userData.userId)
+        if (gamerResult.isSuccessful) {
+            val gamer = gamerResult.asSuccessful().data
+            return LoginWithPhoneUiState.RegisteredUser(gamer.gamerId)
+        }
+        val failure = gamerResult.asFailure().failure
+        if (failure is GamerFailure.GamerNotExists) {
+            return LoginWithPhoneUiState.UnregisteredUser(userData.userId)
+        }
+        return LoginWithPhoneUiState.Failure(LoginWithPhoneError.VERIFY_GAMER_EXISTS)
+    }
+
+    private fun sendOtpErrorToLoginWithPhoneError(sendOtpError: SendOtpError): LoginWithPhoneError = when (sendOtpError) {
+        SendOtpError.SEND_OTP_ERROR -> LoginWithPhoneError.SEND_OTP_ERROR
+        SendOtpError.AUTH_ERROR -> LoginWithPhoneError.AUTH_ERROR
+        SendOtpError.UNKNOWN_ERROR -> LoginWithPhoneError.UNKNOWN_ERROR
+    }
     //endregion
 
-   /* //region MutableStateFlows
-
-    fun validateLoginForm(userId: String?, password: String?) {
-        val userIdUiState = validateUserId(userId)
-        val passwordUiState = validatePassword(password)
-        _loginFormSTF.update {
-            it.copy(
-                userIdUiState = userIdUiState,
-                passwordUiState = passwordUiState,
-            )
-        }
-    }
-
-    fun validatePhoneNumberForm(phoneCode: String?, phoneNumber: String?) {
-        val phoneCodeState = validatePhoneCode(phoneCode)
-        val phoneNumberUiState = validatePhoneNumber(phoneNumber)
-        _sendPhoneFormSTF.update {
-            it.copy(
-                phoneCodeState = phoneCodeState,
-                phoneNumberState = phoneNumberUiState
-            )
-        }
-    }
+   /*
 
     fun validateSentCodeForm(codeSent: String?) {
         val sentCodeState = validateSentCode(codeSent)

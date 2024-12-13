@@ -1,14 +1,13 @@
 package com.asm.taken.utils
 
 import android.content.Context
-import androidx.compose.ui.res.stringResource
 import com.asm.taken.R
 import com.asm.taken.model.InputOtpError
 import com.asm.taken.model.InputPasswordError
 import com.asm.taken.model.InputPhoneCodeError
 import com.asm.taken.model.InputPhoneNumberError
 import com.asm.taken.model.InputUserIdError
-import com.asm.taken.model.SendOtpError
+import com.asm.taken.model.LoginWithPhoneError
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 
@@ -44,10 +43,11 @@ class MessageResolver @Inject constructor(
         InputPhoneNumberError.ONLY_INT_NUMBERS -> context.getString(R.string.err_only_int_numbers)
     }
 
-    fun getErrorSendOtp(error: SendOtpError): String = when (error) {
-        SendOtpError.SEND_OTP_ERROR -> context.getString(R.string.err_send_otp)
-        SendOtpError.AUTH_ERROR -> context.getString(R.string.err_auth_with_phone)
-        SendOtpError.UNKNOWN_ERROR -> context.getString(R.string.err_unknown)
+    fun getErrorLoginWithPhone(error: LoginWithPhoneError): String = when (error) {
+        LoginWithPhoneError.SEND_OTP_ERROR -> context.getString(R.string.err_send_otp)
+        LoginWithPhoneError.AUTH_ERROR -> context.getString(R.string.err_auth_with_phone)
+        LoginWithPhoneError.VERIFY_GAMER_EXISTS -> context.getString(R.string.err_process_gamer)
+        LoginWithPhoneError.UNKNOWN_ERROR -> context.getString(R.string.err_unknown)
     }
 
     fun getErrorVerifyOtp(error: InputOtpError): String = when (error) {

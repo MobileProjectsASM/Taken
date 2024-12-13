@@ -1,5 +1,9 @@
 package com.asm.taken.model
 
+import com.asm.domain.entities.Gamer
+import com.asm.taken.utils.SendOtpResult
+import com.asm.taken.utils.UserData
+
 /*data class LoginFormState(
     val userIdUiState: UserIdUiState = UserIdUiState.Init,
     val passwordUiState: PasswordUiState = PasswordUiState.Init,
@@ -135,28 +139,13 @@ data class LoginFormPhoneUiState(
     val phoneNumberUiState: InputUiState<InputPhoneNumberError>
 )
 
-//region Authentication
-
-sealed class SendOtpResult {
-    data object Loading: SendOtpResult()
-    data class SentOtp(val verificationId: String): SendOtpResult()
-    data class AutomaticAuthWithPhone(val userData: UserData): SendOtpResult()
-    data class Failure(val sendOtpError: SendOtpError): SendOtpResult()
+sealed class LoginWithPhoneUiState {
+    data object Loading: LoginWithPhoneUiState()
+    data class SentOtp(val verificationId: String): LoginWithPhoneUiState()
+    data class RegisteredUser(val gamerId: String): LoginWithPhoneUiState()
+    data class UnregisteredUser(val userId: String): LoginWithPhoneUiState()
+    data class Failure(val loginWithPhoneError: LoginWithPhoneError): LoginWithPhoneUiState()
 }
-
-sealed class AuthResult {
-    data class Successful(val userData: UserData): AuthResult()
-    data class PhoneCodeSent(val verificationId: String): AuthResult()
-    data class Failure(val authError: AuthError): AuthResult()
-}
-
-data class UserData(
-    val userId: String,
-    val username: String?,
-    val profilePictureUrl: String?
-)
-
-//endregion
 
 //region ERRORS
 
@@ -189,12 +178,6 @@ enum class LoginError {
     UNKNOWN_ERROR
 }
 
-enum class SendOtpError {
-    SEND_OTP_ERROR,
-    AUTH_ERROR,
-    UNKNOWN_ERROR
-}
-
 enum class AuthError {
     AUTH_ERROR,
     UNKNOWN_ERROR
@@ -204,5 +187,12 @@ enum class InputOtpError {
     EMPTY,
     BE_6_DIGITS,
     ONLY_INT_NUMBERS
+}
+
+enum class LoginWithPhoneError {
+    SEND_OTP_ERROR,
+    AUTH_ERROR,
+    VERIFY_GAMER_EXISTS,
+    UNKNOWN_ERROR
 }
 //endregion
