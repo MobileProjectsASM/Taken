@@ -100,7 +100,7 @@ fun NavGraphBuilder.navigationLogin(
                             context as Activity,
                             coroutineScope = coroutineScope,
                             phoneNumber = "+$code$phoneNumber",
-                            onOtpSend = loginVM::updateSendOtpResult
+                            onOtpSend = loginVM::updateLoginUiState
                         )
                     }
                 )

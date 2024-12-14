@@ -47,7 +47,7 @@ class LoginVM @Inject constructor(
     private val _loginFormPhoneUiState: MutableStateFlow<LoginFormPhoneUiState> = MutableStateFlow(
         LoginFormPhoneUiState(phoneCodeUiState = InputUiState(), phoneNumberUiState = InputUiState())
     )
-    private val _loginWithPhoneUiState: MutableStateFlow<LoginWithPhoneUiState?> = MutableStateFlow(null)
+    private val _loginUiState: MutableStateFlow<LoginWithPhoneUiState?> = MutableStateFlow(null)
     private val _otpFormUiState: MutableStateFlow<InputUiState<InputOtpError>> = MutableStateFlow(
         InputUiState()
     )
@@ -58,7 +58,7 @@ class LoginVM @Inject constructor(
     val loginFormUiState: StateFlow<LoginFormUiState> = _loginFormUiState
     val countriesUiState: StateFlow<CountriesUiState> = _countriesUiState
     val loginFormPhoneUiState: StateFlow<LoginFormPhoneUiState> = _loginFormPhoneUiState
-    val loginWithPhoneUiState: StateFlow<LoginWithPhoneUiState?> = _loginWithPhoneUiState
+    val loginUiState: StateFlow<LoginWithPhoneUiState?> = _loginUiState
     val otpFormUiState: StateFlow<InputUiState<InputOtpError>> = _otpFormUiState
 
     //endregion
@@ -96,7 +96,7 @@ class LoginVM @Inject constructor(
         }
     }
 
-    fun updateSendOtpResult(sendOtpResult: SendOtpResult?) {
+    fun updateLoginUiState(sendOtpResult: SendOtpResult?) {
         viewModelScope.launch {
             val loginWithPhoneUiState = when (sendOtpResult) {
                 is SendOtpResult.AuthenticatedWithPhone -> verifyGamerExists(sendOtpResult.userData)
@@ -105,7 +105,7 @@ class LoginVM @Inject constructor(
                 is SendOtpResult.SentOtp -> LoginWithPhoneUiState.SentOtp(sendOtpResult.verificationId)
                 null -> null
             }
-            _loginWithPhoneUiState.update { loginWithPhoneUiState }
+            _loginUiState.update { loginWithPhoneUiState }
         }
     }
 

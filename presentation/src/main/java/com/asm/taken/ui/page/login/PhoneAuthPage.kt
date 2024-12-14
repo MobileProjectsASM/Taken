@@ -79,7 +79,7 @@ fun PhoneAuthPage(
     onSentPhone: (String, String) -> Unit
 ) {
     val countriesUiState: CountriesUiState by loginVM.countriesUiState.collectAsStateWithLifecycle()
-    val loginWithPhoneUiState: LoginWithPhoneUiState? by loginVM.loginWithPhoneUiState.collectAsStateWithLifecycle()
+    val loginWithPhoneUiState: LoginWithPhoneUiState? by loginVM.loginUiState.collectAsStateWithLifecycle()
 
     AuthWithPhone(
         loginVM = loginVM,
@@ -433,7 +433,7 @@ fun OtpDialog(
                         modifier = Modifier
                             .size(size = 32.dp)
                             .padding(top = 10.dp, end = 10.dp),
-                        onClick = { loginVM.updateSendOtpResult(null) }
+                        onClick = { loginVM.updateLoginUiState(null) }
                     ) {
                         Icon(
                             imageVector = Icons.Outlined.Cancel,
@@ -487,7 +487,7 @@ fun OtpDialog(
                     ) {
                         scope.launch {
                             val authResult = authenticationUiClient.verifyOtp(verificationId, otpFormUiState.value)
-                            loginVM.updateSendOtpResult(authenticationUiClient.authResultToSendOtpResult(authResult))
+                            loginVM.updateLoginUiState(authenticationUiClient.authResultToSendOtpResult(authResult))
                         }
                     }
                 }
