@@ -91,6 +91,10 @@ class AuthenticationUiClient @Inject constructor(
                     val sendOtpResult = SendOtpResult.SentOtp(verificationId)
                     onOtpSend(sendOtpResult)
                 }
+
+                override fun onCodeAutoRetrievalTimeOut(p0: String) {
+                    val value = p0
+                }
             }
         )
         onOtpSend(SendOtpResult.Loading)

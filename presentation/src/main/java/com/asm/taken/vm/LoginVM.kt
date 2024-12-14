@@ -209,32 +209,6 @@ class LoginVM @Inject constructor(
             )
         }
     }
-
-    fun loginUser(authResult: AuthResult) {
-        viewModelScope.launch {
-            val signInState: SignInState = when (authResult) {
-                is AuthResult.Failure -> SignInState.SignInFail(SignInError.AUTH_ERROR)
-                is AuthResult.PhoneCodeSent -> SignInState.PhoneCodeSent(authResult.verificationId)
-                is AuthResult.Successful -> handleSuccessful(authResult)
-            }
-            _signInSTF.update { signInState }
-        }
-    }
-
-    private suspend fun handleSuccessful(successful: AuthResult.Successful): SignInState {
-        val userId = successful.data.userId
-        val gamerResult = getGamerUC.execute(userId)
-        if (gamerResult.isSuccessful) {
-            val gamer = gamerResult.asSuccessful().data
-            return SignInState.RegisteredUser(gamer.gamerId)
-        }
-        val failure = gamerResult.asFailure().failure
-        if (failure is GamerFailure.GamerNotExists) {
-            return SignInState.UnregisteredUser(userId)
-        }
-        return SignInState.SignInFail(SignInError.REGISTER_ERROR)
-    }
-
     fun resetSignInState() {
         _signInSTF.value = null
     }

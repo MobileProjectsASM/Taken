@@ -1,5 +1,6 @@
 package com.asm.taken.ui
 
+import android.util.Log
 import androidx.annotation.DimenRes
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
@@ -128,7 +129,8 @@ fun DefaultOutlinedTextField(
     if (onClickable != null) {
         LaunchedEffect(mutableInteractionSource) {
             mutableInteractionSource.interactions.collect { interaction ->
-                if (interaction is PressInteraction.Press) {
+                Log.d("INTERACTION", "DefaultOutlinedTextField: $interaction")
+                if (interaction is PressInteraction.Release) {
                     onClickable.invoke()
                 }
             }
