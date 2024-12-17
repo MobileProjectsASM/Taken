@@ -71,10 +71,11 @@ fun NavGraphBuilder.navigationLogin(
             val loginVM = hiltViewModel<LoginVM>(parentEntry)
             BackgroundLogin {
                 MainAuthPage(
-                    loginVM,
+                    loginVM = loginVM,
+                    authenticationUiClient = authenticationUiClient,
                     navController = navController,
+                    snackBarHostState = snackBarHostState,
                     messageResolver = messageResolver,
-                    signInWithGoogle = { },
                 )
             }
         }

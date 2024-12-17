@@ -1,9 +1,5 @@
 package com.asm.taken.model
 
-import com.asm.domain.entities.Gamer
-import com.asm.taken.utils.SendOtpResult
-import com.asm.taken.utils.UserData
-
 /*data class LoginFormState(
     val userIdUiState: UserIdUiState = UserIdUiState.Init,
     val passwordUiState: PasswordUiState = PasswordUiState.Init,
@@ -97,13 +93,6 @@ data class CountryInfoState(
 )
  */
 
-sealed class LoginUiState {
-    data class UnregisteredUser(val userId: String): LoginUiState()
-    data class LoginSuccess(val userId: String): LoginUiState()
-    data object ProcessingUser: LoginUiState()
-    data class LoginFail(val loginError: LoginError): LoginUiState()
-}
-
 data class LoginFormUiState(
     val userIdUiState: InputUiState<InputUserIdError>,
     val passwordUiState: InputUiState<InputPasswordError>
@@ -139,12 +128,12 @@ data class LoginFormPhoneUiState(
     val phoneNumberUiState: InputUiState<InputPhoneNumberError>
 )
 
-sealed class LoginWithPhoneUiState {
-    data object Loading: LoginWithPhoneUiState()
-    data class SentOtp(val verificationId: String): LoginWithPhoneUiState()
-    data class RegisteredUser(val gamerId: String): LoginWithPhoneUiState()
-    data class UnregisteredUser(val userId: String): LoginWithPhoneUiState()
-    data class Failure(val loginWithPhoneError: LoginWithPhoneError): LoginWithPhoneUiState()
+sealed class LoginUiState {
+    data object Loading: LoginUiState()
+    data class SentOtp(val verificationId: String): LoginUiState()
+    data class RegisteredUser(val gamerId: String): LoginUiState()
+    data class UnregisteredUser(val userId: String): LoginUiState()
+    data class Failure(val loginError: LoginError): LoginUiState()
 }
 
 //region ERRORS
@@ -172,12 +161,6 @@ enum class InputPhoneNumberError {
     ONLY_INT_NUMBERS
 }
 
-enum class LoginError {
-    PASSWORD_IS_INCORRECT,
-    INTERNET_CONNECTION,
-    UNKNOWN_ERROR
-}
-
 enum class AuthError {
     AUTH_ERROR,
     UNKNOWN_ERROR
@@ -189,7 +172,7 @@ enum class InputOtpError {
     ONLY_INT_NUMBERS
 }
 
-enum class LoginWithPhoneError {
+enum class LoginError {
     SEND_OTP_ERROR,
     AUTH_ERROR,
     VERIFY_GAMER_EXISTS,

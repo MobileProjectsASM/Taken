@@ -21,10 +21,8 @@ import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.Pin
 import androidx.compose.material.icons.outlined.Cancel
 import androidx.compose.material3.Card
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -54,16 +52,17 @@ import com.asm.taken.R
 import com.asm.taken.model.CountriesUiState
 import com.asm.taken.model.CountryUiState
 import com.asm.taken.model.InputState
-import com.asm.taken.model.LoginWithPhoneUiState
+import com.asm.taken.model.LoginUiState
+import com.asm.taken.ui.CircularProgressDialog
 import com.asm.taken.ui.DefaultButton
 import com.asm.taken.ui.DefaultOutlinedTextFieldLI
 import com.asm.taken.ui.DefaultText
 import com.asm.taken.ui.OtpMultiple
-import com.asm.taken.ui.ProgressDialog
 import com.asm.taken.ui.PuzzleGeneralTitle
 import com.asm.taken.ui.navigation.CreateAccount
 import com.asm.taken.ui.navigation.MainPage
 import com.asm.taken.ui.puzzleFontFamily
+import com.asm.taken.utils.AuthResult
 import com.asm.taken.utils.AuthenticationUiClient
 import com.asm.taken.utils.MessageResolver
 import com.asm.taken.vm.LoginVM
@@ -79,7 +78,7 @@ fun PhoneAuthPage(
     onSentPhone: (String, String) -> Unit
 ) {
     val countriesUiState: CountriesUiState by loginVM.countriesUiState.collectAsStateWithLifecycle()
-    val loginWithPhoneUiState: LoginWithPhoneUiState? by loginVM.loginUiState.collectAsStateWithLifecycle()
+    val loginUiState: LoginUiState? by loginVM.loginUiState.collectAsStateWithLifecycle()
 
     AuthWithPhone(
         loginVM = loginVM,
@@ -88,12 +87,12 @@ fun PhoneAuthPage(
         snackBarHostState = snackBarHostState,
         onSentPhone = onSentPhone
     )
-    SendOtpView(
+    LoginState(
         loginVM = loginVM,
         authenticationUiClient = authenticationUiClient,
         messageResolver = messageResolver,
         navController = navController,
-        loginWithPhoneUiState = loginWithPhoneUiState,
+        loginUiState = loginUiState,
         snackBarHostState = snackBarHostState
     )
 }
@@ -350,63 +349,54 @@ fun ItemCountry(countryUiState: CountryUiState, onClick: (CountryUiState) -> Uni
 }
 
 @Composable
-fun SendOtpView(
+fun LoginState(
     loginVM: LoginVM,
     authenticationUiClient: AuthenticationUiClient,
     messageResolver: MessageResolver,
     navController: NavHostController,
-    loginWithPhoneUiState: LoginWithPhoneUiState?,
+    loginUiState: LoginUiState?,
     snackBarHostState: SnackbarHostState
 ) {
-    if (loginWithPhoneUiState != null) {
-        when (loginWithPhoneUiState) {
-            is LoginWithPhoneUiState.RegisteredUser -> {
+    val scope = rememberCoroutineScope()
+    if (loginUiState != null) {
+        when (loginUiState) {
+            is LoginUiState.RegisteredUser -> {
                 LaunchedEffect(true) {
-                    navController.navigate(MainPage.createRoute(loginWithPhoneUiState.gamerId))
+                    navController.navigate(MainPage.createRoute(loginUiState.gamerId))
                 }
             }
-            is LoginWithPhoneUiState.UnregisteredUser -> {
+            is LoginUiState.UnregisteredUser -> {
                 LaunchedEffect(true) {
-                    navController.navigate(CreateAccount.createRoute(loginWithPhoneUiState.userId))
+                    navController.navigate(CreateAccount.createRoute(loginUiState.userId))
                 }
             }
-            is LoginWithPhoneUiState.Failure -> {
-                val message = messageResolver.getErrorLoginWithPhone(loginWithPhoneUiState.loginWithPhoneError)
+            is LoginUiState.Failure -> {
+                val message = messageResolver.getErrorLogin(loginUiState.loginError)
                 LaunchedEffect(true) {
                     snackBarHostState.showSnackbar(message, withDismissAction = true)
                 }
             }
-            LoginWithPhoneUiState.Loading -> CircularProgressDialog()
-            is LoginWithPhoneUiState.SentOtp -> OtpDialog(
+            LoginUiState.Loading -> CircularProgressDialog()
+            is LoginUiState.SentOtp -> OtpDialog(
                 loginVM = loginVM,
-                authenticationUiClient = authenticationUiClient,
                 messageResolver = messageResolver,
-                verificationId = loginWithPhoneUiState.verificationId
-            )
+            ) { otp ->
+                scope.launch {
+                    loginVM.updateLoginUiState(AuthResult.Loading)
+                    val authResult = authenticationUiClient.verifyOtp(loginUiState.verificationId, otp)
+                    loginVM.updateLoginUiState(authResult)
+                }
+            }
         }
-    }
-}
-
-@Composable
-fun CircularProgressDialog() {
-    ProgressDialog {
-        CircularProgressIndicator(
-            modifier = Modifier.width(64.dp),
-            color = MaterialTheme.colorScheme.secondary,
-            trackColor = MaterialTheme.colorScheme.surfaceVariant,
-            strokeWidth = 10.dp
-        )
     }
 }
 
 @Composable
 fun OtpDialog(
     loginVM: LoginVM,
-    authenticationUiClient: AuthenticationUiClient,
     messageResolver: MessageResolver,
-    verificationId: String,
+    onVerifyOtp: (String) -> Unit
 ) {
-    val scope = rememberCoroutineScope()
     val otpFormUiState by loginVM.otpFormUiState.collectAsStateWithLifecycle()
     val otpErrors: List<String> = when (val otpFormState = otpFormUiState.state) {
         is InputState.Error -> otpFormState.errors.map { messageResolver.getErrorVerifyOtp(it) }
@@ -433,7 +423,7 @@ fun OtpDialog(
                         modifier = Modifier
                             .size(size = 32.dp)
                             .padding(top = 10.dp, end = 10.dp),
-                        onClick = { loginVM.updateLoginUiState(null) }
+                        onClick = { loginVM.resetLoginUiState() }
                     ) {
                         Icon(
                             imageVector = Icons.Outlined.Cancel,
@@ -485,10 +475,7 @@ fun OtpDialog(
                         text = stringResource(id = R.string.txt_btn_verify),
                         enable = otpFormUiState.state is InputState.Success,
                     ) {
-                        scope.launch {
-                            val authResult = authenticationUiClient.verifyOtp(verificationId, otpFormUiState.value)
-                            loginVM.updateLoginUiState(authenticationUiClient.authResultToSendOtpResult(authResult))
-                        }
+                        onVerifyOtp(otpFormUiState.value)
                     }
                 }
                 Spacer(modifier = Modifier.height(20.dp))

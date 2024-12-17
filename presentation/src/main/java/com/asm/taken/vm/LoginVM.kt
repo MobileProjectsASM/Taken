@@ -9,6 +9,7 @@ import com.asm.domain.errors.GamerFailure
 import com.asm.domain.use_cases.GetCountriesInfoUC
 import com.asm.domain.use_cases.GetGamerUC
 import com.asm.taken.mappers.PhoneCodeMapper
+import com.asm.taken.model.AuthError
 import com.asm.taken.model.CountriesUiState
 import com.asm.taken.model.InputOtpError
 import com.asm.taken.model.InputPasswordError
@@ -19,8 +20,9 @@ import com.asm.taken.model.InputUiState
 import com.asm.taken.model.InputUserIdError
 import com.asm.taken.model.LoginFormPhoneUiState
 import com.asm.taken.model.LoginFormUiState
-import com.asm.taken.model.LoginWithPhoneError
-import com.asm.taken.model.LoginWithPhoneUiState
+import com.asm.taken.model.LoginError
+import com.asm.taken.model.LoginUiState
+import com.asm.taken.utils.AuthResult
 import com.asm.taken.utils.SendOtpError
 import com.asm.taken.utils.SendOtpResult
 import com.asm.taken.utils.UserData
@@ -37,9 +39,6 @@ class LoginVM @Inject constructor(
     private val getCountriesInfoUC: GetCountriesInfoUC,
     private val phoneCodeMapper: PhoneCodeMapper
 ) : ViewModel() {
-    private val phoneNumberPattern = Regex("^[0-9]{10}$")
-    private val phoneCodePattern = Regex("^[0-9]{1,3}$")
-    private val validateCodePattern = Regex("^[0-9]{6}$")
 
     //region MutableStateFlows
     private val _loginFormUiState = MutableStateFlow(LoginFormUiState(userIdUiState = InputUiState(), passwordUiState = InputUiState()))
@@ -47,7 +46,7 @@ class LoginVM @Inject constructor(
     private val _loginFormPhoneUiState: MutableStateFlow<LoginFormPhoneUiState> = MutableStateFlow(
         LoginFormPhoneUiState(phoneCodeUiState = InputUiState(), phoneNumberUiState = InputUiState())
     )
-    private val _loginUiState: MutableStateFlow<LoginWithPhoneUiState?> = MutableStateFlow(null)
+    private val _loginUiState: MutableStateFlow<LoginUiState?> = MutableStateFlow(null)
     private val _otpFormUiState: MutableStateFlow<InputUiState<InputOtpError>> = MutableStateFlow(
         InputUiState()
     )
@@ -58,7 +57,7 @@ class LoginVM @Inject constructor(
     val loginFormUiState: StateFlow<LoginFormUiState> = _loginFormUiState
     val countriesUiState: StateFlow<CountriesUiState> = _countriesUiState
     val loginFormPhoneUiState: StateFlow<LoginFormPhoneUiState> = _loginFormPhoneUiState
-    val loginUiState: StateFlow<LoginWithPhoneUiState?> = _loginUiState
+    val loginUiState: StateFlow<LoginUiState?> = _loginUiState
     val otpFormUiState: StateFlow<InputUiState<InputOtpError>> = _otpFormUiState
 
     //endregion
@@ -96,17 +95,31 @@ class LoginVM @Inject constructor(
         }
     }
 
-    fun updateLoginUiState(sendOtpResult: SendOtpResult?) {
+    fun updateLoginUiState(sendOtpResult: SendOtpResult) {
         viewModelScope.launch {
-            val loginWithPhoneUiState = when (sendOtpResult) {
+            val loginUiState = when (sendOtpResult) {
                 is SendOtpResult.AuthenticatedWithPhone -> verifyGamerExists(sendOtpResult.userData)
-                is SendOtpResult.Failure -> LoginWithPhoneUiState.Failure(sendOtpErrorToLoginWithPhoneError(sendOtpResult.sendOtpError))
-                SendOtpResult.Loading -> LoginWithPhoneUiState.Loading
-                is SendOtpResult.SentOtp -> LoginWithPhoneUiState.SentOtp(sendOtpResult.verificationId)
-                null -> null
+                is SendOtpResult.Failure -> LoginUiState.Failure(sendOtpErrorToLoginError(sendOtpResult.sendOtpError))
+                SendOtpResult.Loading -> LoginUiState.Loading
+                is SendOtpResult.SentOtp -> LoginUiState.SentOtp(sendOtpResult.verificationId)
+            }
+            _loginUiState.update { loginUiState }
+        }
+    }
+
+    fun updateLoginUiState(authResult: AuthResult) {
+        viewModelScope.launch {
+            val loginWithPhoneUiState = when (authResult) {
+                is AuthResult.Successful -> verifyGamerExists(authResult.userData)
+                is AuthResult.Failure -> LoginUiState.Failure(authErrorToLoginError(authResult.authError))
+                AuthResult.Loading -> LoginUiState.Loading
             }
             _loginUiState.update { loginWithPhoneUiState }
         }
+    }
+
+    fun resetLoginUiState() {
+        _loginUiState.update { null }
     }
 
     private fun validateUserId(userId: String): List<InputUserIdError> {
@@ -179,23 +192,28 @@ class LoginVM @Inject constructor(
         return errors
     }
 
-    private suspend fun verifyGamerExists(userData: UserData): LoginWithPhoneUiState {
+    private suspend fun verifyGamerExists(userData: UserData): LoginUiState {
         val gamerResult = getGamerUC.execute(userData.userId)
         if (gamerResult.isSuccessful) {
             val gamer = gamerResult.asSuccessful().data
-            return LoginWithPhoneUiState.RegisteredUser(gamer.gamerId)
+            return LoginUiState.RegisteredUser(gamer.gamerId)
         }
         val failure = gamerResult.asFailure().failure
         if (failure is GamerFailure.GamerNotExists) {
-            return LoginWithPhoneUiState.UnregisteredUser(userData.userId)
+            return LoginUiState.UnregisteredUser(userData.userId)
         }
-        return LoginWithPhoneUiState.Failure(LoginWithPhoneError.VERIFY_GAMER_EXISTS)
+        return LoginUiState.Failure(LoginError.VERIFY_GAMER_EXISTS)
     }
 
-    private fun sendOtpErrorToLoginWithPhoneError(sendOtpError: SendOtpError): LoginWithPhoneError = when (sendOtpError) {
-        SendOtpError.SEND_OTP_ERROR -> LoginWithPhoneError.SEND_OTP_ERROR
-        SendOtpError.AUTH_ERROR -> LoginWithPhoneError.AUTH_ERROR
-        SendOtpError.UNKNOWN_ERROR -> LoginWithPhoneError.UNKNOWN_ERROR
+    private fun sendOtpErrorToLoginError(sendOtpError: SendOtpError): LoginError = when (sendOtpError) {
+        SendOtpError.SEND_OTP_ERROR -> LoginError.SEND_OTP_ERROR
+        SendOtpError.AUTH_ERROR -> LoginError.AUTH_ERROR
+        SendOtpError.UNKNOWN_ERROR -> LoginError.UNKNOWN_ERROR
+    }
+
+    private fun authErrorToLoginError(authError: AuthError): LoginError = when (authError) {
+        AuthError.AUTH_ERROR -> LoginError.AUTH_ERROR
+        AuthError.UNKNOWN_ERROR -> LoginError.UNKNOWN_ERROR
     }
     //endregion
 

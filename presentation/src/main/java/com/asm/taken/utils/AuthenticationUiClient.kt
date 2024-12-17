@@ -115,6 +115,7 @@ class AuthenticationUiClient @Inject constructor(
             SendOtpResult.Failure(sendOtpError)
         }
         is AuthResult.Successful -> SendOtpResult.AuthenticatedWithPhone(authResult.userData)
+        AuthResult.Loading -> SendOtpResult.Loading
     }
 
     private suspend fun signInWithCredential(authorizedAccounts: Boolean = false): AuthResult {
@@ -220,6 +221,7 @@ sealed class SendOtpResult {
 }
 
 sealed class AuthResult {
+    data object Loading: AuthResult()
     data class Successful(val userData: UserData): AuthResult()
     data class Failure(val authError: AuthError): AuthResult()
 }

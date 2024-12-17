@@ -15,8 +15,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Card
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -28,6 +31,8 @@ import androidx.navigation.NavHostController
 import com.asm.taken.R
 import com.asm.taken.model.InputState
 import com.asm.taken.model.LoginFormUiState
+import com.asm.taken.model.LoginUiState
+import com.asm.taken.ui.CircularProgressDialog
 import com.asm.taken.ui.DefaultButton
 import com.asm.taken.ui.DefaultImageButton
 import com.asm.taken.ui.DefaultOutlinedTextFieldLI
@@ -36,55 +41,48 @@ import com.asm.taken.ui.DefaultTextButton
 import com.asm.taken.ui.PasswordOutlinedTextField
 import com.asm.taken.ui.PuzzleGeneralTitle
 import com.asm.taken.ui.navigation.AuthenticationPhone
+import com.asm.taken.ui.navigation.CreateAccount
+import com.asm.taken.ui.navigation.MainPage
+import com.asm.taken.utils.AuthResult
+import com.asm.taken.utils.AuthenticationUiClient
 import com.asm.taken.utils.MessageResolver
 import com.asm.taken.vm.LoginVM
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 
 @Composable
 fun MainAuthPage(
     loginVM: LoginVM,
+    authenticationUiClient: AuthenticationUiClient,
     navController: NavHostController,
     messageResolver: MessageResolver,
-    signInWithGoogle: () -> Unit
+    snackBarHostState: SnackbarHostState
 ) {
-    /*LaunchedEffect(key1 = signInUiState) {
-        if (signInUiState == null) return@LaunchedEffect
-        when (signInUiState!!) {
-            is SignInState.RegisteredUser -> {
+    val coroutineScope = rememberCoroutineScope()
 
-            }
-            is SignInState.UnregisteredUser -> {
-                navController.navigate(CreateAccount.route)
-            }
-            is SignInState.PhoneCodeSent -> {
-                val verificationId = (signInUiState as SignInState.PhoneCodeSent).verificationId
+    AuthenticationSection(
+        loginVM = loginVM,
+        messageResolver = messageResolver,
+        coroutineScope = coroutineScope,
+        authenticationUiClient = authenticationUiClient,
+        navController = navController
+    )
+    LoginState(
+        loginVM = loginVM,
+        navController = navController,
+        messageResolver = messageResolver,
+        snackBarHostState = snackBarHostState
+    )
+}
 
-            }
-            is SignInState.SignInFail -> {
-                val signInFail = signInUiState as SignInState.SignInFail
-                when (signInFail.signInError) {
-                    SignInError.AUTH_ERROR -> Toast.makeText(context, "Authentication error", Toast.LENGTH_SHORT).show()
-                    SignInError.REGISTER_ERROR -> Toast.makeText(context, "Register error", Toast.LENGTH_SHORT).show()
-                }
-            }
-        }
-        loginVM.resetSignInState()
-    }*/
-
-    /*if (showDialog) {
-        FormPhoneDialog(
-            loginVM = loginVM,
-            resourceResolver = resourceResolver,
-            title = stringResource(id = R.string.txt_ttl_form_phone_dialog),
-            onDismissRequest = {
-                showDialog = false
-                loginVM.resetSendPhoneForm()
-            },
-        ) {
-            signInWithPhoneNumber(it)
-            showDialog = false
-            loginVM.resetSendPhoneForm()
-        }
-    }*/
+@Composable
+fun AuthenticationSection(
+    loginVM: LoginVM,
+    messageResolver: MessageResolver,
+    coroutineScope: CoroutineScope,
+    authenticationUiClient: AuthenticationUiClient,
+    navController: NavHostController
+) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -96,7 +94,13 @@ fun MainAuthPage(
             messageResolver = messageResolver
         )
         PanelSocialMedia(
-            signInWithGoogle = signInWithGoogle,
+            signInWithGoogle = {
+                coroutineScope.launch {
+                    loginVM.updateLoginUiState(AuthResult.Loading)
+                    val authResult = authenticationUiClient.signInWithGoogle()
+                    loginVM.updateLoginUiState(authResult)
+                }
+            },
         ) {
             navController.navigate(AuthenticationPhone.route)
         }
@@ -135,6 +139,32 @@ fun PanelLogin(
             ) {
 
             }
+        }
+    }
+}
+
+@Composable
+fun LoginState(
+    loginVM: LoginVM,
+    navController: NavHostController,
+    messageResolver: MessageResolver,
+    snackBarHostState: SnackbarHostState
+) {
+    val loginUiState: LoginUiState? by loginVM.loginUiState.collectAsStateWithLifecycle()
+    if (loginUiState == null || loginUiState is LoginUiState.SentOtp) return
+    when (loginUiState) {
+        is LoginUiState.Failure -> {
+            val message = messageResolver.getErrorLogin((loginUiState as LoginUiState.Failure).loginError)
+            LaunchedEffect(true) {
+                snackBarHostState.showSnackbar(message, withDismissAction = true)
+            }
+        }
+        is LoginUiState.Loading -> CircularProgressDialog()
+        is LoginUiState.RegisteredUser -> LaunchedEffect(true) {
+            navController.navigate(MainPage.createRoute((loginUiState as LoginUiState.RegisteredUser).gamerId))
+        }
+        else -> LaunchedEffect(true) {
+            navController.navigate(CreateAccount.createRoute((loginUiState as LoginUiState.UnregisteredUser).userId))
         }
     }
 }
