@@ -266,9 +266,14 @@ fun PhoneCodeInput(
             mutableStateOf(false)
         }
 
-        ChoosePhoneCodeDialog(showDialog = showChosePhoneCodeDialog, countriesUiState = countriesUiState) {
-            showChosePhoneCodeDialog = false
-            loginVM.validatePhoneNumberForm(it, phoneNumberValue)
+        if (showChosePhoneCodeDialog) {
+            ChoosePhoneCodeDialog(
+                codeValue = codeValue,
+                countriesUiState = countriesUiState
+            ) {
+                showChosePhoneCodeDialog = false
+                loginVM.validatePhoneNumberForm(it, phoneNumberValue)
+            }
         }
         DefaultOutlinedTextFieldLI(
             modifier = modifier,
@@ -287,36 +292,34 @@ fun PhoneCodeInput(
 
 @Composable
 fun ChoosePhoneCodeDialog(
-    showDialog: Boolean,
+    codeValue: String,
     countriesUiState: List<CountryUiState>,
     onPhoneCodeSelected: (String) -> Unit
 ) {
-    if (showDialog) {
-        Dialog(onDismissRequest = {
-            onPhoneCodeSelected("")
-        }) {
-            Card(modifier = Modifier.fillMaxWidth()) {
-                Column(
-                    modifier = Modifier
-                        .padding(vertical = 20.dp)
-                        .height(400.dp)
-                ) {
-                    Text(
-                        modifier = Modifier.fillMaxWidth(),
-                        fontSize = dimensionResource(
-                            id = R.dimen.title_text_size
-                        ).value.sp,
-                        text = stringResource(id = R.string.txt_ttl_choose_phone_code),
-                        fontFamily = puzzleFontFamily,
-                        fontWeight = FontWeight.Bold,
-                        textAlign = TextAlign.Center
-                    )
-                    Spacer(modifier = Modifier.height(10.dp))
-                    LazyColumn {
-                        items(countriesUiState) {
-                            ItemCountry(countryUiState = it) { countryUiState ->
-                                onPhoneCodeSelected(countryUiState.phoneCode)
-                            }
+    Dialog(onDismissRequest = {
+        onPhoneCodeSelected(codeValue)
+    }) {
+        Card(modifier = Modifier.fillMaxWidth()) {
+            Column(
+                modifier = Modifier
+                    .padding(vertical = 20.dp)
+                    .height(400.dp)
+            ) {
+                Text(
+                    modifier = Modifier.fillMaxWidth(),
+                    fontSize = dimensionResource(
+                        id = R.dimen.title_text_size
+                    ).value.sp,
+                    text = stringResource(id = R.string.txt_ttl_choose_phone_code),
+                    fontFamily = puzzleFontFamily,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center
+                )
+                Spacer(modifier = Modifier.height(10.dp))
+                LazyColumn {
+                    items(countriesUiState) {
+                        ItemCountry(countryUiState = it) { countryUiState ->
+                            onPhoneCodeSelected(countryUiState.phoneCode)
                         }
                     }
                 }
