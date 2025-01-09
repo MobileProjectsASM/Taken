@@ -40,6 +40,12 @@ dependencies {
     val firebaseVersion = "33.0.0"
     val gsonVersion = "2.11.0"
     val retrofitVersion = "2.11.0"
+    val coreKtxVersion = "1.13.1"
+    val appCompatVersion = "1.6.1"
+    val materialVersion = "1.12.0"
+    val junitVersion = "4.13.2"
+    val extJunitVersion = "1.1.5"
+    val espressoVersion = "3.5.1"
 
     implementation(project(":domain"))
 
@@ -64,13 +70,15 @@ dependencies {
     //Rest services
     implementation("com.squareup.retrofit2:retrofit:$retrofitVersion")
 
-    implementation("androidx.core:core-ktx:1.13.1")
-    implementation("androidx.appcompat:appcompat:1.6.1")
-    implementation("com.google.android.material:material:1.12.0")
-    testImplementation("junit:junit:4.13.2")
+    implementation("androidx.core:core-ktx:$coreKtxVersion")
+    implementation("androidx.appcompat:appcompat:$appCompatVersion")
+    implementation("com.google.android.material:material:$materialVersion")
+
+    //Testing
+    testImplementation("junit:junit:$junitVersion")
     testImplementation("androidx.room:room-testing:$roomVersion")
-    androidTestImplementation("androidx.test.ext:junit:1.1.5")
-    androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
+    androidTestImplementation("androidx.test.ext:junit:$extJunitVersion")
+    androidTestImplementation("androidx.test.espresso:espresso-core:$espressoVersion")
 }
 
 kapt {
