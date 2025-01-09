@@ -15,9 +15,12 @@ class CountryInfoRoomSource @Inject constructor(
         const val TAG = "CountryInfoRoomSource"
     }
 
-    override suspend fun getCountriesInfo(): List<CountryInfo> {
+    override suspend fun getCountriesInfoSortedByName(ascending: Boolean): List<CountryInfo> {
         try {
-            return takenDB.getCountryInfoDao().getCountriesInfo().map(countryInfoMapper::getCountryInfo)
+            return when {
+                ascending -> takenDB.getCountryInfoDao().getCountriesInfoSortedByNameAsc()
+                else -> takenDB.getCountryInfoDao().getCountriesInfoSortedByNameDesc()
+            }.map(countryInfoMapper::getCountryInfo)
         } catch (exception: Exception) {
             Log.e(TAG, exception.stackTraceToString())
             throw Exception("Error to getCountriesCallCode local source")

@@ -22,7 +22,7 @@ class GetCountriesInfoUC @Inject constructor(
 
     override suspend fun run(params: Unit): Result<List<CountryInfo>> {
         return try {
-            val resultCountriesInfo = countryInfoRepository.getCountriesInfo()
+            val resultCountriesInfo = countryInfoRepository.getCountriesInfoSortedByName()
             if (resultCountriesInfo.isFailure) return resultCountriesInfo
             val countriesInfo = resultCountriesInfo.asSuccessful().data
             if (countriesInfo.isNotEmpty()) return countriesInfo.toSuccessful()

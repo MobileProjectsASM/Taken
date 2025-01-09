@@ -23,9 +23,9 @@ class CountryInfoRepositoryImpl @Inject constructor(
         const val TAG = "CountryRepositoryImpl"
     }
 
-    override suspend fun getCountriesInfo(): Result<List<CountryInfo>> {
+    override suspend fun getCountriesInfoSortedByName(ascending: Boolean): Result<List<CountryInfo>> {
         return try {
-            countryInfoLocalSource.getCountriesInfo().toSuccessful()
+            countryInfoLocalSource.getCountriesInfoSortedByName().toSuccessful()
         } catch (exception: Exception) {
             logger.logE(TAG, exception)
             return Failure.UnknownFailure.toFailure()
