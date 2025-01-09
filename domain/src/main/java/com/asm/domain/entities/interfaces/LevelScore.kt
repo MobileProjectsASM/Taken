@@ -4,5 +4,5 @@ import com.asm.domain.entities.GameStatus
 import com.asm.domain.entities.Level
 
 interface LevelScore {
-    fun getScore(level: Level, gameWin: GameStatus.Process): Double
+    fun getScore(level: Level, gameProcess: GameStatus.Process): Double
 }

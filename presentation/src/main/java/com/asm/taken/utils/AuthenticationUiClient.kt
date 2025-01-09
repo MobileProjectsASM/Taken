@@ -93,7 +93,7 @@ class AuthenticationUiClient @Inject constructor(
                 }
 
                 override fun onCodeAutoRetrievalTimeOut(p0: String) {
-                    val value = p0
+
                 }
             }
         )

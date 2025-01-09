@@ -48,8 +48,7 @@ fun MainNavigation(
             messageResolver = messageResolver
         )
         navigationMainPage(
-            navController = navigationController,
-            messageResolver = messageResolver
+            navController = navigationController
         )
     }
 }
@@ -109,10 +108,10 @@ fun NavGraphBuilder.navigationLogin(
         }
         composable(route = CreateAccount.route) { navBackStackEntry ->
             val userId = navBackStackEntry.arguments?.getString(CreateAccount.userIdArg).orEmpty()
-            val parentEntry = remember(navBackStackEntry) {
+            /*val parentEntry = remember(navBackStackEntry) {
                 navController.getBackStackEntry(Login.route)
             }
-            val loginVM = hiltViewModel<LoginVM>(parentEntry)
+            val loginVM = hiltViewModel<LoginVM>(parentEntry)*/
             Box(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
@@ -124,8 +123,7 @@ fun NavGraphBuilder.navigationLogin(
 }
 
 fun NavGraphBuilder.navigationMainPage(
-    navController: NavHostController,
-    messageResolver: MessageResolver
+    navController: NavHostController
 ) {
     navigation(
         startDestination = Home.route,

@@ -48,7 +48,6 @@ class UtilsModule {
     @CountryInfoRetrofit
     @Provides
     fun providesRetrofitCountries(
-        @ApplicationContext context: Context,
         okHttpClient: OkHttpClient,
         gson: Gson
     ): Retrofit = Retrofit.Builder()
