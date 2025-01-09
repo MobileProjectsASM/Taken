@@ -1,5 +1,6 @@
 package com.asm.taken.ui.page.login
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -80,6 +81,10 @@ fun PhoneAuthPage(
     val countriesUiState: CountriesUiState by loginVM.countriesUiState.collectAsStateWithLifecycle()
     val loginUiState: LoginUiState? by loginVM.loginUiState.collectAsStateWithLifecycle()
 
+    BackHandler {
+        loginVM.cleanLoginPhoneForm()
+        navController.popBackStack()
+    }
     AuthWithPhone(
         loginVM = loginVM,
         messageResolver = messageResolver,

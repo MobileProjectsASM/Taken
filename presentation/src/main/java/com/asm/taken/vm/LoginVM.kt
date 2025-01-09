@@ -122,6 +122,15 @@ class LoginVM @Inject constructor(
         _loginUiState.update { null }
     }
 
+    fun cleanLoginPhoneForm() {
+        _loginFormPhoneUiState.update {
+            it.copy(
+                phoneCodeUiState = InputUiState(),
+                phoneNumberUiState = InputUiState()
+            )
+        }
+    }
+
     private fun validateUserId(userId: String): List<InputUserIdError> {
         val errors = mutableListOf<InputUserIdError>()
         if (userId.isEmpty()) errors.add(InputUserIdError.EMPTY)
