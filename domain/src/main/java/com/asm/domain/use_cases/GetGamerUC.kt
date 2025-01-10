@@ -2,8 +2,9 @@ package com.asm.domain.use_cases
 
 import com.asm.domain.entities.Gamer
 import com.asm.domain.entities.Result
-import com.asm.domain.entities.toFailure
-import com.asm.domain.errors.Failure
+import com.asm.domain.entities.toUnsuccessful
+import com.asm.domain.errors.GeneralErrorType
+import com.asm.domain.errors.GeneralFailure
 import com.asm.domain.repositories.GamerRepository
 import com.asm.domain.use_cases.base.UseCaseSync
 import com.asm.domain.utils.Logger
@@ -23,7 +24,7 @@ class GetGamerUC @Inject constructor(
             gamerRepository.getGamerById(params)
         } catch (exception: Exception) {
             logger.logE(TAG, exception)
-            Failure.UnknownFailure.toFailure()
+            GeneralFailure.OtherError(GeneralErrorType.UNKNOWN).toUnsuccessful()
         }
     }
 }

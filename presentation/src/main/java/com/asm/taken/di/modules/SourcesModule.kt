@@ -17,12 +17,12 @@ import com.asm.data.sources.remote.impl.firebase.GameFireStoreSource
 import com.asm.data.sources.remote.impl.firebase.GamerFireStoreSource
 import com.asm.data.sources.remote.impl.firebase.LevelFireStoreSource
 import com.asm.data.sources.remote.impl.firebase.MultimediaStorageSource
-import com.asm.data.sources.remote.impl.rest.CountryInfoRestService
-import com.asm.data.sources.remote.interfaces.CountryInfoRemoteSource
-import com.asm.data.sources.remote.interfaces.GameRemoteSource
-import com.asm.data.sources.remote.interfaces.GamerRemoteSource
-import com.asm.data.sources.remote.interfaces.LevelRemoteSource
-import com.asm.data.sources.remote.interfaces.MultimediaRemoteSource
+import com.asm.data.sources.remote.impl.rest.CountryInfoRestServiceSource
+import com.asm.data.sources.remote.abstract_remotes.CountryInfoRemoteSource
+import com.asm.data.sources.remote.abstract_remotes.GameRemoteSource
+import com.asm.data.sources.remote.abstract_remotes.GamerRemoteSource
+import com.asm.data.sources.remote.abstract_remotes.LevelRemoteSource
+import com.asm.data.sources.remote.abstract_remotes.MultimediaRemoteSource
 import com.asm.domain.utils.Logger
 import dagger.Binds
 import dagger.Module
@@ -79,6 +79,6 @@ abstract class SourcesModule {
 
     @ViewModelScoped
     @Binds
-    abstract fun getCountryInfoRemoteSource(countryInfoRemoteSource: CountryInfoRestService): CountryInfoRemoteSource
+    abstract fun getCountryInfoRemoteSource(countryInfoRemoteSource: CountryInfoRestServiceSource): CountryInfoRemoteSource
 
 }

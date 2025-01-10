@@ -1,7 +1,7 @@
 package com.asm.data.sources.remote.impl.firebase
 
 import android.util.Log
-import com.asm.data.sources.remote.interfaces.GamerRemoteSource
+import com.asm.data.sources.remote.abstract_remotes.GamerRemoteSource
 import com.asm.domain.entities.Gamer
 import com.asm.data.sources.remote.model.GamerFireStore as GamerFireStore
 import com.google.firebase.firestore.FirebaseFirestore

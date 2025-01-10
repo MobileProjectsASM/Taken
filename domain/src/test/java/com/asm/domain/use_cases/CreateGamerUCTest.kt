@@ -8,13 +8,11 @@ import com.asm.domain.entities.Level
 import com.asm.domain.entities.LevelInfo
 import com.asm.domain.entities.MovementsMetrics
 import com.asm.domain.entities.TimeMetrics
-import com.asm.domain.entities.asFailure
+import com.asm.domain.entities.asUnsuccessful
 import com.asm.domain.entities.asSuccessful
-import com.asm.domain.entities.toFailure
 import com.asm.domain.entities.toSuccessful
-import com.asm.domain.errors.Failure
-import com.asm.domain.errors.RegisterFailure
-import com.asm.domain.repositories.ConnectionRepository
+import com.asm.domain.errors.GeneralFailure
+import com.asm.domain.errors.RegisterGeneralFailure
 import com.asm.domain.repositories.GameRepository
 import com.asm.domain.repositories.GamerRepository
 import com.asm.domain.repositories.LevelRepository
@@ -75,14 +73,14 @@ class CreateGamerUCTest {
             country = "MX",
             image  = null
         )
-        coEvery { connectionRepository.isNetworkAvailable() } returns Failure.UnknownFailure.toFailure()
+        coEvery { connectionRepository.isNetworkAvailable() } returns GeneralFailure.UnknownGeneralFailure.toFailure()
 
         //Act
         val result = signInUC.execute(param)
 
         //Asserts
         coVerify(exactly = 1) { connectionRepository.isNetworkAvailable() }
-        assert(result.isFailure)
+        assert(result.isUnsuccessful)
     }
 
     @Test
@@ -102,9 +100,9 @@ class CreateGamerUCTest {
 
         //Asserts
         coVerify(exactly = 1) { connectionRepository.isNetworkAvailable() }
-        assert(result.isFailure)
-        val failure = result.asFailure().failure
-        assert(failure is Failure.NetworkConnection)
+        assert(result.isUnsuccessful)
+        val failure = result.asUnsuccessful().generalFailure
+        assert(failure is GeneralFailure.NetworkConnection)
     }
 
     @Test
@@ -118,7 +116,7 @@ class CreateGamerUCTest {
             image  = null
         )
         coEvery { connectionRepository.isNetworkAvailable() } returns true.toSuccessful()
-        coEvery { gamerRepository.checkIfGamerExists(ofType(String::class)) } returns Failure.UnknownFailure.toFailure()
+        coEvery { gamerRepository.checkIfGamerExists(ofType(String::class)) } returns GeneralFailure.UnknownGeneralFailure.toFailure()
 
         //Act
         val result = signInUC.execute(param)
@@ -126,7 +124,7 @@ class CreateGamerUCTest {
         //Asserts
         coVerify(exactly = 1) { connectionRepository.isNetworkAvailable() }
         coVerify(exactly = 1) { gamerRepository.checkIfGamerExists(ofType(String::class)) }
-        assert(result.isFailure)
+        assert(result.isUnsuccessful)
     }
 
     @Test
@@ -148,9 +146,9 @@ class CreateGamerUCTest {
         //Asserts
         coVerify(exactly = 1) { connectionRepository.isNetworkAvailable() }
         coVerify(exactly = 1) { gamerRepository.checkIfGamerExists(ofType(String::class)) }
-        assert(result.isFailure)
-        val failure = result.asFailure().failure
-        assert(failure is RegisterFailure.GamerExists)
+        assert(result.isUnsuccessful)
+        val failure = result.asUnsuccessful().generalFailure
+        assert(failure is RegisterGeneralFailure.GamerExists)
     }
 
     @Test
@@ -168,7 +166,7 @@ class CreateGamerUCTest {
         )
         coEvery { connectionRepository.isNetworkAvailable() } returns true.toSuccessful()
         coEvery { gamerRepository.checkIfGamerExists(ofType(String::class)) } returns false.toSuccessful()
-        coEvery { multimediaRepository.uploadUserImage(ofType(String::class), ofType(String::class), ofType(String::class)) } returns Failure.UnknownFailure.toFailure()
+        coEvery { multimediaRepository.uploadUserImage(ofType(String::class), ofType(String::class), ofType(String::class)) } returns GeneralFailure.UnknownGeneralFailure.toFailure()
 
         //Act
         val result = signInUC.execute(param)
@@ -178,7 +176,7 @@ class CreateGamerUCTest {
         coVerify(exactly = 1) { gamerRepository.checkIfGamerExists(ofType(String::class)) }
         coVerify(exactly = 1) { multimediaRepository.uploadUserImage(ofType(String::class), ofType(String::class), ofType(String::class)) }
         coVerify(exactly = 0) { multimediaRepository.getDefaultUserImage() }
-        assert(result.isFailure)
+        assert(result.isUnsuccessful)
     }
 
     @Test
@@ -193,7 +191,7 @@ class CreateGamerUCTest {
         )
         coEvery { connectionRepository.isNetworkAvailable() } returns true.toSuccessful()
         coEvery { gamerRepository.checkIfGamerExists(ofType(String::class)) } returns false.toSuccessful()
-        coEvery { multimediaRepository.getDefaultUserImage() } returns Failure.UnknownFailure.toFailure()
+        coEvery { multimediaRepository.getDefaultUserImage() } returns GeneralFailure.UnknownGeneralFailure.toFailure()
 
         //Act
         val result = signInUC.execute(param)
@@ -203,7 +201,7 @@ class CreateGamerUCTest {
         coVerify(exactly = 1) { gamerRepository.checkIfGamerExists(ofType(String::class)) }
         coVerify(exactly = 0) { multimediaRepository.uploadUserImage(ofType(String::class), ofType(String::class), ofType(String::class)) }
         coVerify(exactly = 1) { multimediaRepository.getDefaultUserImage() }
-        assert(result.isFailure)
+        assert(result.isUnsuccessful)
     }
 
     @Test
@@ -219,7 +217,7 @@ class CreateGamerUCTest {
         coEvery { connectionRepository.isNetworkAvailable() } returns true.toSuccessful()
         coEvery { gamerRepository.checkIfGamerExists(ofType(String::class)) } returns false.toSuccessful()
         coEvery { multimediaRepository.getDefaultUserImage() } returns "/example/path".toSuccessful()
-        coEvery { gamerRepository.registerGamer(ofType(Gamer::class)) } returns Failure.UnknownFailure.toFailure()
+        coEvery { gamerRepository.registerGamer(ofType(Gamer::class)) } returns GeneralFailure.UnknownGeneralFailure.toFailure()
 
         //Act
         val result = signInUC.execute(param)
@@ -230,7 +228,7 @@ class CreateGamerUCTest {
         coVerify(exactly = 0) { multimediaRepository.uploadUserImage(ofType(String::class), ofType(String::class), ofType(String::class)) }
         coVerify(exactly = 1) { multimediaRepository.getDefaultUserImage() }
         coVerify(exactly = 1) { gamerRepository.registerGamer(ofType(Gamer::class)) }
-        assert(result.isFailure)
+        assert(result.isUnsuccessful)
     }
 
     @Test
@@ -247,7 +245,7 @@ class CreateGamerUCTest {
         coEvery { gamerRepository.checkIfGamerExists(ofType(String::class)) } returns false.toSuccessful()
         coEvery { multimediaRepository.getDefaultUserImage() } returns "/example/path".toSuccessful()
         coEvery { gamerRepository.registerGamer(ofType(Gamer::class)) } returns Completed.toSuccessful()
-        coEvery { levelRepository.downloadLevelsByOrderCriteria(listOf(1, 2)) } returns Failure.UnknownFailure.toFailure()
+        coEvery { levelRepository.downloadLevelsByOrderCriteria(listOf(1, 2)) } returns GeneralFailure.UnknownGeneralFailure.toFailure()
 
         //Act
         val result = signInUC.execute(param)
@@ -259,7 +257,7 @@ class CreateGamerUCTest {
         coVerify(exactly = 1) { multimediaRepository.getDefaultUserImage() }
         coVerify(exactly = 1) { gamerRepository.registerGamer(ofType(Gamer::class)) }
         coVerify(exactly = 1) { levelRepository.downloadLevelsByOrderCriteria(listOf(1, 2)) }
-        assert(result.isFailure)
+        assert(result.isUnsuccessful)
     }
 
     @Test
@@ -312,7 +310,7 @@ class CreateGamerUCTest {
         coEvery { multimediaRepository.getDefaultUserImage() } returns "/example/path".toSuccessful()
         coEvery { gamerRepository.registerGamer(ofType(Gamer::class)) } returns Completed.toSuccessful()
         coEvery { levelRepository.downloadLevelsByOrderCriteria(listOf(1, 2)) } returns initLevels.toSuccessful()
-        coEvery { gameRepository.saveGamerGames(any(), ofType(String::class)) } returns Failure.UnknownFailure.toFailure()
+        coEvery { gameRepository.saveGamerGames(any(), ofType(String::class)) } returns GeneralFailure.UnknownGeneralFailure.toFailure()
 
         //Act
         val result = signInUC.execute(param)
@@ -326,7 +324,7 @@ class CreateGamerUCTest {
         coVerify(exactly = 1) { levelRepository.downloadLevelsByOrderCriteria(listOf(1, 2)) }
         coVerify(exactly = 1) { gameRepository.saveGamerGames(any(), ofType(String::class)) }
 
-        assert(result.isFailure)
+        assert(result.isUnsuccessful)
     }
 
     @Test

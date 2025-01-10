@@ -1,12 +1,10 @@
 package com.asm.taken.di.modules
 
-import com.asm.data.repositories.ConnectionRepositoryImpl
 import com.asm.data.repositories.CountryInfoRepositoryImpl
 import com.asm.data.repositories.GameRepositoryImpl
 import com.asm.data.repositories.GamerRepositoryImpl
 import com.asm.data.repositories.LevelRepositoryImpl
 import com.asm.data.repositories.MultimediaRepositoryImpl
-import com.asm.domain.repositories.ConnectionRepository
 import com.asm.domain.repositories.CountryInfoRepository
 import com.asm.domain.repositories.GameRepository
 import com.asm.domain.repositories.GamerRepository
@@ -36,10 +34,6 @@ abstract class RepositoryModule {
     @ViewModelScoped
     @Binds
     abstract fun getMultimediaRepository(multimediaRepository: MultimediaRepositoryImpl): MultimediaRepository
-
-    @ViewModelScoped
-    @Binds
-    abstract fun getConnectionRepository(connectionRepository: ConnectionRepositoryImpl): ConnectionRepository
 
     @ViewModelScoped
     @Binds

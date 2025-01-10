@@ -1,6 +1,6 @@
 package com.asm.domain.entities
 
-import com.asm.domain.errors.TimerFailure
+import com.asm.domain.errors.TimerGeneralFailure
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
@@ -22,7 +22,7 @@ class Timer {
         inProcess: (Long) -> Unit,
         timeOut: () -> Unit
     ): Result<Unit> = coroutineScope {
-        if (time == null) return@coroutineScope TimerFailure.TimeInitIsNull.toFailure()
+        if (time == null) return@coroutineScope TimerGeneralFailure.TimeInitIsNull.toUnsuccessful()
         job = launch {
             initMark = timeSource.markNow()
             initTimer.invoke(time!!)

@@ -1,4 +1,4 @@
-package com.asm.data.sources.remote.interfaces
+package com.asm.data.sources.remote.abstract_remotes
 
 interface MultimediaRemoteSource {
     suspend fun uploadImage(path: String, imageName: String, base64: String): String

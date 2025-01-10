@@ -2,12 +2,13 @@ package com.asm.data.repositories
 
 import com.asm.data.sources.hardware.ConnectionSource
 import com.asm.data.sources.local.interfaces.GameLocalSource
-import com.asm.data.sources.remote.interfaces.GameRemoteSource
+import com.asm.data.sources.remote.abstract_remotes.GameRemoteSource
 import com.asm.domain.entities.Game
 import com.asm.domain.entities.Result
-import com.asm.domain.entities.toFailure
 import com.asm.domain.entities.toSuccessful
-import com.asm.domain.errors.Failure
+import com.asm.domain.entities.toUnsuccessful
+import com.asm.domain.errors.GeneralErrorType
+import com.asm.domain.errors.GeneralFailure
 import com.asm.domain.repositories.GameRepository
 import com.asm.domain.utils.Completed
 import com.asm.domain.utils.Logger
@@ -26,13 +27,13 @@ class GameRepositoryImpl @Inject constructor(
 
     override suspend fun saveGamerGames(games: List<Game>, gamerId: String): Result<Completed> {
         return try {
-            if (!connectionSource.isNetworkAvailable()) return Failure.NetworkConnection.toFailure()
+            if (!connectionSource.isNetworkAvailable()) return GeneralFailure.OtherError(GeneralErrorType.NETWORK_CONNECTION).toUnsuccessful()
             gameRemoteSource.insertGames(games, gamerId)
             gameLocalSource.saveGamesByGamerId(games, gamerId)
             Completed.toSuccessful()
         } catch (exception: Exception) {
             logger.logE(TAG, exception)
-            Failure.UnknownFailure.toFailure()
+            GeneralFailure.OtherError(GeneralErrorType.UNKNOWN).toUnsuccessful()
         }
     }
 }

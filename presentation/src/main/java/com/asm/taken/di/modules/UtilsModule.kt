@@ -48,10 +48,11 @@ class UtilsModule {
     @CountryInfoRetrofit
     @Provides
     fun providesRetrofitCountries(
+        @ApplicationContext context: Context,
         okHttpClient: OkHttpClient,
         gson: Gson
     ): Retrofit = Retrofit.Builder()
-        .baseUrl("https://restfulcountries.com/api/v1/")
+        .baseUrl(context.getString(com.asm.data.R.string.api_base_url_countries_info))
         .client(okHttpClient)
         .addConverterFactory(GsonConverterFactory.create(gson))
         .build()
@@ -70,6 +71,6 @@ class UtilsModule {
 
     @Provides
     fun providesCountryInfoInterceptor(@ApplicationContext context: Context): Interceptor = CountryInfoInterceptor(
-        "Bearer ${context.getString(R.string.api_key_country_service)}"
+        "Bearer ${context.getString(com.asm.data.R.string.api_key_country_service)}"
     )
 }

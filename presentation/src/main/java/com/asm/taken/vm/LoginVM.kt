@@ -3,9 +3,9 @@ package com.asm.taken.vm
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.asm.domain.entities.Result
-import com.asm.domain.entities.asFailure
+import com.asm.domain.entities.asUnsuccessful
 import com.asm.domain.entities.asSuccessful
-import com.asm.domain.errors.GamerFailure
+import com.asm.domain.errors.GamerGeneralFailure
 import com.asm.domain.use_cases.GetCountriesInfoUC
 import com.asm.domain.use_cases.GetGamerUC
 import com.asm.taken.mappers.PhoneCodeMapper
@@ -85,7 +85,7 @@ class LoginVM @Inject constructor(
     fun getCountriesInfo() {
         viewModelScope.launch {
             val countriesState: CountriesUiState = when (val countriesResult = getCountriesInfoUC.execute(Unit)) {
-                is Result.Failure -> CountriesUiState.Failure("Error to get codes")
+                is Result.Unsuccessful -> CountriesUiState.Failure("Error to get codes")
                 is Result.Successful -> {
                     val phoneCodes = countriesResult.data.map(phoneCodeMapper::getPhoneCode)
                     CountriesUiState.Successful(phoneCodes)
@@ -207,8 +207,8 @@ class LoginVM @Inject constructor(
             val gamer = gamerResult.asSuccessful().data
             return LoginUiState.RegisteredUser(gamer.gamerId)
         }
-        val failure = gamerResult.asFailure().failure
-        if (failure is GamerFailure.GamerNotExists) {
+        val failure = gamerResult.asUnsuccessful().generalFailure
+        if (failure is GamerGeneralFailure.LoginNotExists) {
             return LoginUiState.UnregisteredUser(userData.userId)
         }
         return LoginUiState.Failure(LoginError.VERIFY_GAMER_EXISTS)

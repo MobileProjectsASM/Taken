@@ -6,12 +6,11 @@ import com.asm.domain.entities.Gamer
 import com.asm.domain.entities.Level
 import com.asm.domain.entities.LevelInfo
 import com.asm.domain.entities.Result
-import com.asm.domain.entities.asFailure
 import com.asm.domain.entities.asSuccessful
-import com.asm.domain.entities.toFailure
-import com.asm.domain.errors.Failure
-import com.asm.domain.errors.RegisterFailure
-import com.asm.domain.repositories.ConnectionRepository
+import com.asm.domain.entities.toUnsuccessful
+import com.asm.domain.errors.GeneralErrorType
+import com.asm.domain.errors.GeneralFailure
+import com.asm.domain.errors.RegisterGeneralFailure
 import com.asm.domain.repositories.GameRepository
 import com.asm.domain.repositories.GamerRepository
 import com.asm.domain.repositories.LevelRepository
@@ -27,7 +26,6 @@ class CreateGamerUC @Inject constructor(
     private val levelRepository: LevelRepository,
     private val gameRepository: GameRepository,
     private val multimediaRepository: MultimediaRepository,
-    private val connectionRepository: ConnectionRepository,
     private val logger: Logger
 ) : UseCaseSync<Completed, CreateGamerUC.GamerParams>() {
 
@@ -51,12 +49,9 @@ class CreateGamerUC @Inject constructor(
 
     override suspend fun run(params: GamerParams): Result<Completed> {
         return try {
-            val connectionResult = connectionRepository.isNetworkAvailable()
-            if (connectionResult.isFailure) return connectionResult.asFailure().toFailure()
-            if (!connectionResult.asSuccessful().data) return Failure.NetworkConnection.toFailure()
             val resultGamerExists = gamerRepository.checkIfGamerExists(params.gamerId)
-            if (resultGamerExists.isFailure) return resultGamerExists.asFailure().toFailure()
-            if (resultGamerExists.asSuccessful().data) return RegisterFailure.GamerExists.toFailure()
+            if (resultGamerExists is Result.Unsuccessful) return resultGamerExists.generalFailure.toUnsuccessful()
+            if (resultGamerExists.asSuccessful().data) return RegisterGeneralFailure.GamerExists.toUnsuccessful()
             val resultImage = if (params.image == null) {
                 multimediaRepository.getDefaultUserImage()
             } else {
@@ -66,20 +61,20 @@ class CreateGamerUC @Inject constructor(
                     params.image.base64
                 )
             }
-            if (resultImage.isFailure) return resultImage.asFailure().toFailure()
+            if (resultImage is Result.Unsuccessful) return resultImage.generalFailure.toUnsuccessful()
             val imagePath = resultImage.asSuccessful().data
             val resultRegisterGamer = gamerRepository.registerGamer(
                 Gamer(params.gamerId, params.nickName, params.age, params.country, imagePath)
             )
-            if (resultRegisterGamer.isFailure) return resultRegisterGamer
+            if (resultRegisterGamer is Result.Unsuccessful) return resultRegisterGamer
             val levelsResult = levelRepository.downloadLevelsByOrderCriteria(listOf(1, 2))
-            if (levelsResult.isFailure) return levelsResult.asFailure().toFailure()
+            if (levelsResult is Result.Unsuccessful) return levelsResult.generalFailure.toUnsuccessful()
             val initLevels = levelsResult.asSuccessful().data
             val initialGames = createInitGames(initLevels)
             gameRepository.saveGamerGames(initialGames, params.gamerId)
         } catch (exception: Exception) {
             logger.logE(TAG, exception)
-            Failure.UnknownFailure.toFailure()
+            GeneralFailure.OtherError(GeneralErrorType.UNKNOWN).toUnsuccessful()
         }
     }
 

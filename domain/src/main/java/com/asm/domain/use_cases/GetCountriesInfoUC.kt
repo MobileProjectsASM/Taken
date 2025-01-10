@@ -3,9 +3,10 @@ package com.asm.domain.use_cases
 import com.asm.domain.entities.CountryInfo
 import com.asm.domain.entities.Result
 import com.asm.domain.entities.asSuccessful
-import com.asm.domain.entities.toFailure
 import com.asm.domain.entities.toSuccessful
-import com.asm.domain.errors.Failure
+import com.asm.domain.entities.toUnsuccessful
+import com.asm.domain.errors.GeneralErrorType
+import com.asm.domain.errors.GeneralFailure
 import com.asm.domain.repositories.CountryInfoRepository
 import com.asm.domain.use_cases.base.UseCaseSync
 import com.asm.domain.utils.Logger
@@ -23,13 +24,13 @@ class GetCountriesInfoUC @Inject constructor(
     override suspend fun run(params: Unit): Result<List<CountryInfo>> {
         return try {
             val resultCountriesInfo = countryInfoRepository.getCountriesInfoSortedByName()
-            if (resultCountriesInfo.isFailure) return resultCountriesInfo
+            if (resultCountriesInfo.isUnsuccessful) return resultCountriesInfo
             val countriesInfo = resultCountriesInfo.asSuccessful().data
             if (countriesInfo.isNotEmpty()) return countriesInfo.toSuccessful()
             countryInfoRepository.downloadCountriesInfo()
         } catch (exception: Exception) {
             logger.logE(TAG, exception)
-            Failure.UnknownFailure.toFailure()
+            GeneralFailure.OtherError(GeneralErrorType.UNKNOWN).toUnsuccessful()
         }
     }
 }

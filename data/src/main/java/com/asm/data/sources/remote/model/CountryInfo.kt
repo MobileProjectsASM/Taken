@@ -12,6 +12,6 @@ data class CountryInfoRest(
 )
 
 data class CountryError(
-    val status: String,
+    val status: Int,
     val message: String
 )

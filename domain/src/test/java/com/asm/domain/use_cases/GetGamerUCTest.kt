@@ -1,7 +1,7 @@
 package com.asm.domain.use_cases
 
-import com.asm.domain.entities.toFailure
-import com.asm.domain.errors.GamerFailure
+import com.asm.domain.entities.toUnsuccessful
+import com.asm.domain.errors.GamerGeneralFailure
 import com.asm.domain.repositories.GamerRepository
 import com.asm.domain.utils.Logger
 import io.mockk.MockKAnnotations
@@ -32,14 +32,14 @@ class GetGamerUCTest {
     @Test
     fun `test the process when getGamerById return a Failure`() = runTest {
         //Arrange
-        coEvery { gamerRepository.getGamerById(ofType(String::class)) } returns GamerFailure.GamerNotExists.toFailure()
+        coEvery { gamerRepository.getGamerById(ofType(String::class)) } returns GamerGeneralFailure.LoginNotExists.toUnsuccessful()
 
         //Act
         val result = getGamerUC.execute("ABCDE")
 
         //Asserts
         coVerify(exactly = 1) { gamerRepository.getGamerById(ofType(String::class)) }
-        assert(result.isFailure)
+        assert(result.isUnsuccessful)
     }
 
     @Test
@@ -54,6 +54,6 @@ class GetGamerUCTest {
         //Asserts
         coVerify(exactly = 1) { gamerRepository.getGamerById(ofType(String::class)) }
         coVerify(exactly = 1) { logger.logE(ofType(String::class), ofType(Exception::class)) }
-        assert(result.isFailure)
+        assert(result.isUnsuccessful)
     }
 }

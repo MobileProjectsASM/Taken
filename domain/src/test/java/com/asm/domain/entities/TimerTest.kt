@@ -1,6 +1,6 @@
 package com.asm.domain.entities
 
-import com.asm.domain.errors.TimerFailure
+import com.asm.domain.errors.TimerGeneralFailure
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -27,9 +27,9 @@ class TimerTest {
         val result = timer.start({}, {}, {})
 
         //Asserts
-        assert(result.isFailure)
-        val failure = result.asFailure().failure
-        assert(failure is TimerFailure.TimeInitIsNull)
+        assert(result.isUnsuccessful)
+        val failure = result.asUnsuccessful().generalFailure
+        assert(failure is TimerGeneralFailure.TimeInitIsNull)
     }
 
     @Test

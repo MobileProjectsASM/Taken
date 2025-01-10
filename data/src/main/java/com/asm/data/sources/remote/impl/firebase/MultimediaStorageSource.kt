@@ -2,7 +2,7 @@ package com.asm.data.sources.remote.impl.firebase
 
 import android.util.Base64
 import android.util.Log
-import com.asm.data.sources.remote.interfaces.MultimediaRemoteSource
+import com.asm.data.sources.remote.abstract_remotes.MultimediaRemoteSource
 import com.google.firebase.storage.StorageReference
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.tasks.await

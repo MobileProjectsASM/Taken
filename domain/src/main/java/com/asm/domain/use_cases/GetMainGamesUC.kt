@@ -2,8 +2,9 @@ package com.asm.domain.use_cases
 
 import com.asm.domain.entities.Game
 import com.asm.domain.entities.Result
-import com.asm.domain.entities.toFailure
-import com.asm.domain.errors.Failure
+import com.asm.domain.entities.toUnsuccessful
+import com.asm.domain.errors.GeneralErrorType
+import com.asm.domain.errors.GeneralFailure
 import com.asm.domain.repositories.GameRepository
 import com.asm.domain.use_cases.base.UseCaseSync
 import com.asm.domain.utils.Logger
@@ -55,6 +56,6 @@ class GetMainGamesUC @Inject constructor(
             logger.logE { exception }
             Error.UnknownError.toFailure()
         }*/
-        return Failure.UnknownFailure.toFailure()
+        return GeneralFailure.OtherError(GeneralErrorType.UNKNOWN).toUnsuccessful()
     }
 }

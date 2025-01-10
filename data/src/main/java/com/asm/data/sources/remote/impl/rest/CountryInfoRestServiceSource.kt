@@ -2,14 +2,19 @@ package com.asm.data.sources.remote.impl.rest
 
 import android.util.Log
 import com.asm.data.sources.remote.impl.rest.api_service.CountryInfoClient
-import com.asm.data.sources.remote.interfaces.CountryInfoRemoteSource
+import com.asm.data.sources.remote.abstract_remotes.CountryInfoRemoteSource
 import com.asm.data.sources.remote.mappers.CountryInfoMapper
 import com.asm.data.sources.remote.model.CountryError
 import com.asm.domain.entities.CountryInfo
+import com.asm.domain.entities.Result
+import com.asm.domain.entities.toSuccessful
+import com.asm.domain.entities.toUnsuccessful
+import com.asm.domain.errors.GeneralErrorType
+import com.asm.domain.errors.GeneralFailure
 import com.google.gson.Gson
 import javax.inject.Inject
 
-class CountryInfoRestService @Inject constructor(
+class CountryInfoRestServiceSource @Inject constructor(
     private val countryInfoClient: CountryInfoClient,
     private val countryInfoMapper: CountryInfoMapper,
     private val gson: Gson
@@ -19,7 +24,7 @@ class CountryInfoRestService @Inject constructor(
         const val TAG = "CountryInfoRestService"
     }
 
-    override suspend fun getCountriesCallCode(): List<CountryInfo> {
+    override suspend fun getCountriesCallCode(): Result<List<CountryInfo>> {
         return try {
             val response = countryInfoClient.getCountriesInfo()
             if (!response.isSuccessful) {
@@ -28,13 +33,14 @@ class CountryInfoRestService @Inject constructor(
                     throw Exception("Unknown error")
                 }
                 val apiError = gson.fromJson(errorBody, CountryError::class.java)
-                throw Exception("Error ${apiError.status}: ${apiError.message}")
+                return GeneralFailure.ServerError(apiError.status, apiError.message).toUnsuccessful()
             }
             val countriesResponse = response.body() ?: throw Exception("Empty response")
-            countriesResponse.countries.map(countryInfoMapper::getCountryInfo)
+            val countriesInfo = countriesResponse.countries.map(countryInfoMapper::getCountryInfo)
+            countriesInfo.toSuccessful()
         } catch(exception: Exception) {
             Log.e(TAG, exception.stackTraceToString())
-            throw Exception("Error to get countries")
+            GeneralFailure.OtherError(GeneralErrorType.UNKNOWN).toUnsuccessful()
         }
     }
 }

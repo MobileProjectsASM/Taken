@@ -48,7 +48,5 @@
     <string name="err_otp_be_6_digits">Otp must be 6 digits long</string>
 
     <string name="default_web_client_id">537568996262-c7nrhuvi4s9jaukcg9uh0hvm98l9ubls.apps.googleusercontent.com</string>
-    <string name="api_key_country_service">1274|gSQVz5Qf9OfRRwUhxEbDBhzz2c48b21KbXDjvnPB</string>
-    <string name="api_base_url_country_service">https://restfulcountries.com/</string>
     <string name="err_get_countries">Error to get countries\n</string>
 </resources>

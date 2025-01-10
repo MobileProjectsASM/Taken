@@ -1,4 +1,4 @@
-package com.asm.data.sources.remote.interfaces
+package com.asm.data.sources.remote.abstract_remotes
 
 import com.asm.domain.entities.Game
 
