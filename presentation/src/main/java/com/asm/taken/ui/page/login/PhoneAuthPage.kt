@@ -24,7 +24,9 @@ import androidx.compose.material.icons.outlined.Cancel
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -49,6 +51,8 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
+import com.asm.domain.errors.GeneralErrorType
+import com.asm.domain.errors.GeneralFailure
 import com.asm.taken.R
 import com.asm.taken.model.CountriesUiState
 import com.asm.taken.model.CountryUiState
@@ -112,7 +116,7 @@ fun AuthWithPhone(
 ) {
     when (countriesUiState) {
         is CountriesUiState.Failure -> ErrorCountries(
-            message = countriesUiState.errorMessage,
+            generalFailure = countriesUiState.generalFailure,
             snackBarHostState = snackBarHostState,
             loginVM = loginVM,
             messageResolver = messageResolver,
@@ -130,14 +134,31 @@ fun AuthWithPhone(
 
 @Composable
 fun ErrorCountries(
-    message: String,
+    generalFailure: GeneralFailure,
     snackBarHostState: SnackbarHostState,
     loginVM: LoginVM,
     messageResolver: MessageResolver,
     onSentPhone: (String, String) -> Unit
 ) {
     LaunchedEffect(true) {
-        snackBarHostState.showSnackbar(message, withDismissAction = true)
+        when (generalFailure) {
+            is GeneralFailure.OtherError -> when (generalFailure.errorType) {
+                GeneralErrorType.NETWORK_CONNECTION -> {
+                    val actionPerformed = snackBarHostState.showSnackbar(
+                        message = messageResolver.getMessage(R.string.err_network_connection),
+                        actionLabel = messageResolver.getMessage(R.string.txt_label_retry),
+                        duration = SnackbarDuration.Long
+                    )
+                    if (actionPerformed == SnackbarResult.ActionPerformed) loginVM.getCountriesInfo()
+                }
+                GeneralErrorType.UNKNOWN -> {
+                    snackBarHostState.showSnackbar(messageResolver.getMessage(R.string.err_get_countries), withDismissAction = true)
+                }
+            }
+            is GeneralFailure.ServerError -> {
+                snackBarHostState.showSnackbar("${generalFailure.code}: ${generalFailure.description}", withDismissAction = true)
+            }
+        }
     }
     PanelAuthPhone(
         countriesUiState = null,
@@ -379,7 +400,7 @@ fun LoginState(
                 }
             }
             is LoginUiState.Failure -> {
-                val message = messageResolver.getErrorLogin(loginUiState.loginError)
+                val message = messageResolver.getErrorLogin(loginUiState.loginFailure)
                 LaunchedEffect(true) {
                     snackBarHostState.showSnackbar(message, withDismissAction = true)
                 }
@@ -387,6 +408,7 @@ fun LoginState(
             LoginUiState.Loading -> CircularProgressDialog()
             is LoginUiState.SentOtp -> OtpDialog(
                 loginVM = loginVM,
+                phoneNumber = loginUiState.phoneNumber,
                 messageResolver = messageResolver,
             ) { otp ->
                 scope.launch {
@@ -403,6 +425,7 @@ fun LoginState(
 fun OtpDialog(
     loginVM: LoginVM,
     messageResolver: MessageResolver,
+    phoneNumber: String,
     onVerifyOtp: (String) -> Unit
 ) {
     val otpFormUiState by loginVM.otpFormUiState.collectAsStateWithLifecycle()
@@ -458,7 +481,7 @@ fun OtpDialog(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp),
-                    text = "${stringResource(id = R.string.txt_inf_enter_otp)} 9354",
+                    text = "${stringResource(id = R.string.txt_inf_enter_otp)} ${phoneNumber.takeLast(4)}",
                     textAlign = TextAlign.Center
                 )
                 Spacer(modifier = Modifier.height(20.dp))

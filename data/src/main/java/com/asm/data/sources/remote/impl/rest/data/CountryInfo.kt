@@ -1,4 +1,4 @@
-package com.asm.data.sources.remote.model
+package com.asm.data.sources.remote.impl.rest.data
 
 data class CountriesInfoRest(
     val countries: List<CountryInfoRest>

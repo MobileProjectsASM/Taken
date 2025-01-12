@@ -154,7 +154,7 @@ fun LoginState(
     if (loginUiState == null || loginUiState is LoginUiState.SentOtp) return
     when (loginUiState) {
         is LoginUiState.Failure -> {
-            val message = messageResolver.getErrorLogin((loginUiState as LoginUiState.Failure).loginError)
+            val message = messageResolver.getErrorLogin((loginUiState as LoginUiState.Failure).loginFailure)
             LaunchedEffect(true) {
                 snackBarHostState.showSnackbar(message, withDismissAction = true)
             }

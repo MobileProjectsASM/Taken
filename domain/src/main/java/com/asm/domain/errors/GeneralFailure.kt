@@ -15,21 +15,28 @@ enum class GeneralErrorType {
     UNKNOWN
 }
 
-sealed class RegisterGeneralFailure: GeneralFailure() {
-    data object GamerExists: RegisterGeneralFailure()
+sealed class RegisterFailure {
+    data object GamerExists: RegisterFailure()
+    data class General(val generalFailure: GeneralFailure): RegisterFailure()
 }
 
-sealed class GamerGeneralFailure: GeneralFailure() {
-    data object GamerNotExists: GamerGeneralFailure()
+sealed class GamerFailure {
+    data object GamerNotExists: GamerFailure()
+    data class General(val generalFailure: GeneralFailure): GamerFailure()
 }
 
-sealed class GameGeneralFailure: GeneralFailure() {
-    data object ThereIsNotGameInProcess: GameGeneralFailure()
-    data object ThereIsGameInProcess: GameGeneralFailure()
-    data object MoreThanOneNewGame: GameGeneralFailure()
-    data object MoreThanOneLockGame: GameGeneralFailure()
+sealed class GameFailure {
+    data object ThereIsNotGameInProcess: GameFailure()
+    data object ThereIsGameInProcess: GameFailure()
+    data object MoreThanOneNewGame: GameFailure()
+    data object MoreThanOneLockGame: GameFailure()
+    data class General(val generalFailure: GeneralFailure): GameFailure()
 }
 
-sealed class TimerGeneralFailure: GeneralFailure() {
-    data object TimeInitIsNull: TimerGeneralFailure()
+sealed class TimerFailure {
+    data object TimeInitIsNull: TimerFailure()
+    data class General(val generalFailure: GeneralFailure): TimerFailure()
 }
+
+fun GeneralFailure.toGamerFailure() = GamerFailure.General(this)
+fun GeneralFailure.toRegisterFailure() = RegisterFailure.General(this)

@@ -12,10 +12,12 @@ import androidx.credentials.exceptions.GetCredentialException
 import androidx.credentials.exceptions.NoCredentialException
 import com.asm.taken.R
 import com.asm.taken.model.AuthError
+import com.asm.taken.model.SendOtpError
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
 import com.google.firebase.FirebaseException
+import com.google.firebase.FirebaseNetworkException
 import com.google.firebase.FirebaseTooManyRequestsException
 import com.google.firebase.auth.AuthCredential
 import com.google.firebase.auth.FirebaseAuth
@@ -41,7 +43,7 @@ class AuthenticationUiClient @Inject constructor(
     private val credentialManager: CredentialManager
 ) {
     companion object {
-        const val TAG: String = "GoogleAuthUiClient"
+        const val TAG: String = "AuthenticationUiClient"
     }
 
     suspend fun signInWithGoogle(): AuthResult {
@@ -64,6 +66,7 @@ class AuthenticationUiClient @Inject constructor(
         coroutineScope: CoroutineScope,
         phoneNumber: String,
         onOtpSend: (SendOtpResult) -> Unit,
+        onAuthResult: (AuthResult) -> Unit
     ) {
         val phoneAuthOptions = getPhoneAuthOptions(
             activity,
@@ -73,22 +76,25 @@ class AuthenticationUiClient @Inject constructor(
                     Log.d(TAG, "onVerificationCompleted")
                     coroutineScope.launch {
                         val authResult = signInWithCredential(phoneAuthCredential)
-                        onOtpSend(authResultToSendOtpResult(authResult))
+                        onAuthResult(authResult)
                     }
                 }
 
                 override fun onVerificationFailed(firebaseException: FirebaseException) {
                     Log.e(TAG, firebaseException.stackTraceToString())
-                    val sendOtpResult = SendOtpResult.Failure( when (firebaseException) {
-                        is FirebaseAuthInvalidCredentialsException, is FirebaseTooManyRequestsException, is FirebaseAuthMissingActivityForRecaptchaException -> SendOtpError.SEND_OTP_ERROR
+                    val phonesSendOtpError = when (firebaseException) {
+                        is FirebaseAuthInvalidCredentialsException -> SendOtpError.PHONE_NUMBER_INVALID_ERROR
+                        is FirebaseNetworkException -> SendOtpError.NETWORK_CONNECTION
+                        is FirebaseTooManyRequestsException, is FirebaseAuthMissingActivityForRecaptchaException -> SendOtpError.SERVER_ERROR
                         else -> SendOtpError.UNKNOWN_ERROR
-                    })
+                    }
+                    val sendOtpResult = SendOtpResult.Failure(phonesSendOtpError)
                     onOtpSend(sendOtpResult)
                 }
 
                 override fun onCodeSent(verificationId: String, token: PhoneAuthProvider.ForceResendingToken) {
                     Log.d(TAG, "onCodeSent:$verificationId")
-                    val sendOtpResult = SendOtpResult.SentOtp(verificationId)
+                    val sendOtpResult = SendOtpResult.SentOtp(verificationId, phoneNumber)
                     onOtpSend(sendOtpResult)
                 }
 
@@ -106,18 +112,6 @@ class AuthenticationUiClient @Inject constructor(
         return signInWithCredential(phoneAuthCredential)
     }
 
-    fun authResultToSendOtpResult(authResult: AuthResult): SendOtpResult = when (authResult) {
-        is AuthResult.Failure -> {
-            val sendOtpError = when (authResult.authError) {
-                AuthError.AUTH_ERROR -> SendOtpError.AUTH_ERROR
-                AuthError.UNKNOWN_ERROR -> SendOtpError.UNKNOWN_ERROR
-            }
-            SendOtpResult.Failure(sendOtpError)
-        }
-        is AuthResult.Successful -> SendOtpResult.AuthenticatedWithPhone(authResult.userData)
-        AuthResult.Loading -> SendOtpResult.Loading
-    }
-
     private suspend fun signInWithCredential(authorizedAccounts: Boolean = false): AuthResult {
         val credentialRequest = getCredentialRequest(authorizedAccounts)
         val credentialResponse = credentialManager.getCredential(context, credentialRequest)
@@ -126,13 +120,13 @@ class AuthenticationUiClient @Inject constructor(
     }
 
     private suspend fun signInWithCredential(authCredential: AuthCredential): AuthResult {
-        try {
+        return try {
             val firebaseUser = auth.signInWithCredential(authCredential).await().user
             if (firebaseUser == null) {
                 Log.e(TAG, "FirebaseUser is null")
                 return AuthResult.Failure(AuthError.UNKNOWN_ERROR)
             }
-            return AuthResult.Successful(
+            AuthResult.Successful(
                 UserData(
                     firebaseUser.uid,
                     firebaseUser.email,
@@ -141,7 +135,15 @@ class AuthenticationUiClient @Inject constructor(
             )
         } catch (exception: Exception) {
             Log.e(TAG, exception.stackTraceToString())
-            return AuthResult.Failure(AuthError.AUTH_ERROR)
+            if (exception is FirebaseException) {
+                if (exception is FirebaseNetworkException) {
+                    AuthResult.Failure(AuthError.NETWORK_CONNECTION)
+                } else {
+                    AuthResult.Failure(AuthError.AUTH_ERROR)
+                }
+            } else {
+                AuthResult.Failure(AuthError.UNKNOWN_ERROR)
+            }
         }
     }
 
@@ -215,9 +217,8 @@ class CredentialException(message: String): Exception(message)
 
 sealed class SendOtpResult {
     data object Loading: SendOtpResult()
-    data class SentOtp(val verificationId: String): SendOtpResult()
-    data class AuthenticatedWithPhone(val userData: UserData): SendOtpResult()
-    data class Failure(val sendOtpError: SendOtpError): SendOtpResult()
+    data class SentOtp(val verificationId: String, val phoneNumber: String): SendOtpResult()
+    data class Failure(val phonesSendOtpError: SendOtpError): SendOtpResult()
 }
 
 sealed class AuthResult {
@@ -231,11 +232,5 @@ data class UserData(
     val username: String?,
     val profilePictureUrl: String?
 )
-
-enum class SendOtpError {
-    SEND_OTP_ERROR,
-    AUTH_ERROR,
-    UNKNOWN_ERROR
-}
 
 //endregion

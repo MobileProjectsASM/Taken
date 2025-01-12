@@ -6,8 +6,6 @@ import com.asm.data.sources.remote.abstract_remotes.CountryInfoRemoteSource
 import com.asm.domain.entities.CountryInfo
 import com.asm.domain.entities.Result
 import com.asm.domain.entities.asSuccessful
-import com.asm.domain.entities.toSuccessful
-import com.asm.domain.entities.toUnsuccessful
 import com.asm.domain.errors.GeneralErrorType
 import com.asm.domain.errors.GeneralFailure
 import com.asm.domain.repositories.CountryInfoRepository
@@ -25,26 +23,27 @@ class CountryInfoRepositoryImpl @Inject constructor(
         const val TAG = "CountryRepositoryImpl"
     }
 
-    override suspend fun getCountriesInfoSortedByName(ascending: Boolean): Result<List<CountryInfo>> {
+    override suspend fun getCountriesInfoSortedByName(ascending: Boolean): Result<List<CountryInfo>, GeneralFailure> {
         return try {
-            countryInfoLocalSource.getCountriesInfoSortedByName().toSuccessful()
+            val countries = countryInfoLocalSource.getCountriesInfoSortedByName()
+            Result.Successful(countries)
         } catch (exception: Exception) {
             logger.logE(TAG, exception)
-            return GeneralFailure.OtherError(GeneralErrorType.UNKNOWN).toUnsuccessful()
+            Result.Unsuccessful(GeneralFailure.OtherError(GeneralErrorType.UNKNOWN))
         }
     }
 
-    override suspend fun downloadCountriesInfo(): Result<List<CountryInfo>> {
+    override suspend fun downloadCountriesInfo(): Result<Unit, GeneralFailure> {
         return try {
-            if (!connectionSource.isNetworkAvailable()) return GeneralFailure.OtherError(GeneralErrorType.NETWORK_CONNECTION).toUnsuccessful()
+            if (!connectionSource.isNetworkAvailable()) return Result.Unsuccessful(GeneralFailure.OtherError(GeneralErrorType.NETWORK_CONNECTION))
             val countriesCallCodeResult = countryInfoRemoteSource.getCountriesCallCode()
             if (countriesCallCodeResult is Result.Unsuccessful) return countriesCallCodeResult
             val countriesCallCode = countriesCallCodeResult.asSuccessful().data
             countryInfoLocalSource.saveCountriesInfo(countriesCallCode)
-            countriesCallCode.toSuccessful()
+            Result.Successful(Unit)
         } catch (exception: Exception) {
             logger.logE(TAG, exception)
-            GeneralFailure.OtherError(GeneralErrorType.UNKNOWN).toUnsuccessful()
+            Result.Unsuccessful(GeneralFailure.OtherError(GeneralErrorType.UNKNOWN))
         }
     }
 }

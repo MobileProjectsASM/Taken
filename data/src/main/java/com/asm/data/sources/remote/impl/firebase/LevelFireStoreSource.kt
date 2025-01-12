@@ -2,8 +2,8 @@ package com.asm.data.sources.remote.impl.firebase
 
 import android.util.Log
 import com.asm.data.sources.remote.abstract_remotes.LevelRemoteSource
-import com.asm.data.sources.remote.mappers.LevelMapper
-import com.asm.data.sources.remote.model.LevelFireStore
+import com.asm.data.sources.remote.impl.firebase.mappers.LevelMapper
+import com.asm.data.sources.remote.impl.firebase.data.LevelFireStore
 import com.asm.domain.entities.Level
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.toObject

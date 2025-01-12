@@ -1,8 +1,8 @@
 package com.asm.data.sources.remote.impl.rest.deserializer
 
 import android.util.Log
-import com.asm.data.sources.remote.model.CountriesInfoRest
-import com.asm.data.sources.remote.model.CountryInfoRest
+import com.asm.data.sources.remote.impl.rest.data.CountriesInfoRest
+import com.asm.data.sources.remote.impl.rest.data.CountryInfoRest
 import com.google.gson.JsonDeserializationContext
 import com.google.gson.JsonDeserializer
 import com.google.gson.JsonElement

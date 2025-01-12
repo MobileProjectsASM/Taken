@@ -3,8 +3,6 @@ package com.asm.domain.use_cases
 import com.asm.domain.entities.CountryInfo
 import com.asm.domain.entities.Result
 import com.asm.domain.entities.asSuccessful
-import com.asm.domain.entities.toSuccessful
-import com.asm.domain.entities.toUnsuccessful
 import com.asm.domain.errors.GeneralErrorType
 import com.asm.domain.errors.GeneralFailure
 import com.asm.domain.repositories.CountryInfoRepository
@@ -15,22 +13,24 @@ import javax.inject.Inject
 class GetCountriesInfoUC @Inject constructor(
     private val logger: Logger,
     private val countryInfoRepository: CountryInfoRepository
-): UseCaseSync<List<CountryInfo>, Unit>() {
+): UseCaseSync<Result<List<CountryInfo>, GeneralFailure>, Unit>() {
 
     companion object {
         const val TAG = "GetCountriesCallCodeUC"
     }
 
-    override suspend fun run(params: Unit): Result<List<CountryInfo>> {
+    override suspend fun run(params: Unit): Result<List<CountryInfo>, GeneralFailure> {
         return try {
             val resultCountriesInfo = countryInfoRepository.getCountriesInfoSortedByName()
-            if (resultCountriesInfo.isUnsuccessful) return resultCountriesInfo
+            if (resultCountriesInfo is Result.Unsuccessful) return resultCountriesInfo
             val countriesInfo = resultCountriesInfo.asSuccessful().data
-            if (countriesInfo.isNotEmpty()) return countriesInfo.toSuccessful()
-            countryInfoRepository.downloadCountriesInfo()
+            if (countriesInfo.isNotEmpty()) return resultCountriesInfo
+            val downloadCountriesResult = countryInfoRepository.downloadCountriesInfo()
+            if (downloadCountriesResult is Result.Unsuccessful) return downloadCountriesResult
+            countryInfoRepository.getCountriesInfoSortedByName()
         } catch (exception: Exception) {
             logger.logE(TAG, exception)
-            GeneralFailure.OtherError(GeneralErrorType.UNKNOWN).toUnsuccessful()
+            Result.Unsuccessful(GeneralFailure.OtherError(GeneralErrorType.UNKNOWN))
         }
     }
 }

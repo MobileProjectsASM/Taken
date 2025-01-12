@@ -1,6 +1,6 @@
-package com.asm.data.sources.remote.mappers
+package com.asm.data.sources.remote.impl.rest.mappers
 
-import com.asm.data.sources.remote.model.CountryInfoRest
+import com.asm.data.sources.remote.impl.rest.data.CountryInfoRest
 import com.asm.domain.entities.CountryInfo
 import javax.inject.Inject
 

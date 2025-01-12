@@ -5,11 +5,8 @@ import com.asm.data.sources.local.interfaces.GamerLocalSource
 import com.asm.data.sources.remote.abstract_remotes.GamerRemoteSource
 import com.asm.domain.entities.Gamer
 import com.asm.domain.entities.Result
-import com.asm.domain.entities.toUnsuccessful
-import com.asm.domain.entities.toSuccessful
-import com.asm.domain.errors.GeneralFailure
-import com.asm.domain.errors.GamerGeneralFailure
 import com.asm.domain.errors.GeneralErrorType
+import com.asm.domain.errors.GeneralFailure
 import com.asm.domain.repositories.GamerRepository
 import com.asm.domain.utils.Completed
 import com.asm.domain.utils.Logger
@@ -25,34 +22,34 @@ class GamerRepositoryImpl @Inject constructor(
         const val TAG = "GamerRepositoryImpl"
     }
 
-    override suspend fun registerGamer(gamer: Gamer): Result<Completed> {
+    override suspend fun registerGamer(gamer: Gamer): Result<Completed, GeneralFailure> {
         return try {
-            if (!connectionSource.isNetworkAvailable()) return GeneralFailure.OtherError(GeneralErrorType.NETWORK_CONNECTION).toUnsuccessful()
+            if (!connectionSource.isNetworkAvailable()) return Result.Unsuccessful(GeneralFailure.OtherError(GeneralErrorType.NETWORK_CONNECTION))
             gamerRemoteSource.saveGamer(gamer)
             gamerLocalSource.saveGamer(gamer)
-            Completed.toSuccessful()
+            Result.Successful(Completed)
         } catch (exception: Exception) {
             logger.logE(TAG, exception)
-            GeneralFailure.OtherError(GeneralErrorType.UNKNOWN).toUnsuccessful()
+            Result.Unsuccessful(GeneralFailure.OtherError(GeneralErrorType.UNKNOWN))
         }
     }
 
-    override suspend fun checkIfGamerExists(gamerId: String): Result<Boolean> {
+    override suspend fun checkIfGamerExists(gamerId: String): Result<Boolean, GeneralFailure> {
         return try {
             val gamerExists = gamerLocalSource.checkGamerExists(gamerId)
-            gamerExists.toSuccessful()
+            Result.Successful(gamerExists)
         } catch (exception: Exception) {
             logger.logE(TAG, exception)
-            GeneralFailure.OtherError(GeneralErrorType.UNKNOWN).toUnsuccessful()
+            Result.Unsuccessful(GeneralFailure.OtherError(GeneralErrorType.UNKNOWN))
         }
     }
 
-    override suspend fun getGamerById(gamerId: String): Result<Gamer> {
+    override suspend fun getGamerById(gamerId: String): Result<Gamer?, GeneralFailure> {
         return try {
-            gamerLocalSource.getGamer(gamerId)?.toSuccessful() ?: GamerGeneralFailure.GamerNotExists.toUnsuccessful()
+            Result.Successful(gamerLocalSource.getGamer(gamerId))
         } catch (exception: Exception) {
             logger.logE(TAG, exception)
-            GeneralFailure.OtherError(GeneralErrorType.UNKNOWN).toUnsuccessful()
+            Result.Unsuccessful(GeneralFailure.OtherError(GeneralErrorType.UNKNOWN))
         }
     }
 

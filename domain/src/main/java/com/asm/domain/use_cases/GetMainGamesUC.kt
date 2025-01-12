@@ -2,7 +2,6 @@ package com.asm.domain.use_cases
 
 import com.asm.domain.entities.Game
 import com.asm.domain.entities.Result
-import com.asm.domain.entities.toUnsuccessful
 import com.asm.domain.errors.GeneralErrorType
 import com.asm.domain.errors.GeneralFailure
 import com.asm.domain.repositories.GameRepository
@@ -13,8 +12,8 @@ import javax.inject.Inject
 class GetMainGamesUC @Inject constructor(
     private val logger: Logger,
     private val gameRepository: GameRepository
-) : UseCaseSync<List<Game>, String>() {
-    override suspend fun run(params: String): Result<List<Game>> {
+) : UseCaseSync<Result<List<Game>, GeneralFailure>, String>() {
+    override suspend fun run(params: String): Result<List<Game>, GeneralFailure> {
         /*return try {
             val result = gameRepository.getGamerGames(params)
             if (result.isFailure) return result
@@ -56,6 +55,6 @@ class GetMainGamesUC @Inject constructor(
             logger.logE { exception }
             Error.UnknownError.toFailure()
         }*/
-        return GeneralFailure.OtherError(GeneralErrorType.UNKNOWN).toUnsuccessful()
+        return Result.Unsuccessful(GeneralFailure.OtherError(GeneralErrorType.UNKNOWN))
     }
 }

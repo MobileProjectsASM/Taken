@@ -4,8 +4,6 @@ import com.asm.data.sources.hardware.ConnectionSource
 import com.asm.data.sources.local.interfaces.MultimediaLocalSource
 import com.asm.data.sources.remote.abstract_remotes.MultimediaRemoteSource
 import com.asm.domain.entities.Result
-import com.asm.domain.entities.toSuccessful
-import com.asm.domain.entities.toUnsuccessful
 import com.asm.domain.errors.GeneralErrorType
 import com.asm.domain.errors.GeneralFailure
 import com.asm.domain.repositories.MultimediaRepository
@@ -25,34 +23,31 @@ class MultimediaRepositoryImpl @Inject constructor(
         const val DEFAULT_IMAGE_NAME_PROFILE = "default_profile_image.jpg"
         const val TAG = "MultimediaRepositoryImpl"
     }
-    override suspend fun uploadUserImage(userId: String, profileImageName: String, base64: String): Result<String> {
+    override suspend fun uploadUserImage(userId: String, profileImageName: String, base64: String): Result<String, GeneralFailure> {
         return try {
-            if (!connectionSource.isNetworkAvailable()) return GeneralFailure.OtherError(GeneralErrorType.NETWORK_CONNECTION).toUnsuccessful()
+            if (!connectionSource.isNetworkAvailable()) return Result.Unsuccessful(GeneralFailure.OtherError(GeneralErrorType.NETWORK_CONNECTION))
             val folderPath = "$userId/$DEFAULT_PATH_USER_IMAGES"
             multimediaRemoteSource.uploadImage(folderPath, profileImageName, base64)
             val imagePath = multimediaLocalSource.saveImage(folderPath, profileImageName, base64)
-            imagePath.toSuccessful()
+            Result.Successful(imagePath)
         } catch (exception: Exception) {
             logger.logE(TAG, exception)
-            GeneralFailure.OtherError(GeneralErrorType.UNKNOWN).toUnsuccessful()
+            Result.Unsuccessful(GeneralFailure.OtherError(GeneralErrorType.UNKNOWN))
         }
     }
 
-    override suspend fun getDefaultUserImage(): Result<String> {
+    override suspend fun getDefaultUserImage(): Result<String, GeneralFailure> {
         return try {
             val fullPath = "$DEFAULT_FOLDER_PATH_USER_IMAGE_PROFILE/$DEFAULT_IMAGE_NAME_PROFILE"
             val existsImage = multimediaLocalSource.existsImage(fullPath)
-            if (existsImage) return fullPath.toSuccessful()
-            if (!connectionSource.isNetworkAvailable()) return GeneralFailure.OtherError(GeneralErrorType.NETWORK_CONNECTION).toUnsuccessful()
+            if (existsImage) return Result.Successful(fullPath)
+            if (!connectionSource.isNetworkAvailable()) return Result.Unsuccessful(GeneralFailure.OtherError(GeneralErrorType.NETWORK_CONNECTION))
             val base64 = multimediaRemoteSource.downloadImage(fullPath)
-            return multimediaLocalSource.saveImage(
-                DEFAULT_FOLDER_PATH_USER_IMAGE_PROFILE,
-                DEFAULT_IMAGE_NAME_PROFILE,
-                base64
-            ).toSuccessful()
+            val path = multimediaLocalSource.saveImage(DEFAULT_FOLDER_PATH_USER_IMAGE_PROFILE, DEFAULT_IMAGE_NAME_PROFILE, base64)
+            return Result.Successful(path)
         } catch (exception: Exception) {
             logger.logE(TAG, exception)
-            GeneralFailure.OtherError(GeneralErrorType.UNKNOWN).toUnsuccessful()
+            Result.Unsuccessful(GeneralFailure.OtherError(GeneralErrorType.UNKNOWN))
         }
     }
 }

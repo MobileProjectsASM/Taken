@@ -1,21 +1,20 @@
 package com.asm.taken.utils
 
 import android.content.Context
+import androidx.annotation.StringRes
+import com.asm.domain.errors.GeneralErrorType
+import com.asm.domain.errors.GeneralFailure
 import com.asm.taken.R
+import com.asm.taken.model.AuthError
 import com.asm.taken.model.InputOtpError
 import com.asm.taken.model.InputPasswordError
 import com.asm.taken.model.InputPhoneCodeError
 import com.asm.taken.model.InputPhoneNumberError
 import com.asm.taken.model.InputUserIdError
-import com.asm.taken.model.LoginError
+import com.asm.taken.model.LoginFailure
+import com.asm.taken.model.SendOtpError
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
-
-class ResourceResolver @Inject constructor(
-    @ApplicationContext val context: Context
-) {
-    fun getString(resource: Int): String = context.getString(resource)
-}
 
 class MessageResolver @Inject constructor(
     @ApplicationContext val context: Context
@@ -43,11 +42,24 @@ class MessageResolver @Inject constructor(
         InputPhoneNumberError.ONLY_INT_NUMBERS -> context.getString(R.string.err_only_int_numbers)
     }
 
-    fun getErrorLogin(error: LoginError): String = when (error) {
-        LoginError.SEND_OTP_ERROR -> context.getString(R.string.err_send_otp)
-        LoginError.AUTH_ERROR -> context.getString(R.string.err_auth_with_phone)
-        LoginError.VERIFY_GAMER_EXISTS -> context.getString(R.string.err_process_gamer)
-        LoginError.UNKNOWN_ERROR -> context.getString(R.string.err_unknown)
+    fun getErrorLogin(error: LoginFailure): String = when (error) {
+        is LoginFailure.AuthFailure -> when (error.authError) {
+            AuthError.AUTH_ERROR -> context.getString(R.string.err_auth_with_phone)
+            AuthError.NETWORK_CONNECTION -> context.getString(R.string.err_network_connection)
+            AuthError.UNKNOWN_ERROR -> context.getString(R.string.err_unknown)
+        }
+        is LoginFailure.RegisterFailure -> when (val generalFailure = error.generalFailure) {
+            is GeneralFailure.OtherError -> when (generalFailure.errorType) {
+                GeneralErrorType.NETWORK_CONNECTION -> context.getString(R.string.err_network_connection)
+                GeneralErrorType.UNKNOWN -> context.getString(R.string.err_process_gamer)
+            }
+            is GeneralFailure.ServerError -> "${generalFailure.code}: ${generalFailure.description}"
+        }
+        is LoginFailure.SendOtpFailure -> when (error.sendOtpError) {
+            SendOtpError.PHONE_NUMBER_INVALID_ERROR -> context.getString(R.string.err_phone_number_invalid)
+            SendOtpError.NETWORK_CONNECTION -> context.getString(R.string.err_network_connection)
+            SendOtpError.SERVER_ERROR, SendOtpError.UNKNOWN_ERROR -> context.getString(R.string.err_send_otp)
+        }
     }
 
     fun getErrorVerifyOtp(error: InputOtpError): String = when (error) {
@@ -55,4 +67,6 @@ class MessageResolver @Inject constructor(
         InputOtpError.BE_6_DIGITS -> context.getString(R.string.err_otp_be_6_digits)
         InputOtpError.ONLY_INT_NUMBERS -> context.getString(R.string.err_only_int_numbers)
     }
+
+    fun getMessage(@StringRes resId: Int) = context.getString(resId)
 }

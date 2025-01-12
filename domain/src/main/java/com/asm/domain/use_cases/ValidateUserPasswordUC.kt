@@ -2,7 +2,6 @@ package com.asm.domain.use_cases
 
 import com.asm.domain.entities.PasswordState
 import com.asm.domain.entities.Result
-import com.asm.domain.entities.toUnsuccessful
 import com.asm.domain.errors.GeneralErrorType
 import com.asm.domain.errors.GeneralFailure
 import com.asm.domain.use_cases.base.UseCaseSync
@@ -11,8 +10,8 @@ import javax.inject.Inject
 
 class ValidateUserPasswordUC @Inject constructor(
     private val logger: Logger
-) : UseCaseSync<PasswordState, String>() {
-    override suspend fun run(params: String): Result<PasswordState> {
+) : UseCaseSync<Result<PasswordState, GeneralFailure>, String>() {
+    override suspend fun run(params: String): Result<PasswordState, GeneralFailure> {
         /*return try {
             if (params.isEmpty()) return PasswordState.EMPTY.toSuccessful()
             if (!params.matches(
@@ -23,6 +22,6 @@ class ValidateUserPasswordUC @Inject constructor(
             logger.logE { exception }
             Error.UnknownError.toFailure()
         }*/
-        return GeneralFailure.OtherError(GeneralErrorType.UNKNOWN).toUnsuccessful()
+        return Result.Unsuccessful(GeneralFailure.OtherError(GeneralErrorType.UNKNOWN))
     }
 }

@@ -1,4 +1,4 @@
-package com.asm.data.sources.remote.model
+package com.asm.data.sources.remote.impl.firebase.data
 
 data class GamerFireStore(
     val gamerId: String,

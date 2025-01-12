@@ -1,6 +1,6 @@
 package com.asm.domain.entities
 
-import com.asm.domain.errors.TimerGeneralFailure
+import com.asm.domain.errors.TimerFailure
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
@@ -21,8 +21,8 @@ class Timer {
         initTimer: (Long) -> Unit,
         inProcess: (Long) -> Unit,
         timeOut: () -> Unit
-    ): Result<Unit> = coroutineScope {
-        if (time == null) return@coroutineScope TimerGeneralFailure.TimeInitIsNull.toUnsuccessful()
+    ): Result<Unit, TimerFailure> = coroutineScope {
+        if (time == null) return@coroutineScope Result.Unsuccessful(TimerFailure.TimeInitIsNull)
         job = launch {
             initMark = timeSource.markNow()
             initTimer.invoke(time!!)
@@ -34,7 +34,7 @@ class Timer {
             } while (elapsedTime < time!!)
             timeOut()
         }
-        return@coroutineScope Unit.toSuccessful()
+        return@coroutineScope Result.Successful(Unit)
     }
 
     fun pause(): Long? {

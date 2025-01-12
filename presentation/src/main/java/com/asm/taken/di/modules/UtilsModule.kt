@@ -6,8 +6,7 @@ import com.asm.data.sources.local.TakenDB
 import com.asm.data.sources.remote.impl.rest.api_service.CountryInfoClient
 import com.asm.data.sources.remote.impl.rest.deserializer.CountryInfoDeserializer
 import com.asm.data.sources.remote.impl.rest.interceptors.CountryInfoInterceptor
-import com.asm.data.sources.remote.model.CountriesInfoRest
-import com.asm.taken.R
+import com.asm.data.sources.remote.impl.rest.data.CountriesInfoRest
 import com.asm.taken.di.CountryInfoRetrofit
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.gson.Gson

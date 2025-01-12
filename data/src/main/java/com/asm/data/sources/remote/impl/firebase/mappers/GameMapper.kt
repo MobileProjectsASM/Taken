@@ -1,8 +1,8 @@
-package com.asm.data.sources.remote.mappers
+package com.asm.data.sources.remote.impl.firebase.mappers
 
+import com.asm.data.sources.remote.impl.firebase.data.GameFireStore
 import com.asm.domain.entities.Game
 import com.asm.domain.entities.GameStatus
-import com.asm.data.sources.remote.model.GameFireStore as GameFireStore
 import javax.inject.Inject
 
 class GameMapper @Inject constructor() {

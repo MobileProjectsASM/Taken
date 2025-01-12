@@ -3,9 +3,8 @@ package com.asm.taken.vm
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.asm.domain.entities.Result
-import com.asm.domain.entities.asUnsuccessful
 import com.asm.domain.entities.asSuccessful
-import com.asm.domain.errors.GamerGeneralFailure
+import com.asm.domain.errors.GamerFailure
 import com.asm.domain.use_cases.GetCountriesInfoUC
 import com.asm.domain.use_cases.GetGamerUC
 import com.asm.taken.mappers.PhoneCodeMapper
@@ -18,12 +17,11 @@ import com.asm.taken.model.InputPhoneNumberError
 import com.asm.taken.model.InputState
 import com.asm.taken.model.InputUiState
 import com.asm.taken.model.InputUserIdError
+import com.asm.taken.model.LoginFailure
 import com.asm.taken.model.LoginFormPhoneUiState
 import com.asm.taken.model.LoginFormUiState
-import com.asm.taken.model.LoginError
 import com.asm.taken.model.LoginUiState
 import com.asm.taken.utils.AuthResult
-import com.asm.taken.utils.SendOtpError
 import com.asm.taken.utils.SendOtpResult
 import com.asm.taken.utils.UserData
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -84,8 +82,9 @@ class LoginVM @Inject constructor(
 
     fun getCountriesInfo() {
         viewModelScope.launch {
+            _countriesUiState.update { CountriesUiState.Loading }
             val countriesState: CountriesUiState = when (val countriesResult = getCountriesInfoUC.execute(Unit)) {
-                is Result.Unsuccessful -> CountriesUiState.Failure("Error to get codes")
+                is Result.Unsuccessful -> CountriesUiState.Failure(countriesResult.failure)
                 is Result.Successful -> {
                     val phoneCodes = countriesResult.data.map(phoneCodeMapper::getPhoneCode)
                     CountriesUiState.Successful(phoneCodes)
@@ -96,22 +95,19 @@ class LoginVM @Inject constructor(
     }
 
     fun updateLoginUiState(sendOtpResult: SendOtpResult) {
-        viewModelScope.launch {
-            val loginUiState = when (sendOtpResult) {
-                is SendOtpResult.AuthenticatedWithPhone -> verifyGamerExists(sendOtpResult.userData)
-                is SendOtpResult.Failure -> LoginUiState.Failure(sendOtpErrorToLoginError(sendOtpResult.sendOtpError))
-                SendOtpResult.Loading -> LoginUiState.Loading
-                is SendOtpResult.SentOtp -> LoginUiState.SentOtp(sendOtpResult.verificationId)
-            }
-            _loginUiState.update { loginUiState }
+        val loginUiState = when (sendOtpResult) {
+            is SendOtpResult.Failure -> LoginUiState.Failure(LoginFailure.SendOtpFailure(sendOtpResult.phonesSendOtpError))
+            SendOtpResult.Loading -> LoginUiState.Loading
+            is SendOtpResult.SentOtp -> LoginUiState.SentOtp(sendOtpResult.verificationId, sendOtpResult.phoneNumber)
         }
+        _loginUiState.update { loginUiState }
     }
 
     fun updateLoginUiState(authResult: AuthResult) {
         viewModelScope.launch {
             val loginWithPhoneUiState = when (authResult) {
                 is AuthResult.Successful -> verifyGamerExists(authResult.userData)
-                is AuthResult.Failure -> LoginUiState.Failure(authErrorToLoginError(authResult.authError))
+                is AuthResult.Failure -> LoginUiState.Failure(LoginFailure.AuthFailure(authResult.authError))
                 AuthResult.Loading -> LoginUiState.Loading
             }
             _loginUiState.update { loginWithPhoneUiState }
@@ -203,26 +199,14 @@ class LoginVM @Inject constructor(
 
     private suspend fun verifyGamerExists(userData: UserData): LoginUiState {
         val gamerResult = getGamerUC.execute(userData.userId)
-        if (gamerResult.isSuccessful) {
+        if (gamerResult is Result.Successful) {
             val gamer = gamerResult.asSuccessful().data
             return LoginUiState.RegisteredUser(gamer.gamerId)
         }
-        val failure = gamerResult.asUnsuccessful().generalFailure
-        if (failure is GamerGeneralFailure.LoginNotExists) {
-            return LoginUiState.UnregisteredUser(userData.userId)
+        return when (val failure = (gamerResult as Result.Unsuccessful).failure) {
+            GamerFailure.GamerNotExists -> LoginUiState.UnregisteredUser(userData.userId)
+            is GamerFailure.General -> LoginUiState.Failure(LoginFailure.RegisterFailure(failure.generalFailure))
         }
-        return LoginUiState.Failure(LoginError.VERIFY_GAMER_EXISTS)
-    }
-
-    private fun sendOtpErrorToLoginError(sendOtpError: SendOtpError): LoginError = when (sendOtpError) {
-        SendOtpError.SEND_OTP_ERROR -> LoginError.SEND_OTP_ERROR
-        SendOtpError.AUTH_ERROR -> LoginError.AUTH_ERROR
-        SendOtpError.UNKNOWN_ERROR -> LoginError.UNKNOWN_ERROR
-    }
-
-    private fun authErrorToLoginError(authError: AuthError): LoginError = when (authError) {
-        AuthError.AUTH_ERROR -> LoginError.AUTH_ERROR
-        AuthError.UNKNOWN_ERROR -> LoginError.UNKNOWN_ERROR
     }
     //endregion
 

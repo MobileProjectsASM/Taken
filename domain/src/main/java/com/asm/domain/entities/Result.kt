@@ -1,18 +1,8 @@
 package com.asm.domain.entities
 
-import com.asm.domain.errors.GeneralFailure
-
-sealed class Result<out T> {
-    data class Successful<out T>(val data: T): Result<T>()
-    data class Unsuccessful<out T>(val generalFailure: GeneralFailure): Result<T>()
-
-    val isSuccessful get() = this is Successful<T>
-    val isUnsuccessful get() = this is Unsuccessful<T>
-
+sealed class Result<out Data, out Failure> {
+    data class Successful<out Data>(val data: Data): Result<Data, Nothing>()
+    data class Unsuccessful<out Failure>(val failure: Failure): Result<Nothing, Failure>()
 }
 
-fun <T, S> Result.Unsuccessful<T>.toUnsuccessful(): Result.Unsuccessful<S> = Result.Unsuccessful(this.generalFailure)
-fun <T> Result<T>.asSuccessful(): Result.Successful<T> = this as Result.Successful<T>
-fun <T> Result<T>.asUnsuccessful(): Result.Unsuccessful<T> = this as Result.Unsuccessful<T>
-fun <T> GeneralFailure.toUnsuccessful(): Result.Unsuccessful<T> = Result.Unsuccessful(this)
-fun <T> T.toSuccessful(): Result.Successful<T> = Result.Successful(this)
+fun <Data, Failure> Result<Data, Failure>.asSuccessful() = this as Result.Successful

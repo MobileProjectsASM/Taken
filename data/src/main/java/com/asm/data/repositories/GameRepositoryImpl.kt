@@ -5,8 +5,6 @@ import com.asm.data.sources.local.interfaces.GameLocalSource
 import com.asm.data.sources.remote.abstract_remotes.GameRemoteSource
 import com.asm.domain.entities.Game
 import com.asm.domain.entities.Result
-import com.asm.domain.entities.toSuccessful
-import com.asm.domain.entities.toUnsuccessful
 import com.asm.domain.errors.GeneralErrorType
 import com.asm.domain.errors.GeneralFailure
 import com.asm.domain.repositories.GameRepository
@@ -25,15 +23,15 @@ class GameRepositoryImpl @Inject constructor(
         const val TAG = "GamerRepositoryImpl"
     }
 
-    override suspend fun saveGamerGames(games: List<Game>, gamerId: String): Result<Completed> {
+    override suspend fun saveGamerGames(games: List<Game>, gamerId: String): Result<Completed, GeneralFailure> {
         return try {
-            if (!connectionSource.isNetworkAvailable()) return GeneralFailure.OtherError(GeneralErrorType.NETWORK_CONNECTION).toUnsuccessful()
+            if (!connectionSource.isNetworkAvailable()) return Result.Unsuccessful(GeneralFailure.OtherError(GeneralErrorType.NETWORK_CONNECTION))
             gameRemoteSource.insertGames(games, gamerId)
             gameLocalSource.saveGamesByGamerId(games, gamerId)
-            Completed.toSuccessful()
+            Result.Successful(Completed)
         } catch (exception: Exception) {
             logger.logE(TAG, exception)
-            GeneralFailure.OtherError(GeneralErrorType.UNKNOWN).toUnsuccessful()
+            Result.Unsuccessful(GeneralFailure.OtherError(GeneralErrorType.UNKNOWN))
         }
     }
 }

@@ -13,6 +13,7 @@
     <string name="txt_label_code">Code</string>
     <string name="txt_label_pn">Phone number</string>
     <string name="txt_label_country">Country</string>
+    <string name="txt_label_retry">Retry</string>
     <string name="txt_cd_ti_password">Password visibility</string>
     <string name="txt_cd_li_password">Password icon</string>
     <string name="txt_cd_li_user_id">User ID icon</string>
@@ -46,7 +47,9 @@
     <string name="err_unknown">Unknown error</string>
     <string name="err_otp_empty">Otp must not be empty</string>
     <string name="err_otp_be_6_digits">Otp must be 6 digits long</string>
+    <string name="err_get_countries">Error to get countries</string>
+    <string name="err_phone_number_invalid">Phone number invalid</string>
+    <string name="err_network_connection">There is not network connection</string>
 
     <string name="default_web_client_id">537568996262-c7nrhuvi4s9jaukcg9uh0hvm98l9ubls.apps.googleusercontent.com</string>
-    <string name="err_get_countries">Error to get countries\n</string>
 </resources>

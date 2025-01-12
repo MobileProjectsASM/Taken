@@ -5,8 +5,6 @@ import com.asm.data.sources.local.interfaces.LevelLocalSource
 import com.asm.data.sources.remote.abstract_remotes.LevelRemoteSource
 import com.asm.domain.entities.Level
 import com.asm.domain.entities.Result
-import com.asm.domain.entities.toSuccessful
-import com.asm.domain.entities.toUnsuccessful
 import com.asm.domain.errors.GeneralErrorType
 import com.asm.domain.errors.GeneralFailure
 import com.asm.domain.repositories.LevelRepository
@@ -24,15 +22,15 @@ class LevelRepositoryImpl @Inject constructor(
         const val TAG = "LevelRepositoryImpl"
     }
 
-    override suspend fun downloadLevelsByOrderCriteria(ids: List<Int>): Result<List<Level>> {
+    override suspend fun downloadLevelsByOrderCriteria(ids: List<Int>): Result<List<Level>, GeneralFailure> {
         return try {
-            if (!connectionSource.isNetworkAvailable()) return GeneralFailure.OtherError(GeneralErrorType.NETWORK_CONNECTION).toUnsuccessful()
+            if (!connectionSource.isNetworkAvailable()) return Result.Unsuccessful(GeneralFailure.OtherError(GeneralErrorType.NETWORK_CONNECTION))
             val levels = levelRemoteSource.getLevelsByOrders(ids)
             levelLocalSource.saveLevels(levels)
-            levels.toSuccessful()
+            Result.Successful(levels)
         } catch (exception: Exception) {
             logger.logE(TAG, exception)
-            GeneralFailure.OtherError(GeneralErrorType.UNKNOWN).toUnsuccessful()
+            Result.Unsuccessful(GeneralFailure.OtherError(GeneralErrorType.UNKNOWN))
         }
 
     }

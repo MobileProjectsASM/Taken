@@ -1,5 +1,7 @@
 package com.asm.taken.model
 
+import com.asm.domain.errors.GeneralFailure
+
 /*data class LoginFormState(
     val userIdUiState: UserIdUiState = UserIdUiState.Init,
     val passwordUiState: PasswordUiState = PasswordUiState.Init,
@@ -114,7 +116,7 @@ sealed class InputState<out InputError> {
 sealed class CountriesUiState {
     data object Loading: CountriesUiState()
     data class Successful(val countriesInfo: List<CountryUiState>) : CountriesUiState()
-    data class Failure(val errorMessage: String) : CountriesUiState()
+    data class Failure(val generalFailure: GeneralFailure) : CountriesUiState()
 }
 
 data class CountryUiState(
@@ -130,10 +132,10 @@ data class LoginFormPhoneUiState(
 
 sealed class LoginUiState {
     data object Loading: LoginUiState()
-    data class SentOtp(val verificationId: String): LoginUiState()
+    data class SentOtp(val verificationId: String, val phoneNumber: String): LoginUiState()
     data class RegisteredUser(val gamerId: String): LoginUiState()
     data class UnregisteredUser(val userId: String): LoginUiState()
-    data class Failure(val loginError: LoginError): LoginUiState()
+    data class Failure(val loginFailure: LoginFailure): LoginUiState()
 }
 
 //region ERRORS
@@ -161,8 +163,16 @@ enum class InputPhoneNumberError {
     ONLY_INT_NUMBERS
 }
 
+enum class SendOtpError {
+    PHONE_NUMBER_INVALID_ERROR,
+    NETWORK_CONNECTION,
+    SERVER_ERROR,
+    UNKNOWN_ERROR
+}
+
 enum class AuthError {
     AUTH_ERROR,
+    NETWORK_CONNECTION,
     UNKNOWN_ERROR
 }
 
@@ -172,10 +182,9 @@ enum class InputOtpError {
     ONLY_INT_NUMBERS
 }
 
-enum class LoginError {
-    SEND_OTP_ERROR,
-    AUTH_ERROR,
-    VERIFY_GAMER_EXISTS,
-    UNKNOWN_ERROR
+sealed class LoginFailure {
+    data class SendOtpFailure(val sendOtpError: SendOtpError): LoginFailure()
+    data class AuthFailure(val authError: AuthError): LoginFailure()
+    data class RegisterFailure(val generalFailure: GeneralFailure): LoginFailure()
 }
 //endregion

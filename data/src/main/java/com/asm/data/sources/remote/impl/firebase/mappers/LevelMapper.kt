@@ -1,6 +1,6 @@
-package com.asm.data.sources.remote.mappers
+package com.asm.data.sources.remote.impl.firebase.mappers
 
-import com.asm.data.sources.remote.model.LevelFireStore
+import com.asm.data.sources.remote.impl.firebase.data.LevelFireStore
 import com.asm.domain.entities.Box
 import com.asm.domain.entities.Difficulty
 import com.asm.domain.entities.Level
