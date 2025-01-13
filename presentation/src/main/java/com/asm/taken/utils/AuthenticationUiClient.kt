@@ -54,7 +54,12 @@ class AuthenticationUiClient @Inject constructor(
                 Log.e(TAG, exception.stackTraceToString())
                 return AuthResult.Failure(AuthError.AUTH_ERROR)
             }
-            signInWithCredential()
+            try {
+                signInWithCredential()
+            } catch (exception: Exception) {
+                Log.e(TAG, exception.stackTraceToString())
+                AuthResult.Failure(AuthError.UNKNOWN_ERROR)
+            }
         } catch (exception: Exception) {
             Log.e(TAG, exception.stackTraceToString())
             AuthResult.Failure(AuthError.UNKNOWN_ERROR)

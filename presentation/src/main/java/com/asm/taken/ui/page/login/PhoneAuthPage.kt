@@ -402,7 +402,8 @@ fun LoginState(
             is LoginUiState.Failure -> {
                 val message = messageResolver.getErrorLogin(loginUiState.loginFailure)
                 LaunchedEffect(true) {
-                    snackBarHostState.showSnackbar(message, withDismissAction = true)
+                    val snackBarResult = snackBarHostState.showSnackbar(message, withDismissAction = true)
+                    if (snackBarResult == SnackbarResult.Dismissed) loginVM.resetLoginUiState()
                 }
             }
             LoginUiState.Loading -> CircularProgressDialog()

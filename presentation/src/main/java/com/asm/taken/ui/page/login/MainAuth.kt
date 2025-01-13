@@ -16,6 +16,7 @@ import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Card
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -157,7 +158,8 @@ fun LoginState(
         is LoginUiState.Failure -> {
             val message = messageResolver.getErrorLogin((loginUiState as LoginUiState.Failure).loginFailure)
             LaunchedEffect(true) {
-                snackBarHostState.showSnackbar(message, withDismissAction = true)
+                val snackBarResult = snackBarHostState.showSnackbar(message, withDismissAction = true)
+                if (snackBarResult == SnackbarResult.Dismissed) loginVM.resetLoginUiState()
             }
         }
         is LoginUiState.Loading -> CircularProgressDialog()
