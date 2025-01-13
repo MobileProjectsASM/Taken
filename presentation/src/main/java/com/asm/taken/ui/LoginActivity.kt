@@ -17,7 +17,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class MainActivity : ComponentActivity() {
+class LoginActivity : ComponentActivity() {
 
     @Inject
     lateinit var authenticationUiClient: AuthenticationUiClient

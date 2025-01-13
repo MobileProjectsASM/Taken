@@ -3,6 +3,7 @@ package com.asm.taken.utils
 import android.app.Activity
 import android.content.Context
 import android.util.Log
+import androidx.activity.result.ActivityResultRegistryOwner
 import androidx.credentials.ClearCredentialStateRequest
 import androidx.credentials.CredentialManager
 import androidx.credentials.CustomCredential
@@ -13,6 +14,13 @@ import androidx.credentials.exceptions.NoCredentialException
 import com.asm.taken.R
 import com.asm.taken.model.AuthError
 import com.asm.taken.model.SendOtpError
+import com.asm.taken.utils.AuthenticationUiClient.Companion.TAG
+import com.facebook.CallbackManager
+import com.facebook.FacebookCallback
+import com.facebook.FacebookException
+import com.facebook.login.LoginManager
+import com.facebook.login.LoginResult
+import com.google.android.gms.auth.api.Auth
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
@@ -20,6 +28,7 @@ import com.google.firebase.FirebaseException
 import com.google.firebase.FirebaseNetworkException
 import com.google.firebase.FirebaseTooManyRequestsException
 import com.google.firebase.auth.AuthCredential
+import com.google.firebase.auth.FacebookAuthProvider
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.google.firebase.auth.FirebaseAuthMissingActivityForRecaptchaException
@@ -44,6 +53,39 @@ class AuthenticationUiClient @Inject constructor(
 ) {
     companion object {
         const val TAG: String = "AuthenticationUiClient"
+    }
+
+    fun signInWithFacebook(
+        activityResultRegistryOwner: ActivityResultRegistryOwner,
+        coroutineScope: CoroutineScope,
+        onAuthResult: (AuthResult) -> Unit
+    ) {
+        val callbackManager = CallbackManager.Factory.create()
+        LoginManager.getInstance().registerCallback(callbackManager, object: FacebookCallback<LoginResult> {
+            override fun onCancel() {
+
+            }
+
+            override fun onError(error: FacebookException) {
+                Log.e(TAG, error.stackTraceToString())
+                onAuthResult(AuthResult.Failure(AuthError.AUTH_ERROR))
+            }
+
+            override fun onSuccess(result: LoginResult) {
+                coroutineScope.launch {
+                    onAuthResult(AuthResult.Loading)
+                    val accessToken = result.accessToken.token
+                    val credential = FacebookAuthProvider.getCredential(accessToken)
+                    val authResult = signInWithCredential(credential)
+                    onAuthResult(authResult)
+                }
+            }
+        })
+        LoginManager.getInstance().logInWithReadPermissions(
+            activityResultRegistryOwner,
+            callbackManager,
+            listOf("email", "public_profile")
+        )
     }
 
     suspend fun signInWithGoogle(): AuthResult {

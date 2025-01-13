@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="api_base_url_countries_info">https://restfulcountries.com/api/v1/</string>
-    <string name="api_key_country_service">1274|gSQVz5Qf9OfRRwUhxEbDBhzz2c48b21KbXDjvnPB</string>
+    <string name="api_base_url_countries_info" translatable="false">https://restfulcountries.com/api/v1/</string>
+    <string name="api_key_country_service" translatable="false">1274|gSQVz5Qf9OfRRwUhxEbDBhzz2c48b21KbXDjvnPB</string>
 </resources>

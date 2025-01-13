@@ -74,6 +74,7 @@ dependencies {
     val junitVersion = "4.13.2"
     val extJunitVersion = "1.1.5"
     val espressoVersion = "3.5.1"
+    val facebookVersion = "17.0.1"
 
     implementation(project(":domain"))
     implementation(project(":data"))
@@ -126,6 +127,9 @@ dependencies {
     implementation("com.google.android.gms:play-services-auth:$playServicesVersion")
     implementation("androidx.credentials:credentials:$credentials")
     implementation("com.google.android.libraries.identity.googleid:googleid:$googleId")
+
+    //Facebook Api
+    implementation("com.facebook.android:facebook-login:$facebookVersion")
 
     //Load image
     implementation("io.coil-kt:coil-compose:$coilVersion")

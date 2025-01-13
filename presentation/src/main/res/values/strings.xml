@@ -51,5 +51,8 @@
     <string name="err_phone_number_invalid">Phone number invalid</string>
     <string name="err_network_connection">There is not network connection</string>
 
-    <string name="default_web_client_id">537568996262-c7nrhuvi4s9jaukcg9uh0hvm98l9ubls.apps.googleusercontent.com</string>
+    <string name="default_web_client_id" translatable="false">537568996262-c7nrhuvi4s9jaukcg9uh0hvm98l9ubls.apps.googleusercontent.com</string>
+    <string name="facebook_app_id" translatable="false">4098294007123784</string>
+    <string name="facebook_login_protocol_scheme" translatable="false">fb4098294007123784</string>
+    <string name="facebook_client_token" translatable="false">9468501c3f46449b3d00698a44a2f230</string>
 </resources>

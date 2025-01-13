@@ -1,5 +1,7 @@
 package com.asm.taken.ui.page.login
 
+import androidx.activity.ComponentActivity
+import androidx.activity.result.ActivityResultRegistryOwner
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,6 +25,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
@@ -84,6 +87,7 @@ fun AuthenticationSection(
     authenticationUiClient: AuthenticationUiClient,
     navController: NavHostController
 ) {
+    val context = LocalContext.current
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -104,6 +108,13 @@ fun AuthenticationSection(
             },
             signInWithPhoneNumber = {
                 navController.navigate(AuthenticationPhone.route)
+            },
+            signInWithFacebook = {
+                authenticationUiClient.signInWithFacebook(
+                    context as ComponentActivity,
+                    coroutineScope,
+                    loginVM::updateLoginUiState
+                )
             }
         )
         Box(modifier = Modifier.height(250.dp))
@@ -232,7 +243,8 @@ fun FormLogin(
 @Composable
 fun PanelSocialMedia(
     signInWithGoogle: () -> Unit,
-    signInWithPhoneNumber: () -> Unit
+    signInWithPhoneNumber: () -> Unit,
+    signInWithFacebook: () -> Unit
 ) {
     Card(
         modifier = Modifier
@@ -258,7 +270,8 @@ fun PanelSocialMedia(
                 DefaultImageButton(
                     imageSize = 40.dp,
                     iconButton = R.drawable.facebook,
-                    cdIconButton = R.string.txt_cd_icon_button
+                    cdIconButton = R.string.txt_cd_icon_button,
+                    onClickButton = signInWithFacebook
                 )
                 DefaultImageButton(
                     imageSize = 40.dp,
