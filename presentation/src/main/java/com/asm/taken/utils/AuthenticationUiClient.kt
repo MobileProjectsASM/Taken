@@ -49,13 +49,13 @@ class AuthenticationUiClient @Inject constructor(
     suspend fun signInWithGoogle(): AuthResult {
         return try {
             signInWithCredential(true)
-        } catch (exception: GetCredentialException ) {
+        } catch (exception: GetCredentialException) {
             if (exception !is NoCredentialException) {
                 Log.e(TAG, exception.stackTraceToString())
-                AuthResult.Failure(AuthError.AUTH_ERROR)
+                return AuthResult.Failure(AuthError.AUTH_ERROR)
             }
             signInWithCredential()
-        } catch (exception: CredentialException) {
+        } catch (exception: Exception) {
             Log.e(TAG, exception.stackTraceToString())
             AuthResult.Failure(AuthError.UNKNOWN_ERROR)
         }
@@ -196,7 +196,7 @@ class AuthenticationUiClient @Inject constructor(
                         return GoogleAuthProvider.getCredential(googleIdTokenCredential.idToken, null)
                     } catch (exception: GoogleIdTokenParsingException) {
                         Log.e(TAG, "Receive an invalid google id token response", exception)
-                        throw CredentialException("Receive an invalid google id token response")
+                        throw exception
                     }
                 } else {
                     Log.e(TAG, "Unexpected type of credential")

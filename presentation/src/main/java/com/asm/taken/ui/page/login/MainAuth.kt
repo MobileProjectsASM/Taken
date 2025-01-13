@@ -101,9 +101,10 @@ fun AuthenticationSection(
                     loginVM.updateLoginUiState(authResult)
                 }
             },
-        ) {
-            navController.navigate(AuthenticationPhone.route)
-        }
+            signInWithPhoneNumber = {
+                navController.navigate(AuthenticationPhone.route)
+            }
+        )
         Box(modifier = Modifier.height(250.dp))
     }
 }
