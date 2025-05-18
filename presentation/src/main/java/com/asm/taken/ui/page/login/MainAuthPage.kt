@@ -53,6 +53,7 @@ import com.asm.taken.utils.MessageResolver
 import com.asm.taken.vm.LoginVM
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import kotlin.math.log
 
 @Composable
 fun MainAuthPage(
@@ -96,6 +97,8 @@ fun AuthenticationSection(
         Box(modifier = Modifier.height(250.dp))
         PanelLogin(
             loginVM = loginVM,
+            authenticationClient = authenticationClient,
+            coroutineScope = coroutineScope,
             messageResolver = messageResolver
         )
         PanelSocialMedia(
@@ -127,6 +130,8 @@ fun AuthenticationSection(
 @Composable
 fun PanelLogin(
     loginVM: LoginVM,
+    authenticationClient: AuthenticationClient,
+    coroutineScope: CoroutineScope,
     messageResolver: MessageResolver
 ) {
     Card(
@@ -152,8 +157,12 @@ fun PanelLogin(
             FormLogin(
                 loginVM = loginVM,
                 messageResolver = messageResolver
-            ) {
-
+            ) { email, password ->
+                coroutineScope.launch {
+                    loginVM.updateLoginUiState(AuthResult.Loading)
+                    val authResult = authenticationClient.signInWithEmailAndPassword(email, password)
+                    loginVM.updateLoginUiState(authResult)
+                }
             }
         }
     }
@@ -190,7 +199,7 @@ fun LoginState(
 fun FormLogin(
     loginVM: LoginVM,
     messageResolver: MessageResolver,
-    onSubmit: () -> Unit,
+    signInWithEmailAndPassword: (String, String) -> Unit,
 ) {
     val loginFormState: LoginFormUiState by loginVM.loginFormUiState.collectAsStateWithLifecycle()
     val emailErrors: List<String> = when (val emailUiState = loginFormState.emailUiState.state) {
@@ -237,7 +246,9 @@ fun FormLogin(
             DefaultButton(
                 text = stringResource(id = R.string.txt_btn_login),
                 enable = loginFormState.emailUiState.state is InputState.Success && loginFormState.passwordUiState.state is InputState.Success,
-                onClickButton = onSubmit
+                onClickButton = {
+                    signInWithEmailAndPassword(loginFormState.emailUiState.value, loginFormState.passwordUiState.value)
+                }
             )
         }
     }

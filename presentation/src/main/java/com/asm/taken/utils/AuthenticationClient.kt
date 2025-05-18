@@ -66,26 +66,61 @@ class AuthenticationClient @Inject constructor(
         } catch (exception: Exception) {
             Log.e(TAG, exception.stackTraceToString())
             if (exception is FirebaseException) {
-                handleFirebaseException(exception)
+                val signUpError: SignUpError = when {
+                    exception is FirebaseNetworkException -> SignUpError.NETWORK_CONNECTION
+                    exception is FirebaseAuthException -> when (exception.errorCode) {
+                        "ERROR_EMAIL_ALREADY_IN_USE", "email-already-in-use" -> SignUpError.EMAIL_ALREADY_IN_USE
+                        "ERROR_INVALID_EMAIL", "invalid-email" -> SignUpError.INVALID_EMAIL
+                        "ERROR_WEAK_PASSWORD", "weak-password" -> SignUpError.WEAK_PASSWORD
+                        "ERROR_NETWORK_REQUEST_FAILED", "network-request-failed" -> SignUpError.NETWORK_CONNECTION
+                        else -> SignUpError.UNKNOWN_ERROR
+                    }
+                    else -> SignUpError.UNKNOWN_ERROR
+                }
+                return SignUpResult.Failure(signUpError)
             } else {
                 SignUpResult.Failure(SignUpError.UNKNOWN_ERROR)
             }
         }
     }
 
-    private fun handleFirebaseException(e: FirebaseException): SignUpResult {
-        val signUpError: SignUpError = when {
-            e is FirebaseNetworkException -> SignUpError.NETWORK_CONNECTION
-            e is FirebaseAuthException -> when (e.errorCode) {
-                "ERROR_EMAIL_ALREADY_IN_USE", "email-already-in-use" -> SignUpError.EMAIL_ALREADY_IN_USE
-                "ERROR_INVALID_EMAIL", "invalid-email" -> SignUpError.INVALID_EMAIL
-                "ERROR_WEAK_PASSWORD", "weak-password" -> SignUpError.WEAK_PASSWORD
-                "ERROR_NETWORK_REQUEST_FAILED", "network-request-failed" -> SignUpError.NETWORK_CONNECTION
-                else -> SignUpError.UNKNOWN_ERROR
+    suspend fun signInWithEmailAndPassword(email: String, password: String): AuthResult {
+        return try {
+            val firebaseUser = auth.signInWithEmailAndPassword(email, password).await().user
+            if (firebaseUser == null) {
+                Log.e(TAG, "FirebaseUser is null")
+                return AuthResult.Failure(AuthError.UNKNOWN_ERROR)
             }
-            else -> SignUpError.UNKNOWN_ERROR
+            AuthResult.Successful(
+                userData = UserData(
+                    userId = firebaseUser.uid,
+                    username = firebaseUser.email,
+                    profilePictureUrl = firebaseUser.photoUrl?.toString()
+                )
+            )
+        } catch (exception: Exception) {
+            Log.e(TAG, exception.stackTraceToString())
+            when {
+                exception is FirebaseException -> {
+                    val authError: AuthError = when {
+                        exception is FirebaseNetworkException -> AuthError.NETWORK_CONNECTION
+                        exception is FirebaseAuthException -> when (exception.errorCode) {
+                            "ERROR_INVALID_EMAIL" -> AuthError.ERROR_INVALID_EMAIL
+                            "ERROR_WRONG_PASSWORD" -> AuthError.ERROR_WRONG_PASSWORD
+                            "ERROR_USER_NOT_FOUND" -> AuthError.ERROR_USER_NOT_FOUND
+                            "ERROR_INVALID_LOGIN_CREDENTIALS" -> AuthError.ERROR_INVALID_LOGIN_CREDENTIALS
+                            "ERROR_USER_DISABLED" -> AuthError.ERROR_USER_DISABLED
+                            "ERROR_TOO_MANY_REQUESTS" -> AuthError.ERROR_TOO_MANY_REQUESTS
+                            "ERROR_NETWORK_REQUEST_FAILED" -> AuthError.NETWORK_CONNECTION
+                            else -> AuthError.UNKNOWN_ERROR
+                        }
+                        else -> AuthError.UNKNOWN_ERROR
+                    }
+                    return AuthResult.Failure(authError)
+                }
+                else -> AuthResult.Failure(AuthError.UNKNOWN_ERROR)
+            }
         }
-        return SignUpResult.Failure(signUpError)
     }
 
     fun signInWithFacebook(
@@ -101,7 +136,7 @@ class AuthenticationClient @Inject constructor(
 
             override fun onError(error: FacebookException) {
                 Log.e(TAG, error.stackTraceToString())
-                onAuthResult(AuthResult.Failure(AuthError.AUTH_ERROR))
+                onAuthResult(AuthResult.Failure(AuthError.UNKNOWN_ERROR))
             }
 
             override fun onSuccess(result: LoginResult) {
@@ -127,7 +162,7 @@ class AuthenticationClient @Inject constructor(
         } catch (exception: GetCredentialException) {
             if (exception !is NoCredentialException) {
                 Log.e(TAG, exception.stackTraceToString())
-                return AuthResult.Failure(AuthError.AUTH_ERROR)
+                return AuthResult.Failure(AuthError.UNKNOWN_ERROR)
             }
             try {
                 signInWithCredential()
@@ -219,7 +254,7 @@ class AuthenticationClient @Inject constructor(
                 if (exception is FirebaseNetworkException) {
                     AuthResult.Failure(AuthError.NETWORK_CONNECTION)
                 } else {
-                    AuthResult.Failure(AuthError.AUTH_ERROR)
+                    AuthResult.Failure(AuthError.UNKNOWN_ERROR)
                 }
             } else {
                 AuthResult.Failure(AuthError.UNKNOWN_ERROR)

@@ -8,7 +8,7 @@ data object CreateAccount: Route("create_account")
 data object SignInGamer: Route("sign_in_gamer")
 data object CreateGamer: Route("create_gamer/{userId}") {
     const val userIdArg = "userId"
-    fun createRoute(userId: String) = "create_account/$userId"
+    fun createRoute(userId: String) = "create_gamer/$userId"
 }
 data object Home: Route("home")
 data object MainPage: Route("main_page/{gamerId}") {

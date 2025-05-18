@@ -56,6 +56,11 @@
     <string name="err_network_connection">There is not network connection</string>
     <string name="err_email_already_in_use">Email already in use</string>
     <string name="err_weak_password">Weak password</string>
+    <string name="err_incorrect_email_or_password">Incorrect email or password</string>
+    <string name="err_user_not_found">No account found with this email</string>
+    <string name="err_invalid_login_credentials">Invalid email or password</string>
+    <string name="err_user_disabled">This account has been disabled</string>
+    <string name="err_too_many_request">Too many attempts</string>
     <string name="err_sign_up">SignUp error</string>
 
     <string name="default_web_client_id" translatable="false">537568996262-c7nrhuvi4s9jaukcg9uh0hvm98l9ubls.apps.googleusercontent.com</string>

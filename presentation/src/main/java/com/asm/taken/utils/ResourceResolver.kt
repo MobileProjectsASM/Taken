@@ -51,7 +51,12 @@ class MessageResolver @Inject constructor(
 
     fun getErrorLogin(error: LoginFailure): String = when (error) {
         is LoginFailure.AuthFailure -> when (error.authError) {
-            AuthError.AUTH_ERROR -> context.getString(R.string.err_auth_with_phone)
+            AuthError.ERROR_INVALID_EMAIL -> context.getString(R.string.err_email_invalid)
+            AuthError.ERROR_WRONG_PASSWORD -> context.getString(R.string.err_incorrect_email_or_password)
+            AuthError.ERROR_USER_NOT_FOUND -> context.getString(R.string.err_user_not_found)
+            AuthError.ERROR_INVALID_LOGIN_CREDENTIALS -> context.getString(R.string.err_invalid_login_credentials)
+            AuthError.ERROR_USER_DISABLED -> context.getString(R.string.err_user_disabled)
+            AuthError.ERROR_TOO_MANY_REQUESTS -> context.getString(R.string.err_too_many_request)
             AuthError.NETWORK_CONNECTION -> context.getString(R.string.err_network_connection)
             AuthError.UNKNOWN_ERROR -> context.getString(R.string.err_unknown)
         }
