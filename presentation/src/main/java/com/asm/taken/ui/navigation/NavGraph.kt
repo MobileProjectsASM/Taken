@@ -15,6 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -22,6 +23,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navigation
 import com.asm.taken.ui.page.login.BackgroundLogin
+import com.asm.taken.ui.page.login.CreateAccountPage
 import com.asm.taken.ui.page.login.MainAuthPage
 import com.asm.taken.ui.page.login.PhoneAuthPage
 import com.asm.taken.utils.AuthenticationUiClient
@@ -108,7 +110,19 @@ fun NavGraphBuilder.navigationLogin(
             }
         }
         composable(route = CreateAccount.route) { navBackStackEntry ->
-            val userId = navBackStackEntry.arguments?.getString(CreateAccount.userIdArg).orEmpty()
+            val parentEntry = remember(navBackStackEntry) {
+                navController.getBackStackEntry(Login.route)
+            }
+            val loginVM = hiltViewModel<LoginVM>(parentEntry)
+            BackgroundLogin {
+                CreateAccountPage(
+                    loginVM = loginVM,
+                    messageResolver = messageResolver
+                )
+            }
+        }
+        composable(route = CreateGamer.route) { navBackStackEntry ->
+            val userId = navBackStackEntry.arguments?.getString(CreateGamer.userIdArg).orEmpty()
             /*val parentEntry = remember(navBackStackEntry) {
                 navController.getBackStackEntry(Login.route)
             }

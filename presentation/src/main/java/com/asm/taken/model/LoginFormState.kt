@@ -96,7 +96,7 @@ data class CountryInfoState(
  */
 
 data class LoginFormUiState(
-    val userIdUiState: InputUiState<InputUserIdError>,
+    val userIdUiState: InputUiState<InputEmailError>,
     val passwordUiState: InputUiState<InputPasswordError>
 )
 
@@ -138,11 +138,13 @@ sealed class LoginUiState {
     data class Failure(val loginFailure: LoginFailure): LoginUiState()
 }
 
-//region ERRORS
+data class LoginFormCreateAccountUiState(
+    val emailUiState: InputUiState<InputEmailError>,
+    val passwordUiState: InputUiState<InputPasswordError>,
+    val passwordRepeatUiState: InputUiState<InputRepeatValueError>
+)
 
-enum class InputUserIdError {
-    EMPTY
-}
+//region ERRORS
 
 enum class InputPasswordError {
     EMPTY,
@@ -150,6 +152,10 @@ enum class InputPasswordError {
     LEAST_ONE_NUMBER,
     LEAST_ONE_SPECIAL_CHARACTER,
     LEAST_ONE_UPPERCASE,
+}
+
+enum class InputRepeatValueError {
+    IS_NOT_SAME_VALUE
 }
 
 enum class InputPhoneCodeError {
@@ -161,6 +167,11 @@ enum class InputPhoneCodeError {
 enum class InputPhoneNumberError {
     EMPTY,
     ONLY_INT_NUMBERS
+}
+
+enum class InputEmailError {
+    EMPTY,
+    EMAIL_INVALID
 }
 
 enum class SendOtpError {

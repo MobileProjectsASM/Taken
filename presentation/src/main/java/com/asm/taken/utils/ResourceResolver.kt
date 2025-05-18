@@ -10,7 +10,7 @@ import com.asm.taken.model.InputOtpError
 import com.asm.taken.model.InputPasswordError
 import com.asm.taken.model.InputPhoneCodeError
 import com.asm.taken.model.InputPhoneNumberError
-import com.asm.taken.model.InputUserIdError
+import com.asm.taken.model.InputEmailError
 import com.asm.taken.model.LoginFailure
 import com.asm.taken.model.SendOtpError
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -19,8 +19,8 @@ import javax.inject.Inject
 class MessageResolver @Inject constructor(
     @ApplicationContext val context: Context
 ) {
-    fun getErrorUserId(error: InputUserIdError): String = when (error) {
-        InputUserIdError.EMPTY -> context.getString(R.string.err_empty_field)
+    fun getErrorUserId(error: InputEmailError): String = when (error) {
+        InputEmailError.EMPTY -> context.getString(R.string.err_empty_field)
     }
 
     fun getErrorPassword(error: InputPasswordError): String = when (error) {

@@ -4,8 +4,9 @@ sealed class Route(val route: String)
 data object Login: Route("login")
 data object Authentication: Route("authentication")
 data object AuthenticationPhone: Route("authentication_phone")
+data object CreateAccount: Route("create_account")
 data object SignInGamer: Route("sign_in_gamer")
-data object CreateAccount: Route("create_account/{userId}") {
+data object CreateGamer: Route("create_gamer/{userId}") {
     const val userIdArg = "userId"
     fun createRoute(userId: String) = "create_account/$userId"
 }

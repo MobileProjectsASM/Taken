@@ -1,7 +1,6 @@
 package com.asm.taken.ui.page.login
 
 import androidx.activity.ComponentActivity
-import androidx.activity.result.ActivityResultRegistryOwner
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -46,6 +45,7 @@ import com.asm.taken.ui.PasswordOutlinedTextField
 import com.asm.taken.ui.PuzzleGeneralTitle
 import com.asm.taken.ui.navigation.AuthenticationPhone
 import com.asm.taken.ui.navigation.CreateAccount
+import com.asm.taken.ui.navigation.CreateGamer
 import com.asm.taken.ui.navigation.MainPage
 import com.asm.taken.utils.AuthResult
 import com.asm.taken.utils.AuthenticationUiClient
@@ -115,6 +115,9 @@ fun AuthenticationSection(
                     coroutineScope,
                     loginVM::updateLoginUiState
                 )
+            },
+            createAccount = {
+                navController.navigate(CreateAccount.route)
             }
         )
         Box(modifier = Modifier.height(250.dp))
@@ -178,7 +181,7 @@ fun LoginState(
             navController.navigate(MainPage.createRoute((loginUiState as LoginUiState.RegisteredUser).gamerId))
         }
         else -> LaunchedEffect(true) {
-            navController.navigate(CreateAccount.createRoute((loginUiState as LoginUiState.UnregisteredUser).userId))
+            navController.navigate(CreateGamer.createRoute((loginUiState as LoginUiState.UnregisteredUser).userId))
         }
     }
 }
@@ -244,7 +247,8 @@ fun FormLogin(
 fun PanelSocialMedia(
     signInWithGoogle: () -> Unit,
     signInWithPhoneNumber: () -> Unit,
-    signInWithFacebook: () -> Unit
+    signInWithFacebook: () -> Unit,
+    createAccount: () -> Unit
 ) {
     Card(
         modifier = Modifier
@@ -287,10 +291,9 @@ fun PanelSocialMedia(
                 )
             }
             DefaultTextButton(
-                text = stringResource(id = R.string.txt_btn_create_account)
-            ) {
-
-            }
+                text = stringResource(id = R.string.txt_btn_create_account),
+                onClickButton = createAccount
+            )
         }
     }
 }

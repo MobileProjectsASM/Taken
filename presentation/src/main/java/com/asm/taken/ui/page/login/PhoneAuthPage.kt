@@ -64,7 +64,7 @@ import com.asm.taken.ui.DefaultOutlinedTextFieldLI
 import com.asm.taken.ui.DefaultText
 import com.asm.taken.ui.OtpMultiple
 import com.asm.taken.ui.PuzzleGeneralTitle
-import com.asm.taken.ui.navigation.CreateAccount
+import com.asm.taken.ui.navigation.CreateGamer
 import com.asm.taken.ui.navigation.MainPage
 import com.asm.taken.ui.puzzleFontFamily
 import com.asm.taken.utils.AuthResult
@@ -396,7 +396,7 @@ fun LoginState(
             }
             is LoginUiState.UnregisteredUser -> {
                 LaunchedEffect(true) {
-                    navController.navigate(CreateAccount.createRoute(loginUiState.userId))
+                    navController.navigate(CreateGamer.createRoute(loginUiState.userId))
                 }
             }
             is LoginUiState.Failure -> {
