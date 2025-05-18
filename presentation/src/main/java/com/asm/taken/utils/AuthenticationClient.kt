@@ -14,13 +14,12 @@ import androidx.credentials.exceptions.NoCredentialException
 import com.asm.taken.R
 import com.asm.taken.model.AuthError
 import com.asm.taken.model.SendOtpError
-import com.asm.taken.utils.AuthenticationUiClient.Companion.TAG
+import com.asm.taken.model.SignUpError
 import com.facebook.CallbackManager
 import com.facebook.FacebookCallback
 import com.facebook.FacebookException
 import com.facebook.login.LoginManager
 import com.facebook.login.LoginResult
-import com.google.android.gms.auth.api.Auth
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
@@ -30,6 +29,7 @@ import com.google.firebase.FirebaseTooManyRequestsException
 import com.google.firebase.auth.AuthCredential
 import com.google.firebase.auth.FacebookAuthProvider
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseAuthException
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.google.firebase.auth.FirebaseAuthMissingActivityForRecaptchaException
 import com.google.firebase.auth.GoogleAuthProvider
@@ -46,13 +46,46 @@ import java.util.UUID
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
-class AuthenticationUiClient @Inject constructor(
+class AuthenticationClient @Inject constructor(
     @ApplicationContext val context: Context,
     private val auth: FirebaseAuth,
     private val credentialManager: CredentialManager
 ) {
     companion object {
         const val TAG: String = "AuthenticationUiClient"
+    }
+
+    suspend fun createAccount(email: String, password: String): SignUpResult {
+        return try {
+            val firebaseUser = auth.createUserWithEmailAndPassword(email, password).await().user
+            if (firebaseUser == null) {
+                Log.e(TAG, "FirebaseUser is null")
+                return SignUpResult.Failure(SignUpError.UNKNOWN_ERROR)
+            }
+            SignUpResult.Successful
+        } catch (exception: Exception) {
+            Log.e(TAG, exception.stackTraceToString())
+            if (exception is FirebaseException) {
+                handleFirebaseException(exception)
+            } else {
+                SignUpResult.Failure(SignUpError.UNKNOWN_ERROR)
+            }
+        }
+    }
+
+    private fun handleFirebaseException(e: FirebaseException): SignUpResult {
+        val signUpError: SignUpError = when {
+            e is FirebaseNetworkException -> SignUpError.NETWORK_CONNECTION
+            e is FirebaseAuthException -> when (e.errorCode) {
+                "ERROR_EMAIL_ALREADY_IN_USE", "email-already-in-use" -> SignUpError.EMAIL_ALREADY_IN_USE
+                "ERROR_INVALID_EMAIL", "invalid-email" -> SignUpError.INVALID_EMAIL
+                "ERROR_WEAK_PASSWORD", "weak-password" -> SignUpError.WEAK_PASSWORD
+                "ERROR_NETWORK_REQUEST_FAILED", "network-request-failed" -> SignUpError.NETWORK_CONNECTION
+                else -> SignUpError.UNKNOWN_ERROR
+            }
+            else -> SignUpError.UNKNOWN_ERROR
+        }
+        return SignUpResult.Failure(signUpError)
     }
 
     fun signInWithFacebook(
@@ -160,7 +193,7 @@ class AuthenticationUiClient @Inject constructor(
     }
 
     private suspend fun signInWithCredential(authorizedAccounts: Boolean = false): AuthResult {
-        val credentialRequest = getCredentialRequest(authorizedAccounts)
+        val credentialRequest = buildCredentialRequest(authorizedAccounts)
         val credentialResponse = credentialManager.getCredential(context, credentialRequest)
         val authCredential = handleCredentialResponse(credentialResponse)
         return signInWithCredential(authCredential)
@@ -203,7 +236,7 @@ class AuthenticationUiClient @Inject constructor(
         }
     }
 
-    private fun getCredentialRequest(authorizedAccounts: Boolean): GetCredentialRequest {
+    private fun buildCredentialRequest(authorizedAccounts: Boolean): GetCredentialRequest {
         val rawNonce = UUID.randomUUID().toString()
         val bytes = rawNonce.toByteArray()
         val md = MessageDigest.getInstance("SHA-256")
@@ -272,6 +305,12 @@ sealed class AuthResult {
     data object Loading: AuthResult()
     data class Successful(val userData: UserData): AuthResult()
     data class Failure(val authError: AuthError): AuthResult()
+}
+
+sealed class SignUpResult {
+    data object Loading: SignUpResult()
+    data object Successful: SignUpResult()
+    data class Failure(val signUpError: SignUpError): SignUpResult()
 }
 
 data class UserData(

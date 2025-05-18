@@ -14,6 +14,7 @@ import com.asm.taken.model.InputEmailError
 import com.asm.taken.model.InputRepeatValueError
 import com.asm.taken.model.LoginFailure
 import com.asm.taken.model.SendOtpError
+import com.asm.taken.model.SignUpError
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 
@@ -65,6 +66,13 @@ class MessageResolver @Inject constructor(
             SendOtpError.PHONE_NUMBER_INVALID_ERROR -> context.getString(R.string.err_phone_number_invalid)
             SendOtpError.NETWORK_CONNECTION -> context.getString(R.string.err_network_connection)
             SendOtpError.SERVER_ERROR, SendOtpError.UNKNOWN_ERROR -> context.getString(R.string.err_send_otp)
+        }
+        is LoginFailure.SignUpFailure -> when (error.signUpError) {
+            SignUpError.NETWORK_CONNECTION -> context.getString(R.string.err_network_connection)
+            SignUpError.EMAIL_ALREADY_IN_USE -> context.getString(R.string.err_email_already_in_use)
+            SignUpError.INVALID_EMAIL -> context.getString(R.string.err_email_invalid)
+            SignUpError.WEAK_PASSWORD -> context.getString(R.string.err_weak_password)
+            SignUpError.UNKNOWN_ERROR -> context.getString(R.string.err_sign_up)
         }
     }
 

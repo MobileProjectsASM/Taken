@@ -11,7 +11,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import com.asm.taken.ui.navigation.MainNavigation
 import com.asm.taken.ui.theme.TakenTheme
-import com.asm.taken.utils.AuthenticationUiClient
+import com.asm.taken.utils.AuthenticationClient
 import com.asm.taken.utils.MessageResolver
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
@@ -20,7 +20,7 @@ import javax.inject.Inject
 class LoginActivity : ComponentActivity() {
 
     @Inject
-    lateinit var authenticationUiClient: AuthenticationUiClient
+    lateinit var authenticationClient: AuthenticationClient
 
     @Inject
     lateinit var messageResolver: MessageResolver
@@ -31,7 +31,7 @@ class LoginActivity : ComponentActivity() {
             TakenTheme {
                 Surface {
                     PuzzleScaffold(
-                        authenticationUiClient = authenticationUiClient,
+                        authenticationClient = authenticationClient,
                         messageResolver = messageResolver
                     )
                 }
@@ -42,7 +42,7 @@ class LoginActivity : ComponentActivity() {
 
 @Composable
 fun PuzzleScaffold(
-    authenticationUiClient: AuthenticationUiClient,
+    authenticationClient: AuthenticationClient,
     messageResolver: MessageResolver
 ) {
     val snackBarHostState = remember { SnackbarHostState() }
@@ -53,7 +53,7 @@ fun PuzzleScaffold(
         MainNavigation(
             innerPadding,
             snackBarHostState = snackBarHostState,
-            authenticationUiClient = authenticationUiClient,
+            authenticationClient = authenticationClient,
             messageResolver = messageResolver
         )
     }

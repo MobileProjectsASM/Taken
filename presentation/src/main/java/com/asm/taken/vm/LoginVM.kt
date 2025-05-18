@@ -2,6 +2,7 @@ package com.asm.taken.vm
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.asm.domain.entities.Result
 import com.asm.domain.entities.asSuccessful
 import com.asm.domain.errors.GamerFailure
@@ -24,6 +25,7 @@ import com.asm.taken.model.LoginFormUiState
 import com.asm.taken.model.LoginUiState
 import com.asm.taken.utils.AuthResult
 import com.asm.taken.utils.SendOtpResult
+import com.asm.taken.utils.SignUpResult
 import com.asm.taken.utils.UserData
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -116,6 +118,17 @@ class LoginVM @Inject constructor(
                 AuthResult.Loading -> LoginUiState.Loading
             }
             _loginUiState.update { loginWithPhoneUiState }
+        }
+    }
+
+    fun updateLoginUiState(signUpResult: SignUpResult) {
+        viewModelScope.launch {
+            val loginState = when (signUpResult) {
+                is SignUpResult.Failure -> LoginUiState.Failure(LoginFailure.SignUpFailure(signUpResult.signUpError))
+                SignUpResult.Loading -> LoginUiState.Loading
+                SignUpResult.Successful -> LoginUiState.AccountCreated
+            }
+            _loginUiState.update { loginState }
         }
     }
 
@@ -252,6 +265,16 @@ class LoginVM @Inject constructor(
         }
     }
 
+    fun cleanLoginFormCreateAccount() {
+        _loginFormCreateAccountUiState.update {
+            it.copy(
+                emailUiState = InputUiState(),
+                passwordUiState = InputUiState(),
+                passwordRepeatUiState = InputUiState()
+            )
+        }
+    }
+
     private fun validatePasswordRepeat(password: String, passwordRepeat: String): List<InputRepeatValueError> {
         val errors = mutableListOf<InputRepeatValueError>()
         if (password != passwordRepeat) errors.add(InputRepeatValueError.IS_NOT_SAME_VALUE)
@@ -259,23 +282,4 @@ class LoginVM @Inject constructor(
     }
 
     //endregion
-
-   /*
-
-    fun validateSentCodeForm(codeSent: String?) {
-        val sentCodeState = validateSentCode(codeSent)
-        _sentCodeFormSTF.update {
-            it.copy(
-                sentCodeState = sentCodeState
-            )
-        }
-    }
-    fun resetSignInState() {
-        _signInSTF.value = null
-    }
-
-    fun resetSendPhoneForm() {
-        _sendPhoneFormSTF.value = SendPhoneFormState()
-    }*/
-
 }

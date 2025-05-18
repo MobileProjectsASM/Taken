@@ -48,7 +48,7 @@ import com.asm.taken.ui.navigation.CreateAccount
 import com.asm.taken.ui.navigation.CreateGamer
 import com.asm.taken.ui.navigation.MainPage
 import com.asm.taken.utils.AuthResult
-import com.asm.taken.utils.AuthenticationUiClient
+import com.asm.taken.utils.AuthenticationClient
 import com.asm.taken.utils.MessageResolver
 import com.asm.taken.vm.LoginVM
 import kotlinx.coroutines.CoroutineScope
@@ -57,7 +57,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun MainAuthPage(
     loginVM: LoginVM,
-    authenticationUiClient: AuthenticationUiClient,
+    authenticationClient: AuthenticationClient,
     navController: NavHostController,
     messageResolver: MessageResolver,
     snackBarHostState: SnackbarHostState
@@ -68,7 +68,7 @@ fun MainAuthPage(
         loginVM = loginVM,
         messageResolver = messageResolver,
         coroutineScope = coroutineScope,
-        authenticationUiClient = authenticationUiClient,
+        authenticationClient = authenticationClient,
         navController = navController
     )
     LoginState(
@@ -84,7 +84,7 @@ fun AuthenticationSection(
     loginVM: LoginVM,
     messageResolver: MessageResolver,
     coroutineScope: CoroutineScope,
-    authenticationUiClient: AuthenticationUiClient,
+    authenticationClient: AuthenticationClient,
     navController: NavHostController
 ) {
     val context = LocalContext.current
@@ -102,7 +102,7 @@ fun AuthenticationSection(
             signInWithGoogle = {
                 coroutineScope.launch {
                     loginVM.updateLoginUiState(AuthResult.Loading)
-                    val authResult = authenticationUiClient.signInWithGoogle()
+                    val authResult = authenticationClient.signInWithGoogle()
                     loginVM.updateLoginUiState(authResult)
                 }
             },
@@ -110,7 +110,7 @@ fun AuthenticationSection(
                 navController.navigate(AuthenticationPhone.route)
             },
             signInWithFacebook = {
-                authenticationUiClient.signInWithFacebook(
+                authenticationClient.signInWithFacebook(
                     context as ComponentActivity,
                     coroutineScope,
                     loginVM::updateLoginUiState
@@ -167,7 +167,7 @@ fun LoginState(
     snackBarHostState: SnackbarHostState
 ) {
     val loginUiState: LoginUiState? by loginVM.loginUiState.collectAsStateWithLifecycle()
-    if (loginUiState == null || loginUiState is LoginUiState.SentOtp) return
+    if (loginUiState == null || loginUiState is LoginUiState.SentOtp || loginUiState is LoginUiState.AccountCreated) return
     when (loginUiState) {
         is LoginUiState.Failure -> {
             val message = messageResolver.getErrorLogin((loginUiState as LoginUiState.Failure).loginFailure)

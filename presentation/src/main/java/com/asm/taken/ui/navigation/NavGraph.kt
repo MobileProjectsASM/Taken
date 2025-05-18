@@ -15,7 +15,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -26,7 +25,7 @@ import com.asm.taken.ui.page.login.BackgroundLogin
 import com.asm.taken.ui.page.login.CreateAccountPage
 import com.asm.taken.ui.page.login.MainAuthPage
 import com.asm.taken.ui.page.login.PhoneAuthPage
-import com.asm.taken.utils.AuthenticationUiClient
+import com.asm.taken.utils.AuthenticationClient
 import com.asm.taken.utils.MessageResolver
 import com.asm.taken.vm.LoginVM
 
@@ -34,7 +33,7 @@ import com.asm.taken.vm.LoginVM
 fun MainNavigation(
     innerPadding: PaddingValues,
     snackBarHostState: SnackbarHostState,
-    authenticationUiClient: AuthenticationUiClient,
+    authenticationClient: AuthenticationClient,
     messageResolver: MessageResolver
 ) {
     val navigationController = rememberNavController()
@@ -46,7 +45,7 @@ fun MainNavigation(
         navigationLogin(
             navController = navigationController,
             snackBarHostState = snackBarHostState,
-            authenticationUiClient = authenticationUiClient,
+            authenticationClient = authenticationClient,
             messageResolver = messageResolver
         )
         navigationMainPage(
@@ -58,7 +57,7 @@ fun MainNavigation(
 fun NavGraphBuilder.navigationLogin(
     navController: NavHostController,
     snackBarHostState: SnackbarHostState,
-    authenticationUiClient: AuthenticationUiClient,
+    authenticationClient: AuthenticationClient,
     messageResolver: MessageResolver
 ) {
     navigation(
@@ -73,7 +72,7 @@ fun NavGraphBuilder.navigationLogin(
             BackgroundLogin {
                 MainAuthPage(
                     loginVM = loginVM,
-                    authenticationUiClient = authenticationUiClient,
+                    authenticationClient = authenticationClient,
                     navController = navController,
                     snackBarHostState = snackBarHostState,
                     messageResolver = messageResolver,
@@ -93,12 +92,12 @@ fun NavGraphBuilder.navigationLogin(
                 }
                 PhoneAuthPage(
                     loginVM = loginVM,
-                    authenticationUiClient = authenticationUiClient,
+                    authenticationClient = authenticationClient,
                     navController = navController,
                     messageResolver = messageResolver,
                     snackBarHostState = snackBarHostState,
                     onSentPhone = { code, phoneNumber ->
-                        authenticationUiClient.authWithPhoneNumber(
+                        authenticationClient.authWithPhoneNumber(
                             context as Activity,
                             coroutineScope = coroutineScope,
                             phoneNumber = "+$code$phoneNumber",
@@ -117,7 +116,10 @@ fun NavGraphBuilder.navigationLogin(
             BackgroundLogin {
                 CreateAccountPage(
                     loginVM = loginVM,
-                    messageResolver = messageResolver
+                    authenticationClient = authenticationClient,
+                    navController = navController,
+                    messageResolver = messageResolver,
+                    snackBarHostState = snackBarHostState
                 )
             }
         }

@@ -68,7 +68,7 @@ import com.asm.taken.ui.navigation.CreateGamer
 import com.asm.taken.ui.navigation.MainPage
 import com.asm.taken.ui.puzzleFontFamily
 import com.asm.taken.utils.AuthResult
-import com.asm.taken.utils.AuthenticationUiClient
+import com.asm.taken.utils.AuthenticationClient
 import com.asm.taken.utils.MessageResolver
 import com.asm.taken.vm.LoginVM
 import kotlinx.coroutines.launch
@@ -76,7 +76,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun PhoneAuthPage(
     loginVM: LoginVM,
-    authenticationUiClient: AuthenticationUiClient,
+    authenticationClient: AuthenticationClient,
     navController: NavHostController,
     messageResolver: MessageResolver,
     snackBarHostState: SnackbarHostState,
@@ -98,7 +98,7 @@ fun PhoneAuthPage(
     )
     LoginState(
         loginVM = loginVM,
-        authenticationUiClient = authenticationUiClient,
+        authenticationClient = authenticationClient,
         messageResolver = messageResolver,
         navController = navController,
         loginUiState = loginUiState,
@@ -380,43 +380,42 @@ fun ItemCountry(countryUiState: CountryUiState, onClick: (CountryUiState) -> Uni
 @Composable
 fun LoginState(
     loginVM: LoginVM,
-    authenticationUiClient: AuthenticationUiClient,
+    authenticationClient: AuthenticationClient,
     messageResolver: MessageResolver,
     navController: NavHostController,
     loginUiState: LoginUiState?,
     snackBarHostState: SnackbarHostState
 ) {
     val scope = rememberCoroutineScope()
-    if (loginUiState != null) {
-        when (loginUiState) {
-            is LoginUiState.RegisteredUser -> {
-                LaunchedEffect(true) {
-                    navController.navigate(MainPage.createRoute(loginUiState.gamerId))
-                }
+    if (loginUiState == null || loginUiState is LoginUiState.AccountCreated) return
+    when (loginUiState) {
+        LoginUiState.Loading -> CircularProgressDialog()
+        is LoginUiState.RegisteredUser -> {
+            LaunchedEffect(true) {
+                navController.navigate(MainPage.createRoute(loginUiState.gamerId))
             }
-            is LoginUiState.UnregisteredUser -> {
-                LaunchedEffect(true) {
-                    navController.navigate(CreateGamer.createRoute(loginUiState.userId))
-                }
+        }
+        is LoginUiState.UnregisteredUser -> {
+            LaunchedEffect(true) {
+                navController.navigate(CreateGamer.createRoute(loginUiState.userId))
             }
-            is LoginUiState.Failure -> {
-                val message = messageResolver.getErrorLogin(loginUiState.loginFailure)
-                LaunchedEffect(true) {
-                    val snackBarResult = snackBarHostState.showSnackbar(message, withDismissAction = true)
-                    if (snackBarResult == SnackbarResult.Dismissed) loginVM.resetLoginUiState()
-                }
+        }
+        is LoginUiState.Failure -> {
+            val message = messageResolver.getErrorLogin(loginUiState.loginFailure)
+            LaunchedEffect(true) {
+                val snackBarResult = snackBarHostState.showSnackbar(message, withDismissAction = true)
+                if (snackBarResult == SnackbarResult.Dismissed) loginVM.resetLoginUiState()
             }
-            LoginUiState.Loading -> CircularProgressDialog()
-            is LoginUiState.SentOtp -> OtpDialog(
-                loginVM = loginVM,
-                phoneNumber = loginUiState.phoneNumber,
-                messageResolver = messageResolver,
-            ) { otp ->
-                scope.launch {
-                    loginVM.updateLoginUiState(AuthResult.Loading)
-                    val authResult = authenticationUiClient.verifyOtp(loginUiState.verificationId, otp)
-                    loginVM.updateLoginUiState(authResult)
-                }
+        }
+        else -> OtpDialog(
+            loginVM = loginVM,
+            phoneNumber = (loginUiState as LoginUiState.SentOtp).phoneNumber,
+            messageResolver = messageResolver,
+        ) { otp ->
+            scope.launch {
+                loginVM.updateLoginUiState(AuthResult.Loading)
+                val authResult = authenticationClient.verifyOtp(loginUiState.verificationId, otp)
+                loginVM.updateLoginUiState(authResult)
             }
         }
     }

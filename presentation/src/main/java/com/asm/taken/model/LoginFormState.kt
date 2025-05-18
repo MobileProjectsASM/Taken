@@ -135,6 +135,7 @@ sealed class LoginUiState {
     data class SentOtp(val verificationId: String, val phoneNumber: String): LoginUiState()
     data class RegisteredUser(val gamerId: String): LoginUiState()
     data class UnregisteredUser(val userId: String): LoginUiState()
+    data object AccountCreated: LoginUiState()
     data class Failure(val loginFailure: LoginFailure): LoginUiState()
 }
 
@@ -187,6 +188,14 @@ enum class AuthError {
     UNKNOWN_ERROR
 }
 
+enum class SignUpError {
+    NETWORK_CONNECTION,
+    EMAIL_ALREADY_IN_USE,
+    INVALID_EMAIL,
+    WEAK_PASSWORD,
+    UNKNOWN_ERROR
+}
+
 enum class InputOtpError {
     EMPTY,
     BE_6_DIGITS,
@@ -196,6 +205,7 @@ enum class InputOtpError {
 sealed class LoginFailure {
     data class SendOtpFailure(val sendOtpError: SendOtpError): LoginFailure()
     data class AuthFailure(val authError: AuthError): LoginFailure()
+    data class SignUpFailure(val signUpError: SignUpError): LoginFailure()
     data class RegisterFailure(val generalFailure: GeneralFailure): LoginFailure()
 }
 //endregion
