@@ -96,7 +96,7 @@ data class CountryInfoState(
  */
 
 data class LoginFormUiState(
-    val userIdUiState: InputUiState<InputEmailError>,
+    val emailUiState: InputUiState<InputEmailError>,
     val passwordUiState: InputUiState<InputPasswordError>
 )
 

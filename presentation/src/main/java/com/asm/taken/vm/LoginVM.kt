@@ -40,7 +40,7 @@ class LoginVM @Inject constructor(
 ) : ViewModel() {
 
     //region MutableStateFlows
-    private val _loginFormUiState = MutableStateFlow(LoginFormUiState(userIdUiState = InputUiState(), passwordUiState = InputUiState()))
+    private val _loginFormUiState = MutableStateFlow(LoginFormUiState(emailUiState = InputUiState(), passwordUiState = InputUiState()))
     private val _countriesUiState: MutableStateFlow<CountriesUiState> = MutableStateFlow(CountriesUiState.Loading)
     private val _loginFormPhoneUiState: MutableStateFlow<LoginFormPhoneUiState> = MutableStateFlow(
         LoginFormPhoneUiState(phoneCodeUiState = InputUiState(), phoneNumberUiState = InputUiState())
@@ -79,7 +79,7 @@ class LoginVM @Inject constructor(
                 else InputUiState(password, InputState.Error(passwordErrors))
             }
             it.copy(
-                userIdUiState = emailUiState,
+                emailUiState = emailUiState,
                 passwordUiState = passwordUiState,
             )
         }

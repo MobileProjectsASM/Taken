@@ -14,7 +14,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Mail
 import androidx.compose.material3.Card
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
@@ -193,8 +193,8 @@ fun FormLogin(
     onSubmit: () -> Unit,
 ) {
     val loginFormState: LoginFormUiState by loginVM.loginFormUiState.collectAsStateWithLifecycle()
-    val userIdErrors: List<String> = when (val userIdUiState = loginFormState.userIdUiState.state) {
-        is InputState.Error -> userIdUiState.errors.map { messageResolver.getErrorUserId(it) }
+    val emailErrors: List<String> = when (val emailUiState = loginFormState.emailUiState.state) {
+        is InputState.Error -> emailUiState.errors.map { messageResolver.getErrorEmail(it) }
         InputState.Init -> listOf()
         InputState.Success -> listOf()
     }
@@ -208,12 +208,12 @@ fun FormLogin(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 10.dp),
-            value = loginFormState.userIdUiState.value,
-            label = R.string.txt_label_user_id_login,
+            value = loginFormState.emailUiState.value,
+            label = R.string.txt_label_email,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-            leadingIcon = Icons.Default.Person,
-            cdLeadingIcon = R.string.txt_cd_li_user_id,
-            errors = userIdErrors
+            leadingIcon = Icons.Default.Mail,
+            cdLeadingIcon = R.string.txt_cd_li_email,
+            errors = emailErrors
         ) {
             loginVM.validateLoginForm(it, loginFormState.passwordUiState.value)
         }
@@ -227,7 +227,7 @@ fun FormLogin(
             leadingIcon = Icons.Default.Lock,
             errors = passwordErrors,
         ) {
-            loginVM.validateLoginForm(loginFormState.userIdUiState.value, it)
+            loginVM.validateLoginForm(loginFormState.emailUiState.value, it)
         }
         Spacer(modifier = Modifier.height(20.dp))
         Column(
@@ -236,7 +236,7 @@ fun FormLogin(
         ) {
             DefaultButton(
                 text = stringResource(id = R.string.txt_btn_login),
-                enable = loginFormState.userIdUiState.state is InputState.Success && loginFormState.passwordUiState.state is InputState.Success,
+                enable = loginFormState.emailUiState.state is InputState.Success && loginFormState.passwordUiState.state is InputState.Success,
                 onClickButton = onSubmit
             )
         }

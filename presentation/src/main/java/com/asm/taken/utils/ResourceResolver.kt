@@ -11,6 +11,7 @@ import com.asm.taken.model.InputPasswordError
 import com.asm.taken.model.InputPhoneCodeError
 import com.asm.taken.model.InputPhoneNumberError
 import com.asm.taken.model.InputEmailError
+import com.asm.taken.model.InputRepeatValueError
 import com.asm.taken.model.LoginFailure
 import com.asm.taken.model.SendOtpError
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -19,8 +20,9 @@ import javax.inject.Inject
 class MessageResolver @Inject constructor(
     @ApplicationContext val context: Context
 ) {
-    fun getErrorUserId(error: InputEmailError): String = when (error) {
+    fun getErrorEmail(error: InputEmailError): String = when (error) {
         InputEmailError.EMPTY -> context.getString(R.string.err_empty_field)
+        InputEmailError.EMAIL_INVALID -> context.getString(R.string.err_email_invalid)
     }
 
     fun getErrorPassword(error: InputPasswordError): String = when (error) {
@@ -29,6 +31,10 @@ class MessageResolver @Inject constructor(
         InputPasswordError.LEAST_ONE_NUMBER -> context.getString(R.string.err_least_one_number)
         InputPasswordError.LEAST_ONE_SPECIAL_CHARACTER -> context.getString(R.string.err_least_one_character)
         InputPasswordError.LEAST_ONE_UPPERCASE -> context.getString(R.string.err_least_one_uppercase)
+    }
+
+    fun getErrorPasswordRepeat(error: InputRepeatValueError): String = when (error) {
+        InputRepeatValueError.IS_NOT_SAME_VALUE -> context.getString(R.string.err_password_is_not_same)
     }
 
     fun getErrorPhoneCode(error: InputPhoneCodeError): String = when (error) {
