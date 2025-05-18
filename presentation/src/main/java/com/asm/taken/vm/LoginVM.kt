@@ -2,7 +2,6 @@ package com.asm.taken.vm
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.asm.domain.entities.Result
 import com.asm.domain.entities.asSuccessful
 import com.asm.domain.errors.GamerFailure
@@ -10,6 +9,7 @@ import com.asm.domain.use_cases.GetCountriesInfoUC
 import com.asm.domain.use_cases.GetGamerUC
 import com.asm.taken.mappers.PhoneCodeMapper
 import com.asm.taken.model.CountriesUiState
+import com.asm.taken.model.InputEmailError
 import com.asm.taken.model.InputOtpError
 import com.asm.taken.model.InputPasswordError
 import com.asm.taken.model.InputPhoneCodeError
@@ -17,7 +17,6 @@ import com.asm.taken.model.InputPhoneNumberError
 import com.asm.taken.model.InputRepeatValueError
 import com.asm.taken.model.InputState
 import com.asm.taken.model.InputUiState
-import com.asm.taken.model.InputEmailError
 import com.asm.taken.model.LoginFailure
 import com.asm.taken.model.LoginFormCreateAccountUiState
 import com.asm.taken.model.LoginFormPhoneUiState

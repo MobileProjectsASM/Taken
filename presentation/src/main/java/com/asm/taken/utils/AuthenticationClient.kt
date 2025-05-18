@@ -106,7 +106,7 @@ class AuthenticationClient @Inject constructor(
                         exception is FirebaseNetworkException -> AuthError.NETWORK_CONNECTION
                         exception is FirebaseAuthException -> when (exception.errorCode) {
                             "ERROR_INVALID_EMAIL" -> AuthError.ERROR_INVALID_EMAIL
-                            "ERROR_WRONG_PASSWORD" -> AuthError.ERROR_WRONG_PASSWORD
+                            "ERROR_INVALID_CREDENTIAL" -> AuthError.ERROR_WRONG_PASSWORD
                             "ERROR_USER_NOT_FOUND" -> AuthError.ERROR_USER_NOT_FOUND
                             "ERROR_INVALID_LOGIN_CREDENTIALS" -> AuthError.ERROR_INVALID_LOGIN_CREDENTIALS
                             "ERROR_USER_DISABLED" -> AuthError.ERROR_USER_DISABLED

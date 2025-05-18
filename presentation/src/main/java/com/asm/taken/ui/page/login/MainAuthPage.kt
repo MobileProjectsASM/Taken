@@ -53,7 +53,6 @@ import com.asm.taken.utils.MessageResolver
 import com.asm.taken.vm.LoginVM
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import kotlin.math.log
 
 @Composable
 fun MainAuthPage(
