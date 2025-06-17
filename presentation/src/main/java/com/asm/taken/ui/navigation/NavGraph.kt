@@ -131,6 +131,9 @@ fun NavGraphBuilder.navigationLogin(
             }
             val loginVM = hiltViewModel<LoginVM>(parentEntry)
             BackgroundLogin {
+                LaunchedEffect(true) {
+                    loginVM.getCountriesInfo()
+                }
                 CreateGamerPage(
                     loginVM = loginVM,
                     navController = navController,
