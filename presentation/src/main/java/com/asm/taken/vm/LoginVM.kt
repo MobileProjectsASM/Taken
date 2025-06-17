@@ -19,6 +19,7 @@ import com.asm.taken.model.InputState
 import com.asm.taken.model.InputUiState
 import com.asm.taken.model.LoginFailure
 import com.asm.taken.model.LoginFormCreateAccountUiState
+import com.asm.taken.model.LoginFormCreateGamerUiState
 import com.asm.taken.model.LoginFormPhoneUiState
 import com.asm.taken.model.LoginFormUiState
 import com.asm.taken.model.LoginUiState
@@ -49,6 +50,9 @@ class LoginVM @Inject constructor(
     private val _loginFormCreateAccountUiState: MutableStateFlow<LoginFormCreateAccountUiState> = MutableStateFlow(
         LoginFormCreateAccountUiState(emailUiState = InputUiState(), passwordUiState = InputUiState(), passwordRepeatUiState = InputUiState())
     )
+    private val _loginFormCreateGamerUiState: MutableStateFlow<LoginFormCreateGamerUiState> = MutableStateFlow(
+        LoginFormCreateGamerUiState(aliasUiState = InputUiState(), ageUiState = InputUiState(), countryUiState = InputUiState())
+    )
     private val _loginUiState: MutableStateFlow<LoginUiState?> = MutableStateFlow(null)
     private val _otpFormUiState: MutableStateFlow<InputUiState<InputOtpError>> = MutableStateFlow(
         InputUiState()
@@ -61,6 +65,7 @@ class LoginVM @Inject constructor(
     val countriesUiState: StateFlow<CountriesUiState> = _countriesUiState
     val loginFormPhoneUiState: StateFlow<LoginFormPhoneUiState> = _loginFormPhoneUiState
     val loginFormCreateAccountState: StateFlow<LoginFormCreateAccountUiState> = _loginFormCreateAccountUiState
+    val loginFormCreateGamerState: StateFlow<LoginFormCreateGamerUiState> = _loginFormCreateGamerUiState
     val loginUiState: StateFlow<LoginUiState?> = _loginUiState
     val otpFormUiState: StateFlow<InputUiState<InputOtpError>> = _otpFormUiState
 

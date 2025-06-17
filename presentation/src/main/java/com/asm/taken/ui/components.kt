@@ -164,7 +164,7 @@ fun DefaultOutlinedTextField(
                     Icon(
                         modifier = Modifier.size(size = 16.dp),
                         imageVector = Icons.Outlined.Cancel,
-                        contentDescription = stringResource(R.string.txt_cd_error_input_icon),
+                        contentDescription = null,
                         tint = OutlinedTextFieldDefaults.colors().errorIndicatorColor
                     )
                     DefaultText(
@@ -298,7 +298,7 @@ fun OtpMultiple(
                     Icon(
                         modifier = Modifier.size(size = 16.dp),
                         imageVector = Icons.Outlined.Cancel,
-                        contentDescription = stringResource(R.string.txt_cd_error_input_icon),
+                        contentDescription = null,
                         tint = OutlinedTextFieldDefaults.colors().errorIndicatorColor
                     )
                     DefaultText(
@@ -320,7 +320,7 @@ fun DefaultOutlinedTextFieldLI(
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     visualTransformation: VisualTransformation = VisualTransformation.None,
     leadingIcon: ImageVector,
-    @StringRes cdLeadingIcon: Int,
+    @StringRes cdLeadingIcon: Int?,
     trailingIcon: @Composable (() -> Unit)? = null,
     errors: List<String> = listOf(),
     readOnly: Boolean = false,
@@ -336,7 +336,7 @@ fun DefaultOutlinedTextFieldLI(
         leadingIcon = {
             Icon(
                 imageVector = leadingIcon,
-                contentDescription = stringResource(id = cdLeadingIcon),
+                contentDescription = cdLeadingIcon?.let { stringResource(it) },
                 tint = colorResource(id = R.color.purple_200)
             )
         },
@@ -356,7 +356,7 @@ fun DefaultOutlinedTextFieldTI(
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     visualTransformation: VisualTransformation = VisualTransformation.None,
     leadingIcon: ImageVector,
-    @StringRes cdLeadingIcon: Int,
+    @StringRes cdLeadingIcon: Int?,
     trailingIcon: ImageVector,
     @StringRes cdTrailingIcon: Int,
     onClickTrailingIcon: (() -> Unit)? = null,
@@ -403,7 +403,7 @@ fun PasswordOutlinedTextField(
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
         visualTransformation = if (isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
         leadingIcon = leadingIcon,
-        cdLeadingIcon = R.string.txt_cd_li_password,
+        cdLeadingIcon = null,
         trailingIcon = if (isPasswordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
         cdTrailingIcon = R.string.txt_cd_ti_password,
         onClickTrailingIcon = {
@@ -463,14 +463,14 @@ fun DefaultTextButton(
 fun DefaultImageButton(
     imageSize: Dp = 50.dp,
     @DrawableRes iconButton: Int,
-    @StringRes cdIconButton: Int,
+    @StringRes cdIconButton: Int?,
     onClickButton: (() -> Unit)? = null
 ) {
     TextButton(modifier = Modifier.size(70.dp), onClick = { onClickButton?.invoke() }) {
         Image(
             modifier = Modifier.size(imageSize),
             painter = painterResource(id = iconButton),
-            contentDescription = stringResource(id = cdIconButton)
+            contentDescription = cdIconButton?.let { stringResource(it) }
         )
     }
 }

@@ -57,9 +57,7 @@ fun BackgroundLogin(content: @Composable () -> Unit) {
                     .size(150.dp)
                     .align(Alignment.Center),
                 painter = painterResource(id = R.drawable.puzzle),
-                contentDescription = stringResource(
-                    id = R.string.txt_cd_icon_app
-                )
+                contentDescription = null
             )
             Text(
                 modifier = Modifier

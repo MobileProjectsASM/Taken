@@ -6,6 +6,9 @@ import com.asm.domain.errors.GeneralErrorType
 import com.asm.domain.errors.GeneralFailure
 import com.asm.taken.R
 import com.asm.taken.model.AuthError
+import com.asm.taken.model.InputAgeError
+import com.asm.taken.model.InputAliasError
+import com.asm.taken.model.InputCountryError
 import com.asm.taken.model.InputOtpError
 import com.asm.taken.model.InputPasswordError
 import com.asm.taken.model.InputPhoneCodeError
@@ -85,6 +88,21 @@ class MessageResolver @Inject constructor(
         InputOtpError.EMPTY -> context.getString(R.string.err_otp_empty)
         InputOtpError.BE_6_DIGITS -> context.getString(R.string.err_otp_be_6_digits)
         InputOtpError.ONLY_INT_NUMBERS -> context.getString(R.string.err_only_int_numbers)
+    }
+
+    fun getErrorAlias(error: InputAliasError): String = when (error) {
+        InputAliasError.EMPTY -> context.getString(R.string.err_empty_field)
+    }
+
+    fun getErrorAge(error: InputAgeError): String = when (error) {
+        InputAgeError.EMPTY -> context.getString(R.string.err_empty_field)
+        InputAgeError.ONLY_NUMBERS -> context.getString(R.string.err_only_number)
+        InputAgeError.GREATER_THAN_100 -> context.getString(R.string.err_age_greater_than_100)
+        InputAgeError.LESS_THAN_8 -> context.getString(R.string.err_age_less_than_8)
+    }
+
+    fun getErrorCountry(error: InputCountryError): String = when (error) {
+        InputCountryError.EMPTY -> context.getString(R.string.err_empty_field)
     }
 
     fun getMessage(@StringRes resId: Int) = context.getString(resId)

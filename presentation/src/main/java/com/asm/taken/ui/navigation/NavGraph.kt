@@ -23,6 +23,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navigation
 import com.asm.taken.ui.page.login.BackgroundLogin
 import com.asm.taken.ui.page.login.CreateAccountPage
+import com.asm.taken.ui.page.login.CreateGamerPage
 import com.asm.taken.ui.page.login.MainAuthPage
 import com.asm.taken.ui.page.login.PhoneAuthPage
 import com.asm.taken.utils.AuthenticationClient
@@ -125,15 +126,17 @@ fun NavGraphBuilder.navigationLogin(
         }
         composable(route = CreateGamer.route) { navBackStackEntry ->
             val userId = navBackStackEntry.arguments?.getString(CreateGamer.userIdArg).orEmpty()
-            /*val parentEntry = remember(navBackStackEntry) {
+            val parentEntry = remember(navBackStackEntry) {
                 navController.getBackStackEntry(Login.route)
             }
-            val loginVM = hiltViewModel<LoginVM>(parentEntry)*/
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(text = "Create Account $userId")
+            val loginVM = hiltViewModel<LoginVM>(parentEntry)
+            BackgroundLogin {
+                CreateGamerPage(
+                    loginVM = loginVM,
+                    navController = navController,
+                    messageResolver = messageResolver,
+                    snackBarHostState = snackBarHostState
+                )
             }
         }
     }

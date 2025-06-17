@@ -170,7 +170,7 @@ fun FormCreateAccount(
             label = R.string.txt_label_email,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
             leadingIcon = Icons.Default.Mail,
-            cdLeadingIcon = R.string.txt_cd_li_email,
+            cdLeadingIcon = null,
             errors = emailErrors
         ) {
             loginVM.validateFormCreateAccount(it, loginFormCreateAccountState.passwordUiState.value, loginFormCreateAccountState.passwordRepeatUiState.value)

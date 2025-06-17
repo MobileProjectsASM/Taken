@@ -6,26 +6,20 @@
     <string name="txt_ttl_enter_otp">Code validation</string>
     <string name="txt_ttl_form_phone_dialog">Verify phone number</string>
     <string name="txt_ttl_form_create_account">Create Account!</string>
+    <string name="txt_ttl_form_create_gamer">Create Gamer!</string>
     <string name="txt_inf_login_dialog">Login to continue</string>
     <string name="txt_inf_enter_otp">Enter the code sent to the number ending in</string>
     <string name="txt_inf_sign_in">Or sign in with …</string>
     <string name="txt_label_email">Email</string>
     <string name="txt_label_password">Password</string>
     <string name="txt_label_password_repeat">Password Repeat</string>
+    <string name="txt_label_alias">Alias</string>
     <string name="txt_label_code">Code</string>
     <string name="txt_label_pn">Phone number</string>
     <string name="txt_label_country">Country</string>
     <string name="txt_label_retry">Retry</string>
+    <string name="txt_label_age">Age</string>
     <string name="txt_cd_ti_password">Password visibility</string>
-    <string name="txt_cd_li_password">Password icon</string>
-    <string name="txt_cd_li_email">Email icon</string>
-    <string name="txt_cd_li_phone_number">Phone icon</string>
-    <string name="txt_cd_li_country">Country icon</string>
-    <string name="txt_cd_li_code">Code icon</string>
-    <string name="txt_cd_icon_button">Icon button</string>
-    <string name="txt_cd_icon_app">Icon app</string>
-    <string name="txt_cd_country_flag">Flag country</string>
-    <string name="txt_cd_error_input_icon">Error input icon</string>
     <string name="txt_btn_login">LOGIN</string>
     <string name="txt_btn_send">SEND</string>
     <string name="txt_btn_verify">VERIFY</string>
@@ -44,6 +38,7 @@
     <string name="err_choose_country">Choose country</string>
     <string name="err_less_than_4_digits">Less than 4 digits</string>
     <string name="err_invalid_phone_number">Invalid phone number</string>
+    <string name="err_only_number">Only numbers</string>
     <string name="err_only_int_numbers">Only int numbers</string>
     <string name="err_send_otp">Error to send Otp</string>
     <string name="err_auth_with_phone">Error to authenticate</string>
@@ -61,6 +56,8 @@
     <string name="err_invalid_login_credentials">Invalid email or password</string>
     <string name="err_user_disabled">This account has been disabled</string>
     <string name="err_too_many_request">Too many attempts</string>
+    <string name="err_age_greater_than_100">Age is greater than 100</string>
+    <string name="err_age_less_than_8">Age is less than 8</string>
     <string name="err_sign_up">SignUp error</string>
 
     <string name="default_web_client_id" translatable="false">537568996262-c7nrhuvi4s9jaukcg9uh0hvm98l9ubls.apps.googleusercontent.com</string>

@@ -243,7 +243,7 @@ fun FormPhoneNumber(
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             label = R.string.txt_label_pn, 
             leadingIcon = Icons.Default.Phone, 
-            cdLeadingIcon = R.string.txt_cd_li_phone_number,
+            cdLeadingIcon = null,
             errors = phoneNumberErrors
         ) {
             loginVM.validatePhoneNumberForm(loginPhoneFormState.phoneCodeUiState.value, it)
@@ -282,7 +282,7 @@ fun PhoneCodeInput(
             label = R.string.txt_label_code,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             leadingIcon = Icons.Default.Pin,
-            cdLeadingIcon = R.string.txt_cd_li_code,
+            cdLeadingIcon = null,
             errors = phoneCodeErrors
         ) {
             loginVM.validatePhoneNumberForm(it, phoneNumberValue)
@@ -306,7 +306,7 @@ fun PhoneCodeInput(
             value = codeValue,
             label = R.string.txt_label_code,
             leadingIcon = Icons.Default.Pin,
-            cdLeadingIcon = R.string.txt_cd_li_code,
+            cdLeadingIcon = null,
             readOnly = true,
             errors = phoneCodeErrors,
             onClickable = {
@@ -365,7 +365,7 @@ fun ItemCountry(countryUiState: CountryUiState, onClick: (CountryUiState) -> Uni
         AsyncImage(
             modifier = Modifier.size(50.dp),
             model = countryUiState.flag,
-            contentDescription = stringResource(id = R.string.txt_cd_country_flag),
+            contentDescription = null,
             placeholder = painterResource(id = R.drawable.american_flag),
             error = painterResource(id = R.drawable.american_flag)
         )
@@ -458,7 +458,7 @@ fun OtpDialog(
                     ) {
                         Icon(
                             imageVector = Icons.Outlined.Cancel,
-                            contentDescription = stringResource(R.string.txt_cd_error_input_icon),
+                            contentDescription = null,
                             tint = Color.Red
                         )
                     }

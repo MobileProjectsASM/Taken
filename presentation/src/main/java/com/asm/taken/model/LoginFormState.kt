@@ -2,99 +2,6 @@ package com.asm.taken.model
 
 import com.asm.domain.errors.GeneralFailure
 
-/*data class LoginFormState(
-    val userIdUiState: UserIdUiState = UserIdUiState.Init,
-    val passwordUiState: PasswordUiState = PasswordUiState.Init,
-)
-
-sealed class SendPhoneFormState {
-    enum class PhoneFormData {
-        COUNTRY_CODE,
-        LOCAL_PHONE
-    }
-    enum class ErrorPhoneFormData {
-        GET_COUNTRIES
-    }
-
-    data object Loading: SendPhoneFormState()
-    data class ErrorForm(val errorPhoneFormData: ErrorPhoneFormData): SendPhoneFormState()
-    data class BuildForm(val countries: List<CountryInfoState>): SendPhoneFormState()
-    data class InvalidData(val invalidData: Map<PhoneFormData, Boolean>): SendPhoneFormState()
-    data class ValidField(val code: String): SendPhoneFormState()
-}
-
-
-
-sealed class UserIdUiState(val value: String?) {
-    data object Init : UserIdUiState(null)
-    data object IsEmpty : UserIdUiState("")
-    data class IsValid(val userId: String) : UserIdUiState(userId)
-}
-
-sealed class PasswordUiState(val value: String?) {
-    data object Init : PasswordUiState(null)
-    data object IsEmpty : PasswordUiState("")
-    data class IsInvalid(val password: String) : PasswordUiState(password)
-    data class IsValid(val password: String) : PasswordUiState(password)
-}
-
-sealed class PhoneNumberState(val value: String?) {
-    data object Init: PhoneNumberState(null)
-    data object IsEmpty: PhoneNumberState("")
-    data class IsInvalid(val phoneNumber: String): PhoneNumberState(phoneNumber)
-    data class IsValid(val phoneNumber: String): PhoneNumberState(phoneNumber)
-}
-
-sealed class PhoneCodeState(val value: String?) {
-    data object Init: PhoneCodeState(null)
-    data object IsEmpty: PhoneCodeState("")
-    data class IsInvalid(val phoneCode: String): PhoneCodeState(phoneCode)
-    data class IsValid(val phoneCode: String): PhoneCodeState(phoneCode)
-}
-
-sealed class SentCodeState(val value: String?) {
-    data object Init: SentCodeState(null)
-    data object IsEmpty: SentCodeState("")
-    data class IsInvalid(val validateCode: String): SentCodeState(validateCode)
-    data class IsValid(val validateCode: String): SentCodeState(validateCode)
-}
-
-sealed class SignInState {
-    data class RegisteredUser(val userId: String) : SignInState()
-    data class UnregisteredUser(val userId: String) : SignInState()
-    data class PhoneCodeSent(val verificationId: String): SignInState()
-    data class SignInFail(val signInError: SignInError) : SignInState()
-}
-
-sealed class GetCountriesInfoState {
-    data object Loading: GetCountriesInfoState()
-    data class Successful(val countriesInfo: List<CountryInfoState>) : GetCountriesInfoState()
-    data class Failure(val errorMessage: String) : GetCountriesInfoState()
-}
-
-enum class SignInError {
-    AUTH_ERROR, REGISTER_ERROR
-}
-
-sealed class AuthResult {
-    data class Successful(val data: UserData): AuthResult()
-    data class PhoneCodeSent(val verificationId: String): AuthResult()
-    data class Failure(val errorMessage: String): AuthResult()
-}
-
-data class UserData(
-    val userId: String,
-    val username: String?,
-    val profilePictureUrl: String?
-)
-
-data class CountryInfoState(
-    val country: String,
-    val phoneCode: String,
-    val flag: String
-)
- */
-
 data class LoginFormUiState(
     val emailUiState: InputUiState<InputEmailError>,
     val passwordUiState: InputUiState<InputPasswordError>
@@ -145,6 +52,13 @@ data class LoginFormCreateAccountUiState(
     val passwordRepeatUiState: InputUiState<InputRepeatValueError>
 )
 
+
+data class LoginFormCreateGamerUiState(
+    val aliasUiState: InputUiState<InputAliasError>,
+    val ageUiState: InputUiState<InputAgeError>,
+    val countryUiState: InputUiState<InputCountryError>
+)
+
 //region ERRORS
 
 enum class InputPasswordError {
@@ -173,6 +87,21 @@ enum class InputPhoneNumberError {
 enum class InputEmailError {
     EMPTY,
     EMAIL_INVALID
+}
+
+enum class InputAliasError {
+    EMPTY
+}
+
+enum class InputAgeError {
+    EMPTY,
+    ONLY_NUMBERS,
+    GREATER_THAN_100,
+    LESS_THAN_8
+}
+
+enum class InputCountryError {
+    EMPTY
 }
 
 enum class SendOtpError {
