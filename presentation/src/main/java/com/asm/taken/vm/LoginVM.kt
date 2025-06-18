@@ -9,6 +9,9 @@ import com.asm.domain.use_cases.GetCountriesInfoUC
 import com.asm.domain.use_cases.GetGamerUC
 import com.asm.taken.mappers.PhoneCodeMapper
 import com.asm.taken.model.CountriesUiState
+import com.asm.taken.model.InputAgeError
+import com.asm.taken.model.InputAliasError
+import com.asm.taken.model.InputCountryError
 import com.asm.taken.model.InputEmailError
 import com.asm.taken.model.InputOtpError
 import com.asm.taken.model.InputPasswordError
@@ -283,6 +286,57 @@ class LoginVM @Inject constructor(
         val errors = mutableListOf<InputRepeatValueError>()
         if (password != passwordRepeat) errors.add(InputRepeatValueError.IS_NOT_SAME_VALUE)
         return errors
+    }
+
+    //endregion
+
+    //region createGamer
+
+    fun validateCreateGamerForm(alias: String, age: String, country: String) {
+        val aliasErrors = validateAlias(alias)
+        val ageErrors = validateAge(age)
+        val countryErrors = validateCountry(country)
+        _loginFormCreateGamerUiState.update {
+            LoginFormCreateGamerUiState(
+                aliasUiState = aliasErrors.run {
+                    if (isEmpty()) InputUiState(alias, InputState.Success)
+                    else InputUiState(alias, InputState.Error(this))
+                },
+                ageUiState = ageErrors.run {
+                    if (isEmpty()) InputUiState(age, InputState.Success)
+                    else InputUiState(age, InputState.Error(this))
+                },
+                countryUiState = countryErrors.run {
+                    if (isEmpty()) InputUiState(country, InputState.Success)
+                    else InputUiState(country, InputState.Error(this))
+                }
+            )
+        }
+    }
+
+    private fun validateAlias(alias: String): List<InputAliasError> {
+        val aliasErrors = mutableListOf<InputAliasError>()
+        if (alias.isEmpty()) aliasErrors.add(InputAliasError.EMPTY)
+        return aliasErrors
+    }
+
+    private fun validateAge(age: String): List<InputAgeError> {
+        val ageErrors = mutableListOf<InputAgeError>()
+        if (age.isEmpty()) ageErrors.add(InputAgeError.EMPTY)
+        try {
+            val ageInt = age.toInt()
+            if (ageInt > 100) ageErrors.add(InputAgeError.GREATER_THAN_100)
+            if (ageInt < 8) ageErrors.add(InputAgeError.LESS_THAN_8)
+        } catch (exception: NumberFormatException) {
+            ageErrors.add(InputAgeError.ONLY_NUMBERS)
+        }
+        return ageErrors
+    }
+
+    private fun validateCountry(country: String): List<InputCountryError> {
+        val countryErrors = mutableListOf<InputCountryError>()
+        if (country.isEmpty()) countryErrors.add(InputCountryError.EMPTY)
+        return countryErrors
     }
 
     //endregion

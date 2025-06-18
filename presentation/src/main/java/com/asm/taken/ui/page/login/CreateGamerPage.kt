@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Attribution
@@ -27,6 +28,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -174,20 +176,31 @@ fun FormCreateGamer(
             leadingIcon = Icons.Default.Person,
             cdLeadingIcon = null,
             errors = aliasErrors
-        ) {
-
+        ) { newAlias ->
+            loginVM.validateCreateGamerForm(
+                alias = newAlias,
+                age = loginFormCreateGamerState.ageUiState.value,
+                country = loginFormCreateGamerState.countryUiState.value
+            )
         }
         Spacer(modifier = Modifier.height(10.dp))
         DefaultOutlinedTextFieldLI(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 10.dp),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             value = loginFormCreateGamerState.ageUiState.value,
             label = R.string.txt_label_age,
             leadingIcon = Icons.Default.Attribution,
             cdLeadingIcon = null,
             errors = ageErrors
-        )
+        ) { newAge ->
+            loginVM.validateCreateGamerForm(
+                alias = loginFormCreateGamerState.aliasUiState.value,
+                age = newAge,
+                country = loginFormCreateGamerState.countryUiState.value
+            )
+        }
         Spacer(modifier = Modifier.height(10.dp))
         CountryInput(
             modifier = Modifier
@@ -196,7 +209,13 @@ fun FormCreateGamer(
             countriesUiState = countriesUiState,
             value = loginFormCreateGamerState.countryUiState.value,
             countryErrors = countryErrors
-        )
+        ) { newCountry ->
+            loginVM.validateCreateGamerForm(
+                alias = loginFormCreateGamerState.aliasUiState.value,
+                age = loginFormCreateGamerState.ageUiState.value,
+                country = newCountry
+            )
+        }
     }
 }
 
@@ -205,7 +224,8 @@ fun CountryInput(
     modifier: Modifier = Modifier,
     countriesUiState: List<CountryUiState>?,
     value: String,
-    countryErrors: List<String>
+    countryErrors: List<String>,
+    onCountryChange: (String) -> Unit
 ) {
     if (countriesUiState == null) {
         DefaultOutlinedTextFieldLI(
@@ -214,10 +234,9 @@ fun CountryInput(
             label = R.string.txt_label_country,
             leadingIcon = Icons.Default.Public,
             cdLeadingIcon = null,
-            errors = countryErrors
-        ) {
-
-        }
+            errors = countryErrors,
+            onValueChange = onCountryChange
+        )
     } else {
         var showChoseCountryDialog by rememberSaveable {
             mutableStateOf(false)
@@ -229,6 +248,7 @@ fun CountryInput(
                 countriesUiState = countriesUiState
             ) {
                 showChoseCountryDialog = false
+                onCountryChange(it)
             }
         }
         DefaultOutlinedTextFieldLI(
