@@ -1,11 +1,11 @@
 package com.asm.taken.ui.page.login
 
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -18,9 +18,14 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.automirrored.outlined.Logout
+import androidx.compose.material.icons.automirrored.sharp.Logout
 import androidx.compose.material.icons.filled.Attribution
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Public
+import androidx.compose.material.icons.outlined.Cancel
+import androidx.compose.material.icons.outlined.Logout
 import androidx.compose.material.icons.rounded.PhotoCamera
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -41,7 +46,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.dimensionResource
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -59,8 +63,9 @@ import com.asm.taken.model.InputAgeError
 import com.asm.taken.model.InputAliasError
 import com.asm.taken.model.InputCountryError
 import com.asm.taken.model.InputState
-import com.asm.taken.model.LoginFormCreateGamerUiState
+import com.asm.taken.model.LoginCreateGamerFormUiState
 import com.asm.taken.ui.CircularProgressDialog
+import com.asm.taken.ui.DefaultButton
 import com.asm.taken.ui.DefaultOutlinedTextFieldLI
 import com.asm.taken.ui.PuzzleGeneralTitle
 import com.asm.taken.ui.puzzleFontFamily
@@ -145,6 +150,30 @@ fun PanelCreateGamer(
                     .fillMaxWidth()
                     .padding(vertical = 15.dp, horizontal = 10.dp)
             ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    Button(
+                        modifier = Modifier
+                            .size(38.dp),
+                        shape = CircleShape,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color.Red,
+                            contentColor = Color.White
+                        ),
+                        contentPadding = PaddingValues(7.dp),
+                        onClick = {
+
+                        }
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.Logout,
+                            contentDescription = null,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                }
                 PuzzleGeneralTitle(
                     modifier = Modifier.fillMaxWidth(),
                     text = stringResource(id = R.string.txt_ttl_form_create_gamer)
@@ -170,16 +199,16 @@ fun FormCreateGamer(
     messageResolver: MessageResolver,
     createGamer: () -> Unit
 ) {
-    val loginFormCreateGamerState: LoginFormCreateGamerUiState by loginVM.loginFormCreateGamerState.collectAsStateWithLifecycle()
-    val aliasErrors: List<String> = when (val aliasUiState = loginFormCreateGamerState.aliasUiState.state) {
+    val loginCreateGamerFormState: LoginCreateGamerFormUiState by loginVM.loginCreateGamerFormState.collectAsStateWithLifecycle()
+    val aliasErrors: List<String> = when (val aliasUiState = loginCreateGamerFormState.aliasUiState.state) {
         is InputState.Error<InputAliasError> -> aliasUiState.errors.map { messageResolver.getErrorAlias(it) }
         InputState.Init, InputState.Success -> listOf()
     }
-    val ageErrors: List<String> = when (val ageUiState = loginFormCreateGamerState.ageUiState.state) {
+    val ageErrors: List<String> = when (val ageUiState = loginCreateGamerFormState.ageUiState.state) {
         is InputState.Error<InputAgeError> -> ageUiState.errors.map { messageResolver.getErrorAge(it) }
         InputState.Init, InputState.Success -> listOf()
     }
-    val countryErrors: List<String> = when (val countryState = loginFormCreateGamerState.countryUiState.state) {
+    val countryErrors: List<String> = when (val countryState = loginCreateGamerFormState.countryUiState.state) {
         is InputState.Error<InputCountryError> -> countryState.errors.map { messageResolver.getErrorCountry(it) }
         InputState.Init, InputState.Success -> listOf()
     }
@@ -200,11 +229,11 @@ fun FormCreateGamer(
             Button(
                 modifier = Modifier
                     .size(38.dp)
-                    .align(Alignment.BottomEnd), // Define the size of the circular button
-                shape = CircleShape, // Makes the button circular
+                    .align(Alignment.BottomEnd),
+                shape = CircleShape,
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.Black, // Background color of the button
-                    contentColor = Color.White // Color of the icon/text inside
+                    containerColor = Color.Black,
+                    contentColor = Color.White
                 ),
                 contentPadding = PaddingValues(7.dp),
                 onClick = {
@@ -223,7 +252,7 @@ fun FormCreateGamer(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 10.dp),
-            value = loginFormCreateGamerState.aliasUiState.value,
+            value = loginCreateGamerFormState.aliasUiState.value,
             label = R.string.txt_label_alias,
             leadingIcon = Icons.Default.Person,
             cdLeadingIcon = null,
@@ -231,43 +260,56 @@ fun FormCreateGamer(
         ) { newAlias ->
             loginVM.validateCreateGamerForm(
                 alias = newAlias,
-                age = loginFormCreateGamerState.ageUiState.value,
-                country = loginFormCreateGamerState.countryUiState.value
+                age = loginCreateGamerFormState.ageUiState.value,
+                country = loginCreateGamerFormState.countryUiState.value
             )
         }
-        Spacer(modifier = Modifier.height(10.dp))
+        Spacer(modifier = Modifier.height(20.dp))
         DefaultOutlinedTextFieldLI(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 10.dp),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            value = loginFormCreateGamerState.ageUiState.value,
+            value = loginCreateGamerFormState.ageUiState.value,
             label = R.string.txt_label_age,
             leadingIcon = Icons.Default.Attribution,
             cdLeadingIcon = null,
             errors = ageErrors
         ) { newAge ->
             loginVM.validateCreateGamerForm(
-                alias = loginFormCreateGamerState.aliasUiState.value,
+                alias = loginCreateGamerFormState.aliasUiState.value,
                 age = newAge,
-                country = loginFormCreateGamerState.countryUiState.value
+                country = loginCreateGamerFormState.countryUiState.value
             )
         }
-        Spacer(modifier = Modifier.height(10.dp))
+        Spacer(modifier = Modifier.height(20.dp))
         CountryInput(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 10.dp),
             countriesUiState = countriesUiState,
-            value = loginFormCreateGamerState.countryUiState.value,
+            value = loginCreateGamerFormState.countryUiState.value,
             countryErrors = countryErrors
         ) { newCountry ->
             loginVM.validateCreateGamerForm(
-                alias = loginFormCreateGamerState.aliasUiState.value,
-                age = loginFormCreateGamerState.ageUiState.value,
+                alias = loginCreateGamerFormState.aliasUiState.value,
+                age = loginCreateGamerFormState.ageUiState.value,
                 country = newCountry
             )
         }
+        Spacer(modifier = Modifier.height(20.dp))
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            DefaultButton(
+                text = stringResource(id = R.string.txt_btn_create_gamer),
+                enable = loginCreateGamerFormState.ageUiState.state is InputState.Success && loginCreateGamerFormState.ageUiState.state is InputState.Success && loginCreateGamerFormState.countryUiState.state is InputState.Success,
+            ) {
+
+            }
+        }
+        Spacer(modifier = Modifier.height(20.dp))
     }
 }
 

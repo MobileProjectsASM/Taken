@@ -53,7 +53,7 @@ data class LoginFormCreateAccountUiState(
 )
 
 
-data class LoginFormCreateGamerUiState(
+data class LoginCreateGamerFormUiState(
     val aliasUiState: InputUiState<InputAliasError>,
     val ageUiState: InputUiState<InputAgeError>,
     val countryUiState: InputUiState<InputCountryError>

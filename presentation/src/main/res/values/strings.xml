@@ -25,6 +25,7 @@
     <string name="txt_btn_send">SEND</string>
     <string name="txt_btn_verify">VERIFY</string>
     <string name="txt_btn_create_account">CREATE ACCOUNT</string>
+    <string name="txt_btn_create_gamer">CREATE GAMER</string>
     
     <!-- Errors -->
     <string name="err_empty_field">Empty field</string>
