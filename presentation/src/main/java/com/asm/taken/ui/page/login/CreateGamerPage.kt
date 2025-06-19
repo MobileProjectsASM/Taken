@@ -1,21 +1,32 @@
 package com.asm.taken.ui.page.login
 
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Attribution
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Public
+import androidx.compose.material.icons.rounded.PhotoCamera
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -24,8 +35,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -35,6 +51,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import coil.compose.AsyncImage
 import com.asm.taken.R
 import com.asm.taken.model.CountriesUiState
 import com.asm.taken.model.CountryUiState
@@ -166,7 +183,42 @@ fun FormCreateGamer(
         is InputState.Error<InputCountryError> -> countryState.errors.map { messageResolver.getErrorCountry(it) }
         InputState.Init, InputState.Success -> listOf()
     }
-    Column {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Box(
+            modifier = Modifier
+                .size(128.dp)
+        ) {
+            AsyncImage(
+                modifier = Modifier
+                    .size(size = 128.dp)
+                    .clip(CircleShape)
+                    .border(width = 2.dp, color = Color.Black, shape = CircleShape),
+                contentScale = ContentScale.Crop,
+                model = R.drawable.gamer,
+                contentDescription = null
+            )
+            Button(
+                modifier = Modifier
+                    .size(38.dp)
+                    .align(Alignment.BottomEnd), // Define the size of the circular button
+                shape = CircleShape, // Makes the button circular
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color.Black, // Background color of the button
+                    contentColor = Color.White // Color of the icon/text inside
+                ),
+                contentPadding = PaddingValues(7.dp),
+                onClick = {
+
+                }
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.PhotoCamera,
+                    contentDescription = null,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+        }
+        Spacer(modifier = Modifier.height(20.dp))
         DefaultOutlinedTextFieldLI(
             modifier = Modifier
                 .fillMaxWidth()
