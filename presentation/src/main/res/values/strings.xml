@@ -8,6 +8,10 @@
     <string name="txt_ttl_form_create_account">Create Account!</string>
     <string name="txt_ttl_form_create_gamer">Create Gamer!</string>
     <string name="txt_ttl_choose_country">Choose country</string>
+    <string name="txt_ttl_choose_option">Choose option</string>
+    <string name="txt_label_default_image">Default Image</string>
+    <string name="txt_label_social_network_image">Social Network</string>
+    <string name="txt_label_gallery">Gallery</string>
     <string name="txt_inf_login_dialog">Login to continue</string>
     <string name="txt_inf_enter_otp">Enter the code sent to the number ending in</string>
     <string name="txt_inf_sign_in">Or sign in with …</string>
@@ -60,6 +64,7 @@
     <string name="err_too_many_request">Too many attempts</string>
     <string name="err_age_greater_than_100">Age is greater than 100</string>
     <string name="err_age_less_than_8">Age is less than 8</string>
+    <string name="err_image_is_very_weight">Image is very weight</string>
     <string name="err_sign_up">SignUp error</string>
 
     <string name="default_web_client_id" translatable="false">537568996262-c7nrhuvi4s9jaukcg9uh0hvm98l9ubls.apps.googleusercontent.com</string>

@@ -9,6 +9,7 @@ import com.asm.domain.use_cases.GetCountriesInfoUC
 import com.asm.domain.use_cases.GetGamerUC
 import com.asm.taken.mappers.PhoneCodeMapper
 import com.asm.taken.model.CountriesUiState
+import com.asm.taken.model.ImageSelected
 import com.asm.taken.model.InputAgeError
 import com.asm.taken.model.InputAliasError
 import com.asm.taken.model.InputCountryError
@@ -45,20 +46,20 @@ class LoginVM @Inject constructor(
 ) : ViewModel() {
 
     //region MutableStateFlows
-    private val _loginFormUiState = MutableStateFlow(LoginFormUiState(emailUiState = InputUiState(), passwordUiState = InputUiState()))
+    private val _loginFormUiState = MutableStateFlow(LoginFormUiState(emailUiState = InputUiState(""), passwordUiState = InputUiState("")))
     private val _countriesUiState: MutableStateFlow<CountriesUiState> = MutableStateFlow(CountriesUiState.Loading)
     private val _loginFormPhoneUiState: MutableStateFlow<LoginFormPhoneUiState> = MutableStateFlow(
-        LoginFormPhoneUiState(phoneCodeUiState = InputUiState(), phoneNumberUiState = InputUiState())
+        LoginFormPhoneUiState(phoneCodeUiState = InputUiState(""), phoneNumberUiState = InputUiState(""))
     )
     private val _loginFormCreateAccountUiState: MutableStateFlow<LoginFormCreateAccountUiState> = MutableStateFlow(
-        LoginFormCreateAccountUiState(emailUiState = InputUiState(), passwordUiState = InputUiState(), passwordRepeatUiState = InputUiState())
+        LoginFormCreateAccountUiState(emailUiState = InputUiState(""), passwordUiState = InputUiState(""), passwordRepeatUiState = InputUiState(""))
     )
     private val _loginCreateGamerFormUiState: MutableStateFlow<LoginCreateGamerFormUiState> = MutableStateFlow(
-        LoginCreateGamerFormUiState(aliasUiState = InputUiState(), ageUiState = InputUiState(), countryUiState = InputUiState())
+        LoginCreateGamerFormUiState(imageSelected = InputUiState(ImageSelected.Default), aliasUiState = InputUiState(""), ageUiState = InputUiState(""), countryUiState = InputUiState(""))
     )
     private val _loginUiState: MutableStateFlow<LoginUiState?> = MutableStateFlow(null)
-    private val _otpFormUiState: MutableStateFlow<InputUiState<InputOtpError>> = MutableStateFlow(
-        InputUiState()
+    private val _otpFormUiState: MutableStateFlow<InputUiState<String, InputOtpError>> = MutableStateFlow(
+        InputUiState("")
     )
 
     //endregion
@@ -70,7 +71,7 @@ class LoginVM @Inject constructor(
     val loginFormCreateAccountState: StateFlow<LoginFormCreateAccountUiState> = _loginFormCreateAccountUiState
     val loginCreateGamerFormState: StateFlow<LoginCreateGamerFormUiState> = _loginCreateGamerFormUiState
     val loginUiState: StateFlow<LoginUiState?> = _loginUiState
-    val otpFormUiState: StateFlow<InputUiState<InputOtpError>> = _otpFormUiState
+    val otpFormUiState: StateFlow<InputUiState<String, InputOtpError>> = _otpFormUiState
 
     //endregion
 
@@ -146,8 +147,8 @@ class LoginVM @Inject constructor(
     fun cleanLoginPhoneForm() {
         _loginFormPhoneUiState.update {
             it.copy(
-                phoneCodeUiState = InputUiState(),
-                phoneNumberUiState = InputUiState()
+                phoneCodeUiState = InputUiState(""),
+                phoneNumberUiState = InputUiState("")
             )
         }
     }
@@ -246,19 +247,19 @@ class LoginVM @Inject constructor(
         val passwordErrors = validatePassword(password)
         val passwordRepeatErrors = validatePasswordRepeat(password, passwordRepeat)
         _loginFormCreateAccountUiState.update {
-            val emailUiState: InputUiState<InputEmailError> = emailErrors.run {
+            val emailUiState: InputUiState<String, InputEmailError> = emailErrors.run {
                 when {
                     isEmpty() -> InputUiState(email, InputState.Success)
                     else -> InputUiState(email, InputState.Error(this))
                 }
             }
-            val passwordUiState: InputUiState<InputPasswordError> = passwordErrors.run {
+            val passwordUiState: InputUiState<String, InputPasswordError> = passwordErrors.run {
                 when {
                     isEmpty() -> InputUiState(password, InputState.Success)
                     else -> InputUiState(password, InputState.Error(this))
                 }
             }
-            val passwordRepeatUiState: InputUiState<InputRepeatValueError> = passwordRepeatErrors.run {
+            val passwordRepeatUiState: InputUiState<String, InputRepeatValueError> = passwordRepeatErrors.run {
                 when {
                     isEmpty() -> InputUiState(passwordRepeat, InputState.Success)
                     else -> InputUiState(passwordRepeat, InputState.Error(this))
@@ -275,9 +276,9 @@ class LoginVM @Inject constructor(
     fun cleanLoginFormCreateAccount() {
         _loginFormCreateAccountUiState.update {
             it.copy(
-                emailUiState = InputUiState(),
-                passwordUiState = InputUiState(),
-                passwordRepeatUiState = InputUiState()
+                emailUiState = InputUiState(""),
+                passwordUiState = InputUiState(""),
+                passwordRepeatUiState = InputUiState("")
             )
         }
     }
@@ -292,7 +293,13 @@ class LoginVM @Inject constructor(
 
     //region createGamer
 
-    fun validateCreateGamerForm(alias: String, age: String, country: String) {
+    fun createGamer(id: String, alias: String, age: Int, country: String, image: String?) {
+        viewModelScope.launch {
+
+        }
+    }
+
+    fun validateCreateGamerForm(alias: String, age: String, country: String, imageSelected: ImageSelected) {
         val aliasErrors = validateAlias(alias)
         val ageErrors = validateAge(age)
         val countryErrors = validateCountry(country)
@@ -309,7 +316,8 @@ class LoginVM @Inject constructor(
                 countryUiState = countryErrors.run {
                     if (isEmpty()) InputUiState(country, InputState.Success)
                     else InputUiState(country, InputState.Error(this))
-                }
+                },
+                imageSelected = InputUiState(imageSelected)
             )
         }
     }

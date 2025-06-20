@@ -125,7 +125,6 @@ fun NavGraphBuilder.navigationLogin(
             }
         }
         composable(route = CreateGamer.route) { navBackStackEntry ->
-            val userId = navBackStackEntry.arguments?.getString(CreateGamer.userIdArg).orEmpty()
             val parentEntry = remember(navBackStackEntry) {
                 navController.getBackStackEntry(Login.route)
             }
@@ -136,6 +135,7 @@ fun NavGraphBuilder.navigationLogin(
                 }
                 CreateGamerPage(
                     loginVM = loginVM,
+                    userData = authenticationClient.getCurrentUserSignedIn()!!,
                     navController = navController,
                     messageResolver = messageResolver,
                     snackBarHostState = snackBarHostState

@@ -1,11 +1,13 @@
 package com.asm.taken.ui.page.login
 
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -19,19 +21,14 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
-import androidx.compose.material.icons.automirrored.outlined.Logout
-import androidx.compose.material.icons.automirrored.sharp.Logout
 import androidx.compose.material.icons.filled.Attribution
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Public
-import androidx.compose.material.icons.outlined.Cancel
-import androidx.compose.material.icons.outlined.Logout
 import androidx.compose.material.icons.rounded.PhotoCamera
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -59,22 +56,27 @@ import coil.compose.AsyncImage
 import com.asm.taken.R
 import com.asm.taken.model.CountriesUiState
 import com.asm.taken.model.CountryUiState
+import com.asm.taken.model.ImageSelected
 import com.asm.taken.model.InputAgeError
 import com.asm.taken.model.InputAliasError
 import com.asm.taken.model.InputCountryError
+import com.asm.taken.model.InputImageError
 import com.asm.taken.model.InputState
 import com.asm.taken.model.LoginCreateGamerFormUiState
 import com.asm.taken.ui.CircularProgressDialog
 import com.asm.taken.ui.DefaultButton
 import com.asm.taken.ui.DefaultOutlinedTextFieldLI
+import com.asm.taken.ui.DefaultText
 import com.asm.taken.ui.PuzzleGeneralTitle
 import com.asm.taken.ui.puzzleFontFamily
 import com.asm.taken.utils.MessageResolver
+import com.asm.taken.utils.UserData
 import com.asm.taken.vm.LoginVM
 
 @Composable
 fun CreateGamerPage(
     loginVM: LoginVM,
+    userData: UserData,
     navController: NavController,
     messageResolver: MessageResolver,
     snackBarHostState: SnackbarHostState
@@ -84,13 +86,15 @@ fun CreateGamerPage(
         loginVM = loginVM,
         messageResolver = messageResolver,
         countriesUiState = countriesUiState,
-        snackBarHostState = snackBarHostState
+        snackBarHostState = snackBarHostState,
+        userData = userData
     )
 }
 
 @Composable
 fun CreateGamerSection(
     loginVM: LoginVM,
+    userData: UserData,
     snackBarHostState: SnackbarHostState,
     countriesUiState: CountriesUiState,
     messageResolver: MessageResolver
@@ -98,6 +102,7 @@ fun CreateGamerSection(
     when (countriesUiState) {
         is CountriesUiState.Failure -> ErrorCountries(
             loginVM = loginVM,
+            userData = userData,
             snackBarHostState = snackBarHostState,
             messageResolver = messageResolver
         )
@@ -107,7 +112,8 @@ fun CreateGamerSection(
         is CountriesUiState.Successful -> PanelCreateGamer(
             loginVM = loginVM,
             countriesUiState = countriesUiState.countriesInfo,
-            messageResolver = messageResolver
+            messageResolver = messageResolver,
+            userData = userData
         )
     }
 }
@@ -116,7 +122,8 @@ fun CreateGamerSection(
 fun ErrorCountries(
     loginVM: LoginVM,
     snackBarHostState: SnackbarHostState,
-    messageResolver: MessageResolver
+    messageResolver: MessageResolver,
+    userData: UserData,
 ) {
     LaunchedEffect(true) {
         snackBarHostState.showSnackbar(messageResolver.getMessage(R.string.err_get_countries))
@@ -124,13 +131,15 @@ fun ErrorCountries(
     PanelCreateGamer(
         loginVM = loginVM,
         countriesUiState = null,
-        messageResolver = messageResolver
+        messageResolver = messageResolver,
+        userData = userData
     )
 }
 
 @Composable
 fun PanelCreateGamer(
     loginVM: LoginVM,
+    userData: UserData,
     countriesUiState: List<CountryUiState>?,
     messageResolver: MessageResolver,
 ) {
@@ -181,11 +190,10 @@ fun PanelCreateGamer(
                 Spacer(modifier = Modifier.height(50.dp))
                 FormCreateGamer(
                     loginVM = loginVM,
+                    userData = userData,
                     countriesUiState = countriesUiState,
-                    messageResolver = messageResolver
-                ) {
-
-                }
+                    messageResolver = messageResolver,
+                )
             }
         }
         Box(modifier = Modifier.height(250.dp))
@@ -195,11 +203,12 @@ fun PanelCreateGamer(
 @Composable
 fun FormCreateGamer(
     loginVM: LoginVM,
+    userData: UserData,
     countriesUiState: List<CountryUiState>?,
-    messageResolver: MessageResolver,
-    createGamer: () -> Unit
+    messageResolver: MessageResolver
 ) {
     val loginCreateGamerFormState: LoginCreateGamerFormUiState by loginVM.loginCreateGamerFormState.collectAsStateWithLifecycle()
+    var showChangeProfileImageDialog: Boolean by rememberSaveable { mutableStateOf(false) }
     val aliasErrors: List<String> = when (val aliasUiState = loginCreateGamerFormState.aliasUiState.state) {
         is InputState.Error<InputAliasError> -> aliasUiState.errors.map { messageResolver.getErrorAlias(it) }
         InputState.Init, InputState.Success -> listOf()
@@ -212,42 +221,25 @@ fun FormCreateGamer(
         is InputState.Error<InputCountryError> -> countryState.errors.map { messageResolver.getErrorCountry(it) }
         InputState.Init, InputState.Success -> listOf()
     }
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Box(
-            modifier = Modifier
-                .size(128.dp)
-        ) {
-            AsyncImage(
-                modifier = Modifier
-                    .size(size = 128.dp)
-                    .clip(CircleShape)
-                    .border(width = 2.dp, color = Color.Black, shape = CircleShape),
-                contentScale = ContentScale.Crop,
-                model = R.drawable.gamer,
-                contentDescription = null
-            )
-            Button(
-                modifier = Modifier
-                    .size(38.dp)
-                    .align(Alignment.BottomEnd),
-                shape = CircleShape,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.Black,
-                    contentColor = Color.White
-                ),
-                contentPadding = PaddingValues(7.dp),
-                onClick = {
-
-                }
-            ) {
-                Icon(
-                    imageVector = Icons.Rounded.PhotoCamera,
-                    contentDescription = null,
-                    modifier = Modifier.size(24.dp)
-                )
-            }
+    val imageErrors: List<String> = when (val imageSelectedState = loginCreateGamerFormState.imageSelected.state) {
+        is InputState.Error<InputImageError> -> imageSelectedState.errors.map { messageResolver.getErrorImage(it) }
+        InputState.Init, InputState.Success -> listOf()
+    }
+    if (showChangeProfileImageDialog) {
+        ChangeProfileImageDialog(
+            userData = userData,
+            messageResolver = messageResolver
+        ) { imageSelected ->
+            showChangeProfileImageDialog = false
         }
-        Spacer(modifier = Modifier.height(20.dp))
+    }
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        InputSelectImage(
+            imageSelected = loginCreateGamerFormState.imageSelected.value
+        ) {
+            showChangeProfileImageDialog = true
+        }
+        Spacer(modifier = Modifier.height(10.dp))
         DefaultOutlinedTextFieldLI(
             modifier = Modifier
                 .fillMaxWidth()
@@ -261,10 +253,11 @@ fun FormCreateGamer(
             loginVM.validateCreateGamerForm(
                 alias = newAlias,
                 age = loginCreateGamerFormState.ageUiState.value,
-                country = loginCreateGamerFormState.countryUiState.value
+                country = loginCreateGamerFormState.countryUiState.value,
+                imageSelected = loginCreateGamerFormState.imageSelected.value
             )
         }
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(10.dp))
         DefaultOutlinedTextFieldLI(
             modifier = Modifier
                 .fillMaxWidth()
@@ -279,10 +272,11 @@ fun FormCreateGamer(
             loginVM.validateCreateGamerForm(
                 alias = loginCreateGamerFormState.aliasUiState.value,
                 age = newAge,
-                country = loginCreateGamerFormState.countryUiState.value
+                country = loginCreateGamerFormState.countryUiState.value,
+                imageSelected = loginCreateGamerFormState.imageSelected.value
             )
         }
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(10.dp))
         CountryInput(
             modifier = Modifier
                 .fillMaxWidth()
@@ -294,7 +288,8 @@ fun FormCreateGamer(
             loginVM.validateCreateGamerForm(
                 alias = loginCreateGamerFormState.aliasUiState.value,
                 age = loginCreateGamerFormState.ageUiState.value,
-                country = newCountry
+                country = newCountry,
+                imageSelected = loginCreateGamerFormState.imageSelected.value
             )
         }
         Spacer(modifier = Modifier.height(20.dp))
@@ -306,7 +301,7 @@ fun FormCreateGamer(
                 text = stringResource(id = R.string.txt_btn_create_gamer),
                 enable = loginCreateGamerFormState.ageUiState.state is InputState.Success && loginCreateGamerFormState.ageUiState.state is InputState.Success && loginCreateGamerFormState.countryUiState.state is InputState.Success,
             ) {
-
+                loginVM.createGamer(userData.userId, loginCreateGamerFormState.aliasUiState.value, loginCreateGamerFormState.ageUiState.value.toInt(), loginCreateGamerFormState.countryUiState.value, "")
             }
         }
         Spacer(modifier = Modifier.height(20.dp))
@@ -398,4 +393,116 @@ fun ChooseCountryDialog(
             }
         }
     }
+}
+
+@Composable
+fun InputSelectImage(
+    imageSelected: ImageSelected,
+    onClick: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .size(128.dp)
+    ) {
+        AsyncImage(
+            modifier = Modifier
+                .size(size = 128.dp)
+                .clip(CircleShape)
+                .border(width = 2.dp, color = Color.Black, shape = CircleShape),
+            contentScale = ContentScale.Crop,
+            model = R.drawable.gamer,
+            contentDescription = null
+        )
+        Button(
+            modifier = Modifier
+                .size(38.dp)
+                .align(Alignment.BottomEnd),
+            shape = CircleShape,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color.Black,
+                contentColor = Color.White
+            ),
+            contentPadding = PaddingValues(7.dp),
+            onClick = onClick
+        ) {
+            Icon(
+                imageVector = Icons.Rounded.PhotoCamera,
+                contentDescription = null,
+                modifier = Modifier.size(24.dp)
+            )
+        }
+    }
+}
+
+@Composable
+fun ChangeProfileImageDialog(
+    userData: UserData,
+    messageResolver: MessageResolver,
+    onOptionSelected: (ImageSelected) -> Unit
+) {
+    Dialog(
+        onDismissRequest = { onOptionSelected(ImageSelected.Default) }
+    ) {
+        Card(
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(
+                modifier = Modifier
+                    .padding(vertical = 20.dp)
+            ) {
+                Text(
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.Center,
+                    fontSize = dimensionResource(
+                        id = R.dimen.title_text_size
+                    ).value.sp,
+                    text = messageResolver.getMessage(R.string.txt_ttl_choose_option)
+                )
+                Spacer(modifier = Modifier.height(30.dp))
+                OptionItem(
+                    modifier = Modifier.fillMaxWidth(),
+                    onClick = { onOptionSelected(ImageSelected.Default) }
+                ) {
+                    DefaultText(
+                        text = messageResolver.getMessage(R.string.txt_label_default_image)
+                    )
+                }
+                OptionItem(
+                    modifier = Modifier.fillMaxWidth(),
+                    onClick = {
+
+                    }
+                ) {
+                    DefaultText(
+                        text = messageResolver.getMessage(R.string.txt_label_gallery)
+                    )
+                }
+                if (userData.profilePictureUrl != null)
+                    OptionItem(
+                        modifier = Modifier.fillMaxWidth(),
+                        onClick = { onOptionSelected(ImageSelected.SocialNetwork(userData.profilePictureUrl)) }
+                    ) {
+                        DefaultText(
+                            text = messageResolver.getMessage(R.string.txt_label_social_network_image)
+                        )
+                    }
+            }
+        }
+    }
+}
+
+@Composable
+fun OptionItem(
+    modifier: Modifier,
+    onClick: () -> Unit,
+    content: @Composable RowScope.() -> Unit
+) {
+    Row(
+        modifier = modifier
+            .clickable { onClick() }
+            .padding(horizontal = 16.dp, vertical = 15.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center,
+        content = content
+    )
 }

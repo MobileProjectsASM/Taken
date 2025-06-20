@@ -14,6 +14,8 @@ import com.asm.taken.model.InputPasswordError
 import com.asm.taken.model.InputPhoneCodeError
 import com.asm.taken.model.InputPhoneNumberError
 import com.asm.taken.model.InputEmailError
+import com.asm.taken.model.InputImageError
+import com.asm.taken.model.InputImageError.*
 import com.asm.taken.model.InputRepeatValueError
 import com.asm.taken.model.LoginFailure
 import com.asm.taken.model.SendOtpError
@@ -103,6 +105,11 @@ class MessageResolver @Inject constructor(
 
     fun getErrorCountry(error: InputCountryError): String = when (error) {
         InputCountryError.EMPTY -> context.getString(R.string.err_empty_field)
+    }
+
+    fun getErrorImage(error: InputImageError): String = when (error) {
+        IMAGE_IS_VERY_WEIGHT -> context.getString(R.string.err_image_is_very_weight)
+        UNKNOWN_ERROR -> context.getString(R.string.err_unknown)
     }
 
     fun getMessage(@StringRes resId: Int) = context.getString(resId)

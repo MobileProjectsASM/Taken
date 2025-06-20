@@ -3,12 +3,12 @@ package com.asm.taken.model
 import com.asm.domain.errors.GeneralFailure
 
 data class LoginFormUiState(
-    val emailUiState: InputUiState<InputEmailError>,
-    val passwordUiState: InputUiState<InputPasswordError>
+    val emailUiState: InputUiState<String, InputEmailError>,
+    val passwordUiState: InputUiState<String, InputPasswordError>
 )
 
-data class InputUiState<out InputError>(
-    val value: String = "",
+data class InputUiState<out Value, out InputError>(
+    val value: Value,
     val state: InputState<InputError> = InputState.Init
 )
 
@@ -33,8 +33,8 @@ data class CountryUiState(
 )
 
 data class LoginFormPhoneUiState(
-    val phoneCodeUiState: InputUiState<InputPhoneCodeError>,
-    val phoneNumberUiState: InputUiState<InputPhoneNumberError>
+    val phoneCodeUiState: InputUiState<String, InputPhoneCodeError>,
+    val phoneNumberUiState: InputUiState<String, InputPhoneNumberError>
 )
 
 sealed class LoginUiState {
@@ -47,17 +47,24 @@ sealed class LoginUiState {
 }
 
 data class LoginFormCreateAccountUiState(
-    val emailUiState: InputUiState<InputEmailError>,
-    val passwordUiState: InputUiState<InputPasswordError>,
-    val passwordRepeatUiState: InputUiState<InputRepeatValueError>
+    val emailUiState: InputUiState<String, InputEmailError>,
+    val passwordUiState: InputUiState<String, InputPasswordError>,
+    val passwordRepeatUiState: InputUiState<String, InputRepeatValueError>
 )
 
 
 data class LoginCreateGamerFormUiState(
-    val aliasUiState: InputUiState<InputAliasError>,
-    val ageUiState: InputUiState<InputAgeError>,
-    val countryUiState: InputUiState<InputCountryError>
+    val imageSelected: InputUiState<ImageSelected, InputImageError>,
+    val aliasUiState: InputUiState<String, InputAliasError>,
+    val ageUiState: InputUiState<String, InputAgeError>,
+    val countryUiState: InputUiState<String, InputCountryError>
 )
+
+sealed class ImageSelected {
+    data object Default: ImageSelected()
+    data class SocialNetwork(val urlImage: String): ImageSelected()
+    data class Gallery(val base64: String)
+}
 
 //region ERRORS
 
@@ -134,6 +141,11 @@ enum class InputOtpError {
     EMPTY,
     BE_6_DIGITS,
     ONLY_INT_NUMBERS
+}
+
+enum class InputImageError {
+    IMAGE_IS_VERY_WEIGHT,
+    UNKNOWN_ERROR
 }
 
 sealed class LoginFailure {

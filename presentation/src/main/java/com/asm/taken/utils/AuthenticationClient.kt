@@ -262,17 +262,13 @@ class AuthenticationClient @Inject constructor(
         }
     }
 
-    fun isThereCurrentUserSignedIn(): AuthResult? {
-        return if (auth.currentUser != null) {
-            AuthResult.Successful(
-                UserData(
-                    userId = auth.currentUser!!.uid,
-                    username = auth.currentUser?.email,
-                    profilePictureUrl = auth.currentUser?.photoUrl.toString()
-                )
+    fun getCurrentUserSignedIn(): UserData? {
+        return auth.currentUser?.let {
+            UserData(
+                userId = auth.currentUser!!.uid,
+                username = auth.currentUser?.email,
+                profilePictureUrl = auth.currentUser?.photoUrl.toString()
             )
-        } else {
-            null
         }
     }
 
