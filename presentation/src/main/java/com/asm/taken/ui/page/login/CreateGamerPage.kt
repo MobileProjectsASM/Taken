@@ -1,5 +1,10 @@
 package com.asm.taken.ui.page.login
 
+import android.net.Uri
+import androidx.activity.compose.ManagedActivityResultLauncher
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -225,12 +230,37 @@ fun FormCreateGamer(
         is InputState.Error<InputImageError> -> imageSelectedState.errors.map { messageResolver.getErrorImage(it) }
         InputState.Init, InputState.Success -> listOf()
     }
+    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+        if (uri != null) {
+            loginVM.validateCreateGamerForm(
+                alias = loginCreateGamerFormState.aliasUiState.value,
+                age = loginCreateGamerFormState.aliasUiState.value,
+                country = loginCreateGamerFormState.countryUiState.value,
+                imageSelected = ImageSelected.Gallery(uri)
+            )
+        }
+    }
     if (showChangeProfileImageDialog) {
         ChangeProfileImageDialog(
             userData = userData,
             messageResolver = messageResolver
-        ) { imageSelected ->
+        ) { optionChosen ->
             showChangeProfileImageDialog = false
+            when (optionChosen) {
+                OptionChosen.Default -> loginVM.validateCreateGamerForm(
+                    alias = loginCreateGamerFormState.aliasUiState.value,
+                    age = loginCreateGamerFormState.ageUiState.value,
+                    country = loginCreateGamerFormState.countryUiState.value,
+                    imageSelected = ImageSelected.Default
+                )
+                OptionChosen.Gallery -> launcher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                is OptionChosen.SocialNetwork -> loginVM.validateCreateGamerForm(
+                    alias = loginCreateGamerFormState.aliasUiState.value,
+                    age = loginCreateGamerFormState.aliasUiState.value,
+                    country = loginCreateGamerFormState.countryUiState.value,
+                    imageSelected = ImageSelected.SocialNetwork(optionChosen.urlImage)
+                )
+            }
         }
     }
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -410,7 +440,11 @@ fun InputSelectImage(
                 .clip(CircleShape)
                 .border(width = 2.dp, color = Color.Black, shape = CircleShape),
             contentScale = ContentScale.Crop,
-            model = R.drawable.gamer,
+            model = when (imageSelected) {
+                ImageSelected.Default -> R.drawable.gamer
+                is ImageSelected.Gallery -> imageSelected.uri
+                is ImageSelected.SocialNetwork -> imageSelected.urlImage
+            },
             contentDescription = null
         )
         Button(
@@ -427,7 +461,7 @@ fun InputSelectImage(
         ) {
             Icon(
                 imageVector = Icons.Rounded.PhotoCamera,
-                contentDescription = null,
+                contentDescription = stringResource(R.string.txt_cd_choose_image),
                 modifier = Modifier.size(24.dp)
             )
         }
@@ -438,10 +472,10 @@ fun InputSelectImage(
 fun ChangeProfileImageDialog(
     userData: UserData,
     messageResolver: MessageResolver,
-    onOptionSelected: (ImageSelected) -> Unit
+    onOptionSelected: (OptionChosen) -> Unit
 ) {
     Dialog(
-        onDismissRequest = { onOptionSelected(ImageSelected.Default) }
+        onDismissRequest = { onOptionSelected(OptionChosen.Default) }
     ) {
         Card(
             modifier = Modifier.fillMaxWidth()
@@ -461,7 +495,7 @@ fun ChangeProfileImageDialog(
                 Spacer(modifier = Modifier.height(30.dp))
                 OptionItem(
                     modifier = Modifier.fillMaxWidth(),
-                    onClick = { onOptionSelected(ImageSelected.Default) }
+                    onClick = { onOptionSelected(OptionChosen.Default) }
                 ) {
                     DefaultText(
                         text = messageResolver.getMessage(R.string.txt_label_default_image)
@@ -469,9 +503,7 @@ fun ChangeProfileImageDialog(
                 }
                 OptionItem(
                     modifier = Modifier.fillMaxWidth(),
-                    onClick = {
-
-                    }
+                    onClick = { onOptionSelected(OptionChosen.Gallery) }
                 ) {
                     DefaultText(
                         text = messageResolver.getMessage(R.string.txt_label_gallery)
@@ -480,7 +512,7 @@ fun ChangeProfileImageDialog(
                 if (userData.profilePictureUrl != null)
                     OptionItem(
                         modifier = Modifier.fillMaxWidth(),
-                        onClick = { onOptionSelected(ImageSelected.SocialNetwork(userData.profilePictureUrl)) }
+                        onClick = { onOptionSelected(OptionChosen.SocialNetwork(userData.profilePictureUrl)) }
                     ) {
                         DefaultText(
                             text = messageResolver.getMessage(R.string.txt_label_social_network_image)
@@ -505,4 +537,10 @@ fun OptionItem(
         horizontalArrangement = Arrangement.Center,
         content = content
     )
+}
+
+sealed class OptionChosen {
+    data object Default: OptionChosen()
+    data object Gallery: OptionChosen()
+    data class SocialNetwork(val urlImage: String): OptionChosen()
 }

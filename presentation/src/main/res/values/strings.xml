@@ -25,6 +25,7 @@
     <string name="txt_label_retry">Retry</string>
     <string name="txt_label_age">Age</string>
     <string name="txt_cd_ti_password">Password visibility</string>
+    <string name="txt_cd_choose_image">Where fetch image?</string>
     <string name="txt_btn_login">LOGIN</string>
     <string name="txt_btn_send">SEND</string>
     <string name="txt_btn_verify">VERIFY</string>

@@ -1,5 +1,6 @@
 package com.asm.taken.model
 
+import android.net.Uri
 import com.asm.domain.errors.GeneralFailure
 
 data class LoginFormUiState(
@@ -63,7 +64,7 @@ data class LoginCreateGamerFormUiState(
 sealed class ImageSelected {
     data object Default: ImageSelected()
     data class SocialNetwork(val urlImage: String): ImageSelected()
-    data class Gallery(val base64: String)
+    data class Gallery(val uri: Uri): ImageSelected()
 }
 
 //region ERRORS
