@@ -84,6 +84,8 @@ class MessageResolver @Inject constructor(
             SignUpError.WEAK_PASSWORD -> context.getString(R.string.err_weak_password)
             SignUpError.UNKNOWN_ERROR -> context.getString(R.string.err_sign_up)
         }
+
+        LoginFailure.LogoutFailure -> context.getString(R.string.err_logout)
     }
 
     fun getErrorVerifyOtp(error: InputOtpError): String = when (error) {

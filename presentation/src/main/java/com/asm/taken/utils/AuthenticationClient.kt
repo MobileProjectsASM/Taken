@@ -272,12 +272,14 @@ class AuthenticationClient @Inject constructor(
         }
     }
 
-    suspend fun signOut() {
+    suspend fun signOut(): LogoutResult {
         try {
             auth.signOut()
             credentialManager.clearCredentialState(ClearCredentialStateRequest())
+            return LogoutResult.SUCCESSFUL
         } catch (exception: Exception) {
             Log.e(TAG, exception.stackTraceToString())
+            return LogoutResult.FAILURE
         }
     }
 
@@ -350,6 +352,11 @@ sealed class AuthResult {
     data object Loading: AuthResult()
     data class Successful(val userData: UserData): AuthResult()
     data class Failure(val authError: AuthError): AuthResult()
+}
+
+enum class LogoutResult {
+    SUCCESSFUL,
+    FAILURE
 }
 
 sealed class SignUpResult {

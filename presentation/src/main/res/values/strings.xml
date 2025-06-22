@@ -25,7 +25,8 @@
     <string name="txt_label_retry">Retry</string>
     <string name="txt_label_age">Age</string>
     <string name="txt_cd_ti_password">Password visibility</string>
-    <string name="txt_cd_choose_image">Where fetch image?</string>
+    <string name="txt_cd_btn_choose_image">Where fetch image?</string>
+    <string name="txt_cd_btn_logout">Logout button</string>
     <string name="txt_btn_login">LOGIN</string>
     <string name="txt_btn_send">SEND</string>
     <string name="txt_btn_verify">VERIFY</string>
@@ -67,6 +68,7 @@
     <string name="err_age_less_than_8">Age is less than 8</string>
     <string name="err_image_is_very_weight">Image is very weight</string>
     <string name="err_sign_up">SignUp error</string>
+    <string name="err_logout">Logout Error</string>
 
     <string name="default_web_client_id" translatable="false">537568996262-c7nrhuvi4s9jaukcg9uh0hvm98l9ubls.apps.googleusercontent.com</string>
     <string name="facebook_app_id" translatable="false">4098294007123784</string>

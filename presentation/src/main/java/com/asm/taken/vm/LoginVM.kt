@@ -140,6 +140,12 @@ class LoginVM @Inject constructor(
         }
     }
 
+    fun updateLoginUiState(loginUiState: LoginUiState) {
+        _loginUiState.update {
+            loginUiState
+        }
+    }
+
     fun resetLoginUiState() {
         _loginUiState.update { null }
     }
@@ -293,7 +299,7 @@ class LoginVM @Inject constructor(
 
     //region createGamer
 
-    fun createGamer(id: String, alias: String, age: Int, country: String, image: String?) {
+    fun createGamer(id: String, alias: String, age: Int, country: String, imageSelected: ImageSelected) {
         viewModelScope.launch {
 
         }

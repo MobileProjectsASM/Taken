@@ -50,6 +50,8 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
+import androidx.navigation.NavOptions
+import androidx.navigation.NavOptionsBuilder
 import coil.compose.AsyncImage
 import com.asm.domain.errors.GeneralErrorType
 import com.asm.domain.errors.GeneralFailure
@@ -64,6 +66,7 @@ import com.asm.taken.ui.DefaultOutlinedTextFieldLI
 import com.asm.taken.ui.DefaultText
 import com.asm.taken.ui.OtpMultiple
 import com.asm.taken.ui.PuzzleGeneralTitle
+import com.asm.taken.ui.navigation.Authentication
 import com.asm.taken.ui.navigation.CreateGamer
 import com.asm.taken.ui.navigation.MainPage
 import com.asm.taken.ui.puzzleFontFamily
@@ -397,7 +400,9 @@ fun LoginState(
         }
         is LoginUiState.UnregisteredUser -> {
             LaunchedEffect(true) {
-                navController.navigate(CreateGamer.createRoute(loginUiState.userId))
+                navController.navigate(CreateGamer.createRoute(loginUiState.userId)) {
+                    popUpTo(navController.graph.startDestinationId) { inclusive = true }
+                }
             }
         }
         is LoginUiState.Failure -> {

@@ -1,7 +1,5 @@
 package com.asm.taken.ui.page.login
 
-import android.net.Uri
-import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -35,11 +33,13 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -68,37 +68,86 @@ import com.asm.taken.model.InputCountryError
 import com.asm.taken.model.InputImageError
 import com.asm.taken.model.InputState
 import com.asm.taken.model.LoginCreateGamerFormUiState
+import com.asm.taken.model.LoginFailure
+import com.asm.taken.model.LoginUiState
 import com.asm.taken.ui.CircularProgressDialog
 import com.asm.taken.ui.DefaultButton
 import com.asm.taken.ui.DefaultOutlinedTextFieldLI
 import com.asm.taken.ui.DefaultText
 import com.asm.taken.ui.PuzzleGeneralTitle
+import com.asm.taken.ui.navigation.Authentication
 import com.asm.taken.ui.puzzleFontFamily
+import com.asm.taken.utils.AuthenticationClient
+import com.asm.taken.utils.LogoutResult
 import com.asm.taken.utils.MessageResolver
 import com.asm.taken.utils.UserData
 import com.asm.taken.vm.LoginVM
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
+import kotlin.math.log
 
 @Composable
 fun CreateGamerPage(
     loginVM: LoginVM,
     userData: UserData,
+    authenticationClient: AuthenticationClient,
     navController: NavController,
     messageResolver: MessageResolver,
     snackBarHostState: SnackbarHostState
 ) {
+    val coroutineScope =  rememberCoroutineScope()
     val countriesUiState: CountriesUiState by loginVM.countriesUiState.collectAsStateWithLifecycle()
+    val loginUiState: LoginUiState? by loginVM.loginUiState.collectAsStateWithLifecycle()
+
     CreateGamerSection(
+        authenticationClient = authenticationClient,
         loginVM = loginVM,
+        coroutineScope = coroutineScope,
         messageResolver = messageResolver,
         countriesUiState = countriesUiState,
         snackBarHostState = snackBarHostState,
         userData = userData
     )
+    LoginState(
+        loginVM = loginVM,
+        navController = navController,
+        loginUiState = loginUiState,
+        snackBarHostState = snackBarHostState,
+        messageResolver = messageResolver
+    )
+}
+
+@Composable
+fun LoginState(
+    loginVM: LoginVM,
+    navController: NavController,
+    loginUiState: LoginUiState?,
+    snackBarHostState: SnackbarHostState,
+    messageResolver: MessageResolver
+) {
+    when (loginUiState) {
+        LoginUiState.AccountCreated, null, is LoginUiState.RegisteredUser, is LoginUiState.SentOtp, is LoginUiState.UnregisteredUser -> return
+        LoginUiState.Loading -> CircularProgressDialog()
+        LoginUiState.Logout -> LaunchedEffect(true) {
+            navController.navigate(Authentication.route) {
+                popUpTo(navController.graph.startDestinationId) {
+                    inclusive = true
+                }
+            }
+        }
+        is LoginUiState.Failure -> LaunchedEffect(true) {
+            val message = messageResolver.getErrorLogin(loginUiState.loginFailure)
+            val snackBarResult = snackBarHostState.showSnackbar(message, withDismissAction = true)
+            if (snackBarResult == SnackbarResult.Dismissed) loginVM.resetLoginUiState()
+        }
+    }
 }
 
 @Composable
 fun CreateGamerSection(
+    authenticationClient: AuthenticationClient,
     loginVM: LoginVM,
+    coroutineScope: CoroutineScope,
     userData: UserData,
     snackBarHostState: SnackbarHostState,
     countriesUiState: CountriesUiState,
@@ -106,7 +155,9 @@ fun CreateGamerSection(
 ) {
     when (countriesUiState) {
         is CountriesUiState.Failure -> ErrorCountries(
+            authenticationClient = authenticationClient,
             loginVM = loginVM,
+            coroutineScope = coroutineScope,
             userData = userData,
             snackBarHostState = snackBarHostState,
             messageResolver = messageResolver
@@ -115,7 +166,9 @@ fun CreateGamerSection(
         CountriesUiState.Loading -> CircularProgressDialog()
 
         is CountriesUiState.Successful -> PanelCreateGamer(
+            authenticationClient = authenticationClient,
             loginVM = loginVM,
+            coroutineScope = coroutineScope,
             countriesUiState = countriesUiState.countriesInfo,
             messageResolver = messageResolver,
             userData = userData
@@ -125,7 +178,9 @@ fun CreateGamerSection(
 
 @Composable
 fun ErrorCountries(
+    authenticationClient: AuthenticationClient,
     loginVM: LoginVM,
+    coroutineScope: CoroutineScope,
     snackBarHostState: SnackbarHostState,
     messageResolver: MessageResolver,
     userData: UserData,
@@ -134,6 +189,8 @@ fun ErrorCountries(
         snackBarHostState.showSnackbar(messageResolver.getMessage(R.string.err_get_countries))
     }
     PanelCreateGamer(
+        authenticationClient = authenticationClient,
+        coroutineScope = coroutineScope,
         loginVM = loginVM,
         countriesUiState = null,
         messageResolver = messageResolver,
@@ -143,7 +200,9 @@ fun ErrorCountries(
 
 @Composable
 fun PanelCreateGamer(
+    authenticationClient: AuthenticationClient,
     loginVM: LoginVM,
+    coroutineScope: CoroutineScope,
     userData: UserData,
     countriesUiState: List<CountryUiState>?,
     messageResolver: MessageResolver,
@@ -178,12 +237,19 @@ fun PanelCreateGamer(
                         ),
                         contentPadding = PaddingValues(7.dp),
                         onClick = {
-
+                            coroutineScope.launch {
+                                loginVM.updateLoginUiState(LoginUiState.Loading)
+                                val logoutResult = authenticationClient.signOut()
+                                when (logoutResult) {
+                                    LogoutResult.SUCCESSFUL -> loginVM.updateLoginUiState(LoginUiState.Logout)
+                                    LogoutResult.FAILURE -> loginVM.updateLoginUiState(LoginUiState.Failure(LoginFailure.LogoutFailure))
+                                }
+                            }
                         }
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.Logout,
-                            contentDescription = null,
+                            contentDescription = stringResource(R.string.txt_cd_btn_logout),
                             modifier = Modifier.size(24.dp)
                         )
                     }
@@ -331,7 +397,7 @@ fun FormCreateGamer(
                 text = stringResource(id = R.string.txt_btn_create_gamer),
                 enable = loginCreateGamerFormState.ageUiState.state is InputState.Success && loginCreateGamerFormState.ageUiState.state is InputState.Success && loginCreateGamerFormState.countryUiState.state is InputState.Success,
             ) {
-                loginVM.createGamer(userData.userId, loginCreateGamerFormState.aliasUiState.value, loginCreateGamerFormState.ageUiState.value.toInt(), loginCreateGamerFormState.countryUiState.value, "")
+                loginVM.createGamer(userData.userId, loginCreateGamerFormState.aliasUiState.value, loginCreateGamerFormState.ageUiState.value.toInt(), loginCreateGamerFormState.countryUiState.value, loginCreateGamerFormState.imageSelected.value)
             }
         }
         Spacer(modifier = Modifier.height(20.dp))
@@ -461,7 +527,7 @@ fun InputSelectImage(
         ) {
             Icon(
                 imageVector = Icons.Rounded.PhotoCamera,
-                contentDescription = stringResource(R.string.txt_cd_choose_image),
+                contentDescription = stringResource(R.string.txt_cd_btn_choose_image),
                 modifier = Modifier.size(24.dp)
             )
         }

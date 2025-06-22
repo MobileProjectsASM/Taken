@@ -43,6 +43,7 @@ import com.asm.taken.ui.DefaultText
 import com.asm.taken.ui.DefaultTextButton
 import com.asm.taken.ui.PasswordOutlinedTextField
 import com.asm.taken.ui.PuzzleGeneralTitle
+import com.asm.taken.ui.navigation.Authentication
 import com.asm.taken.ui.navigation.AuthenticationPhone
 import com.asm.taken.ui.navigation.CreateAccount
 import com.asm.taken.ui.navigation.CreateGamer
@@ -189,7 +190,9 @@ fun LoginState(
             navController.navigate(MainPage.createRoute((loginUiState as LoginUiState.RegisteredUser).gamerId))
         }
         else -> LaunchedEffect(true) {
-            navController.navigate(CreateGamer.createRoute((loginUiState as LoginUiState.UnregisteredUser).userId))
+            navController.navigate(CreateGamer.createRoute((loginUiState as LoginUiState.UnregisteredUser).userId)) {
+                //popUpTo(navController.graph.startDestinationId) { inclusive = true }
+            }
         }
     }
 }

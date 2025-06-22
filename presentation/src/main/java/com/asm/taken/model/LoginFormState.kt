@@ -44,6 +44,7 @@ sealed class LoginUiState {
     data class RegisteredUser(val gamerId: String): LoginUiState()
     data class UnregisteredUser(val userId: String): LoginUiState()
     data object AccountCreated: LoginUiState()
+    data object Logout: LoginUiState()
     data class Failure(val loginFailure: LoginFailure): LoginUiState()
 }
 
@@ -52,7 +53,6 @@ data class LoginFormCreateAccountUiState(
     val passwordUiState: InputUiState<String, InputPasswordError>,
     val passwordRepeatUiState: InputUiState<String, InputRepeatValueError>
 )
-
 
 data class LoginCreateGamerFormUiState(
     val imageSelected: InputUiState<ImageSelected, InputImageError>,
@@ -154,5 +154,6 @@ sealed class LoginFailure {
     data class AuthFailure(val authError: AuthError): LoginFailure()
     data class SignUpFailure(val signUpError: SignUpError): LoginFailure()
     data class RegisterFailure(val generalFailure: GeneralFailure): LoginFailure()
+    data object LogoutFailure: LoginFailure()
 }
 //endregion
