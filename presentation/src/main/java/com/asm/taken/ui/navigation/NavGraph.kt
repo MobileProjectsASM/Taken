@@ -74,9 +74,22 @@ fun NavGraphBuilder.navigationLogin(
                 MainAuthPage(
                     loginVM = loginVM,
                     authenticationClient = authenticationClient,
-                    navController = navController,
                     snackBarHostState = snackBarHostState,
                     messageResolver = messageResolver,
+                    onNavigateToCreateAccount = {
+                        navController.navigate(CreateAccount.route)
+                    },
+                    onNavigateToAuthWithPhone = {
+                        navController.navigate(AuthenticationPhone.route)
+                    },
+                    onNavigateToMainPage = {
+                        navController.navigate(MainPage.createRoute(it))
+                    },
+                    onNavigateToCreateGamer = {
+                        navController.navigate(CreateGamer.route) {
+                            popUpTo(Login.route) { inclusive = false }
+                        }
+                    }
                 )
             }
         }
@@ -94,7 +107,6 @@ fun NavGraphBuilder.navigationLogin(
                 PhoneAuthPage(
                     loginVM = loginVM,
                     authenticationClient = authenticationClient,
-                    navController = navController,
                     messageResolver = messageResolver,
                     snackBarHostState = snackBarHostState,
                     onSentPhone = { code, phoneNumber ->
@@ -105,7 +117,16 @@ fun NavGraphBuilder.navigationLogin(
                             onOtpSend = loginVM::updateLoginUiState,
                             onAuthResult = loginVM::updateLoginUiState
                         )
-                    }
+                    },
+                    onNavigateToCreateGamer = {
+                        navController.navigate(CreateGamer.route) {
+                            popUpTo(Login.route) { inclusive = false }
+                        }
+                    },
+                    onNavigateToMainPage = {
+                        navController.navigate(MainPage.createRoute(it))
+                    },
+                    popBackStack = navController::popBackStack
                 )
             }
         }
@@ -118,9 +139,9 @@ fun NavGraphBuilder.navigationLogin(
                 CreateAccountPage(
                     loginVM = loginVM,
                     authenticationClient = authenticationClient,
-                    navController = navController,
                     messageResolver = messageResolver,
-                    snackBarHostState = snackBarHostState
+                    snackBarHostState = snackBarHostState,
+                    popBackStack = navController::popBackStack
                 )
             }
         }
@@ -136,9 +157,13 @@ fun NavGraphBuilder.navigationLogin(
                 CreateGamerPage(
                     loginVM = loginVM,
                     authenticationClient = authenticationClient,
-                    navController = navController,
                     messageResolver = messageResolver,
-                    snackBarHostState = snackBarHostState
+                    snackBarHostState = snackBarHostState,
+                    onNavigateToAuthentication = {
+                        navController.navigate(Authentication.route) {
+                            popUpTo(Login.route) { inclusive = false }
+                        }
+                    }
                 )
             }
         }

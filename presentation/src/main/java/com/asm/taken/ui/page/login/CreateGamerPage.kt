@@ -56,7 +56,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.asm.taken.R
 import com.asm.taken.model.CountriesUiState
@@ -75,8 +74,6 @@ import com.asm.taken.ui.DefaultButton
 import com.asm.taken.ui.DefaultOutlinedTextFieldLI
 import com.asm.taken.ui.DefaultText
 import com.asm.taken.ui.PuzzleGeneralTitle
-import com.asm.taken.ui.navigation.Authentication
-import com.asm.taken.ui.navigation.Login
 import com.asm.taken.ui.puzzleFontFamily
 import com.asm.taken.utils.AuthenticationClient
 import com.asm.taken.utils.LogoutResult
@@ -90,20 +87,20 @@ import kotlinx.coroutines.launch
 fun CreateGamerPage(
     loginVM: LoginVM,
     authenticationClient: AuthenticationClient,
-    navController: NavController,
     messageResolver: MessageResolver,
-    snackBarHostState: SnackbarHostState
+    snackBarHostState: SnackbarHostState,
+    onNavigateToAuthentication: () -> Unit
 ) {
     val coroutineScope =  rememberCoroutineScope()
     val loginUiState: LoginUiState by loginVM.loginUiState.collectAsStateWithLifecycle()
     LoginState(
         loginVM = loginVM,
-        navController = navController,
         coroutineScope = coroutineScope,
         authenticationClient = authenticationClient,
         loginUiState = loginUiState,
         snackBarHostState = snackBarHostState,
-        messageResolver = messageResolver
+        messageResolver = messageResolver,
+        onNavigateToAuthentication = onNavigateToAuthentication
     )
 }
 
@@ -112,18 +109,16 @@ fun LoginState(
     loginVM: LoginVM,
     coroutineScope: CoroutineScope,
     authenticationClient: AuthenticationClient,
-    navController: NavController,
     loginUiState: LoginUiState,
     snackBarHostState: SnackbarHostState,
-    messageResolver: MessageResolver
+    messageResolver: MessageResolver,
+    onNavigateToAuthentication: () -> Unit
 ) {
     when (loginUiState) {
         LoginUiState.AccountCreated, is LoginUiState.RegisteredUser, is LoginUiState.SentOtp -> return
         LoginUiState.Loading -> CircularProgressDialog()
         LoginUiState.Logout -> LaunchedEffect(true) {
-            navController.navigate(Authentication.route) {
-                popUpTo(Login.route) { inclusive = false }
-            }
+            onNavigateToAuthentication()
         }
         is LoginUiState.UnregisteredUser -> {
             val countriesUiState: CountriesUiState by loginVM.countriesUiState.collectAsStateWithLifecycle()

@@ -81,17 +81,19 @@ import kotlinx.coroutines.launch
 fun PhoneAuthPage(
     loginVM: LoginVM,
     authenticationClient: AuthenticationClient,
-    navController: NavHostController,
     messageResolver: MessageResolver,
     snackBarHostState: SnackbarHostState,
-    onSentPhone: (String, String) -> Unit
+    onSentPhone: (String, String) -> Unit,
+    popBackStack: () -> Unit,
+    onNavigateToMainPage: (String) -> Unit,
+    onNavigateToCreateGamer: () -> Unit
 ) {
     val countriesUiState: CountriesUiState by loginVM.countriesUiState.collectAsStateWithLifecycle()
     val loginUiState: LoginUiState by loginVM.loginUiState.collectAsStateWithLifecycle()
 
     BackHandler {
         loginVM.cleanLoginPhoneForm()
-        navController.popBackStack()
+        popBackStack()
     }
     AuthWithPhone(
         loginVM = loginVM,
@@ -104,9 +106,10 @@ fun PhoneAuthPage(
         loginVM = loginVM,
         authenticationClient = authenticationClient,
         messageResolver = messageResolver,
-        navController = navController,
         loginUiState = loginUiState,
-        snackBarHostState = snackBarHostState
+        snackBarHostState = snackBarHostState,
+        onNavigateToMainPage = onNavigateToMainPage,
+        onNavigateToCreateGamer = onNavigateToCreateGamer
     )
 }
 
@@ -386,24 +389,22 @@ fun LoginState(
     loginVM: LoginVM,
     authenticationClient: AuthenticationClient,
     messageResolver: MessageResolver,
-    navController: NavHostController,
     loginUiState: LoginUiState,
-    snackBarHostState: SnackbarHostState
+    snackBarHostState: SnackbarHostState,
+    onNavigateToMainPage: (String) -> Unit,
+    onNavigateToCreateGamer: () -> Unit
 ) {
     val scope = rememberCoroutineScope()
-    if (loginUiState == LoginUiState.Logout || loginUiState is LoginUiState.AccountCreated) return
     when (loginUiState) {
         LoginUiState.Loading -> CircularProgressDialog()
         is LoginUiState.RegisteredUser -> {
             LaunchedEffect(true) {
-                navController.navigate(MainPage.createRoute(loginUiState.gamerId))
+                onNavigateToMainPage(loginUiState.gamerId)
             }
         }
         is LoginUiState.UnregisteredUser -> {
             LaunchedEffect(true) {
-                navController.navigate(CreateGamer.route) {
-                    popUpTo(Login.route) { inclusive = false }
-                }
+                onNavigateToCreateGamer()
             }
         }
         is LoginUiState.Failure -> {
@@ -413,9 +414,9 @@ fun LoginState(
                 if (snackBarResult == SnackbarResult.Dismissed) loginVM.resetLoginUiState()
             }
         }
-        else -> OtpDialog(
+        is LoginUiState.SentOtp -> OtpDialog(
             loginVM = loginVM,
-            phoneNumber = (loginUiState as LoginUiState.SentOtp).phoneNumber,
+            phoneNumber = loginUiState.phoneNumber,
             messageResolver = messageResolver,
         ) { otp ->
             scope.launch {
@@ -424,6 +425,7 @@ fun LoginState(
                 loginVM.updateLoginUiState(authResult)
             }
         }
+        else -> return
     }
 }
 

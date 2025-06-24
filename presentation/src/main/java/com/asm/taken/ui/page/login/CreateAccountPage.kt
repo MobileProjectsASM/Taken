@@ -47,15 +47,15 @@ import kotlinx.coroutines.launch
 fun CreateAccountPage(
     loginVM: LoginVM,
     authenticationClient: AuthenticationClient,
-    navController: NavController,
     messageResolver: MessageResolver,
-    snackBarHostState: SnackbarHostState
+    snackBarHostState: SnackbarHostState,
+    popBackStack: () -> Unit
 ) {
     val coroutineScope = rememberCoroutineScope()
 
     BackHandler {
         loginVM.cleanLoginFormCreateAccount()
-        navController.popBackStack()
+        popBackStack()
     }
     PanelCreateAccount(
         loginVM = loginVM,
@@ -65,26 +65,23 @@ fun CreateAccountPage(
     )
     LoginState(
         loginVM = loginVM,
-        navController = navController,
         messageResolver = messageResolver,
-        snackBarHostState = snackBarHostState
+        snackBarHostState = snackBarHostState,
+        popBackStack = popBackStack
     )
 }
 
 @Composable
 fun LoginState(
     loginVM: LoginVM,
-    navController: NavController,
     messageResolver: MessageResolver,
-    snackBarHostState: SnackbarHostState
+    snackBarHostState: SnackbarHostState,
+    popBackStack: () -> Unit
 ) {
     val loginUiState: LoginUiState by loginVM.loginUiState.collectAsStateWithLifecycle()
-    if (loginUiState == LoginUiState.Logout || loginUiState is LoginUiState.SentOtp
-        || loginUiState is LoginUiState.RegisteredUser
-        || loginUiState is LoginUiState.UnregisteredUser) return
     when (loginUiState) {
         LoginUiState.AccountCreated -> LaunchedEffect(true) {
-            navController.popBackStack()
+            popBackStack()
             loginVM.cleanLoginFormCreateAccount()
             loginVM.resetLoginUiState()
         }
@@ -95,7 +92,8 @@ fun LoginState(
                 if (snackBarResult == SnackbarResult.Dismissed) loginVM.resetLoginUiState()
             }
         }
-        else-> CircularProgressDialog()
+        LoginUiState.Loading -> CircularProgressDialog()
+        else -> return
     }
 }
 

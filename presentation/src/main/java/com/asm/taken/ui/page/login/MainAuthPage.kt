@@ -30,7 +30,6 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.navigation.NavHostController
 import com.asm.taken.R
 import com.asm.taken.model.InputState
 import com.asm.taken.model.LoginFormUiState
@@ -43,12 +42,6 @@ import com.asm.taken.ui.DefaultText
 import com.asm.taken.ui.DefaultTextButton
 import com.asm.taken.ui.PasswordOutlinedTextField
 import com.asm.taken.ui.PuzzleGeneralTitle
-import com.asm.taken.ui.navigation.Authentication
-import com.asm.taken.ui.navigation.AuthenticationPhone
-import com.asm.taken.ui.navigation.CreateAccount
-import com.asm.taken.ui.navigation.CreateGamer
-import com.asm.taken.ui.navigation.Login
-import com.asm.taken.ui.navigation.MainPage
 import com.asm.taken.utils.AuthResult
 import com.asm.taken.utils.AuthenticationClient
 import com.asm.taken.utils.MessageResolver
@@ -60,9 +53,12 @@ import kotlinx.coroutines.launch
 fun MainAuthPage(
     loginVM: LoginVM,
     authenticationClient: AuthenticationClient,
-    navController: NavHostController,
     messageResolver: MessageResolver,
-    snackBarHostState: SnackbarHostState
+    snackBarHostState: SnackbarHostState,
+    onNavigateToCreateAccount: () -> Unit,
+    onNavigateToAuthWithPhone: () -> Unit,
+    onNavigateToMainPage: (gamerId: String) -> Unit,
+    onNavigateToCreateGamer: () -> Unit
 ) {
     val coroutineScope = rememberCoroutineScope()
 
@@ -71,13 +67,15 @@ fun MainAuthPage(
         messageResolver = messageResolver,
         coroutineScope = coroutineScope,
         authenticationClient = authenticationClient,
-        navController = navController
+        onNavigateToCreateAccount = onNavigateToCreateAccount,
+        onNavigateToAuthWithPhone = onNavigateToAuthWithPhone
     )
     LoginState(
         loginVM = loginVM,
-        navController = navController,
         messageResolver = messageResolver,
-        snackBarHostState = snackBarHostState
+        snackBarHostState = snackBarHostState,
+        onNavigateToMainPage = onNavigateToMainPage,
+        onNavigateToCreateGamer = onNavigateToCreateGamer
     )
 }
 
@@ -87,7 +85,8 @@ fun AuthenticationSection(
     messageResolver: MessageResolver,
     coroutineScope: CoroutineScope,
     authenticationClient: AuthenticationClient,
-    navController: NavHostController
+    onNavigateToCreateAccount: () -> Unit,
+    onNavigateToAuthWithPhone: () -> Unit,
 ) {
     val context = LocalContext.current
     Column(
@@ -110,9 +109,7 @@ fun AuthenticationSection(
                     loginVM.updateLoginUiState(authResult)
                 }
             },
-            signInWithPhoneNumber = {
-                navController.navigate(AuthenticationPhone.route)
-            },
+            signInWithPhoneNumber = onNavigateToAuthWithPhone,
             signInWithFacebook = {
                 authenticationClient.signInWithFacebook(
                     context as ComponentActivity,
@@ -120,9 +117,7 @@ fun AuthenticationSection(
                     loginVM::updateLoginUiState
                 )
             },
-            createAccount = {
-                navController.navigate(CreateAccount.route)
-            }
+            createAccount = onNavigateToCreateAccount
         )
         Box(modifier = Modifier.height(250.dp))
     }
@@ -172,13 +167,13 @@ fun PanelLogin(
 @Composable
 fun LoginState(
     loginVM: LoginVM,
-    navController: NavHostController,
     messageResolver: MessageResolver,
-    snackBarHostState: SnackbarHostState
+    snackBarHostState: SnackbarHostState,
+    onNavigateToMainPage: (gamerId: String) -> Unit,
+    onNavigateToCreateGamer: () -> Unit
 ) {
     val loginUiState: LoginUiState by loginVM.loginUiState.collectAsStateWithLifecycle()
-    if (loginUiState == LoginUiState.Logout || loginUiState is LoginUiState.SentOtp || loginUiState is LoginUiState.AccountCreated) return
-    when (loginUiState) {
+    when (val state = loginUiState) {
         is LoginUiState.Failure -> {
             val message = messageResolver.getErrorLogin((loginUiState as LoginUiState.Failure).loginFailure)
             LaunchedEffect(true) {
@@ -188,13 +183,12 @@ fun LoginState(
         }
         is LoginUiState.Loading -> CircularProgressDialog()
         is LoginUiState.RegisteredUser -> LaunchedEffect(true) {
-            navController.navigate(MainPage.createRoute((loginUiState as LoginUiState.RegisteredUser).gamerId))
+            onNavigateToMainPage(state.gamerId)
         }
-        else -> LaunchedEffect(true) {
-            navController.navigate(CreateGamer.route) {
-                popUpTo(Login.route) { inclusive = false }
-            }
+        is LoginUiState.UnregisteredUser -> LaunchedEffect(true) {
+           onNavigateToCreateGamer()
         }
+        else -> return
     }
 }
 
