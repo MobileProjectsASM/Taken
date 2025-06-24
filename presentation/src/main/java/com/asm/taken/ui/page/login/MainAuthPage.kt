@@ -47,6 +47,7 @@ import com.asm.taken.ui.navigation.Authentication
 import com.asm.taken.ui.navigation.AuthenticationPhone
 import com.asm.taken.ui.navigation.CreateAccount
 import com.asm.taken.ui.navigation.CreateGamer
+import com.asm.taken.ui.navigation.Login
 import com.asm.taken.ui.navigation.MainPage
 import com.asm.taken.utils.AuthResult
 import com.asm.taken.utils.AuthenticationClient
@@ -175,8 +176,8 @@ fun LoginState(
     messageResolver: MessageResolver,
     snackBarHostState: SnackbarHostState
 ) {
-    val loginUiState: LoginUiState? by loginVM.loginUiState.collectAsStateWithLifecycle()
-    if (loginUiState == null || loginUiState is LoginUiState.SentOtp || loginUiState is LoginUiState.AccountCreated) return
+    val loginUiState: LoginUiState by loginVM.loginUiState.collectAsStateWithLifecycle()
+    if (loginUiState == LoginUiState.Logout || loginUiState is LoginUiState.SentOtp || loginUiState is LoginUiState.AccountCreated) return
     when (loginUiState) {
         is LoginUiState.Failure -> {
             val message = messageResolver.getErrorLogin((loginUiState as LoginUiState.Failure).loginFailure)
@@ -190,8 +191,8 @@ fun LoginState(
             navController.navigate(MainPage.createRoute((loginUiState as LoginUiState.RegisteredUser).gamerId))
         }
         else -> LaunchedEffect(true) {
-            navController.navigate(CreateGamer.createRoute((loginUiState as LoginUiState.UnregisteredUser).userId)) {
-                //popUpTo(navController.graph.startDestinationId) { inclusive = true }
+            navController.navigate(CreateGamer.route) {
+                popUpTo(Login.route) { inclusive = false }
             }
         }
     }

@@ -76,6 +76,7 @@ import com.asm.taken.ui.DefaultOutlinedTextFieldLI
 import com.asm.taken.ui.DefaultText
 import com.asm.taken.ui.PuzzleGeneralTitle
 import com.asm.taken.ui.navigation.Authentication
+import com.asm.taken.ui.navigation.Login
 import com.asm.taken.ui.puzzleFontFamily
 import com.asm.taken.utils.AuthenticationClient
 import com.asm.taken.utils.LogoutResult
@@ -84,33 +85,22 @@ import com.asm.taken.utils.UserData
 import com.asm.taken.vm.LoginVM
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import kotlin.math.log
 
 @Composable
 fun CreateGamerPage(
     loginVM: LoginVM,
-    userData: UserData,
     authenticationClient: AuthenticationClient,
     navController: NavController,
     messageResolver: MessageResolver,
     snackBarHostState: SnackbarHostState
 ) {
     val coroutineScope =  rememberCoroutineScope()
-    val countriesUiState: CountriesUiState by loginVM.countriesUiState.collectAsStateWithLifecycle()
-    val loginUiState: LoginUiState? by loginVM.loginUiState.collectAsStateWithLifecycle()
-
-    CreateGamerSection(
-        authenticationClient = authenticationClient,
-        loginVM = loginVM,
-        coroutineScope = coroutineScope,
-        messageResolver = messageResolver,
-        countriesUiState = countriesUiState,
-        snackBarHostState = snackBarHostState,
-        userData = userData
-    )
+    val loginUiState: LoginUiState by loginVM.loginUiState.collectAsStateWithLifecycle()
     LoginState(
         loginVM = loginVM,
         navController = navController,
+        coroutineScope = coroutineScope,
+        authenticationClient = authenticationClient,
         loginUiState = loginUiState,
         snackBarHostState = snackBarHostState,
         messageResolver = messageResolver
@@ -120,20 +110,32 @@ fun CreateGamerPage(
 @Composable
 fun LoginState(
     loginVM: LoginVM,
+    coroutineScope: CoroutineScope,
+    authenticationClient: AuthenticationClient,
     navController: NavController,
-    loginUiState: LoginUiState?,
+    loginUiState: LoginUiState,
     snackBarHostState: SnackbarHostState,
     messageResolver: MessageResolver
 ) {
     when (loginUiState) {
-        LoginUiState.AccountCreated, null, is LoginUiState.RegisteredUser, is LoginUiState.SentOtp, is LoginUiState.UnregisteredUser -> return
+        LoginUiState.AccountCreated, is LoginUiState.RegisteredUser, is LoginUiState.SentOtp -> return
         LoginUiState.Loading -> CircularProgressDialog()
         LoginUiState.Logout -> LaunchedEffect(true) {
             navController.navigate(Authentication.route) {
-                popUpTo(navController.graph.startDestinationId) {
-                    inclusive = true
-                }
+                popUpTo(Login.route) { inclusive = false }
             }
+        }
+        is LoginUiState.UnregisteredUser -> {
+            val countriesUiState: CountriesUiState by loginVM.countriesUiState.collectAsStateWithLifecycle()
+            CreateGamerSection(
+                authenticationClient = authenticationClient,
+                loginVM = loginVM,
+                coroutineScope = coroutineScope,
+                messageResolver = messageResolver,
+                countriesUiState = countriesUiState,
+                snackBarHostState = snackBarHostState,
+                userData = loginUiState.userData
+            )
         }
         is LoginUiState.Failure -> LaunchedEffect(true) {
             val message = messageResolver.getErrorLogin(loginUiState.loginFailure)

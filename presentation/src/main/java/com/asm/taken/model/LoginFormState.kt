@@ -2,6 +2,7 @@ package com.asm.taken.model
 
 import android.net.Uri
 import com.asm.domain.errors.GeneralFailure
+import com.asm.taken.utils.UserData
 
 data class LoginFormUiState(
     val emailUiState: InputUiState<String, InputEmailError>,
@@ -42,7 +43,7 @@ sealed class LoginUiState {
     data object Loading: LoginUiState()
     data class SentOtp(val verificationId: String, val phoneNumber: String): LoginUiState()
     data class RegisteredUser(val gamerId: String): LoginUiState()
-    data class UnregisteredUser(val userId: String): LoginUiState()
+    data class UnregisteredUser(val userData: UserData): LoginUiState()
     data object AccountCreated: LoginUiState()
     data object Logout: LoginUiState()
     data class Failure(val loginFailure: LoginFailure): LoginUiState()

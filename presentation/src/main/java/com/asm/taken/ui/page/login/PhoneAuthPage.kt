@@ -68,6 +68,7 @@ import com.asm.taken.ui.OtpMultiple
 import com.asm.taken.ui.PuzzleGeneralTitle
 import com.asm.taken.ui.navigation.Authentication
 import com.asm.taken.ui.navigation.CreateGamer
+import com.asm.taken.ui.navigation.Login
 import com.asm.taken.ui.navigation.MainPage
 import com.asm.taken.ui.puzzleFontFamily
 import com.asm.taken.utils.AuthResult
@@ -86,7 +87,7 @@ fun PhoneAuthPage(
     onSentPhone: (String, String) -> Unit
 ) {
     val countriesUiState: CountriesUiState by loginVM.countriesUiState.collectAsStateWithLifecycle()
-    val loginUiState: LoginUiState? by loginVM.loginUiState.collectAsStateWithLifecycle()
+    val loginUiState: LoginUiState by loginVM.loginUiState.collectAsStateWithLifecycle()
 
     BackHandler {
         loginVM.cleanLoginPhoneForm()
@@ -386,11 +387,11 @@ fun LoginState(
     authenticationClient: AuthenticationClient,
     messageResolver: MessageResolver,
     navController: NavHostController,
-    loginUiState: LoginUiState?,
+    loginUiState: LoginUiState,
     snackBarHostState: SnackbarHostState
 ) {
     val scope = rememberCoroutineScope()
-    if (loginUiState == null || loginUiState is LoginUiState.AccountCreated) return
+    if (loginUiState == LoginUiState.Logout || loginUiState is LoginUiState.AccountCreated) return
     when (loginUiState) {
         LoginUiState.Loading -> CircularProgressDialog()
         is LoginUiState.RegisteredUser -> {
@@ -400,8 +401,8 @@ fun LoginState(
         }
         is LoginUiState.UnregisteredUser -> {
             LaunchedEffect(true) {
-                navController.navigate(CreateGamer.createRoute(loginUiState.userId)) {
-                    popUpTo(navController.graph.startDestinationId) { inclusive = true }
+                navController.navigate(CreateGamer.route) {
+                    popUpTo(Login.route) { inclusive = false }
                 }
             }
         }

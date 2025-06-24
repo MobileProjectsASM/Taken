@@ -78,8 +78,8 @@ fun LoginState(
     messageResolver: MessageResolver,
     snackBarHostState: SnackbarHostState
 ) {
-    val loginUiState: LoginUiState? by loginVM.loginUiState.collectAsStateWithLifecycle()
-    if (loginUiState == null || loginUiState is LoginUiState.SentOtp
+    val loginUiState: LoginUiState by loginVM.loginUiState.collectAsStateWithLifecycle()
+    if (loginUiState == LoginUiState.Logout || loginUiState is LoginUiState.SentOtp
         || loginUiState is LoginUiState.RegisteredUser
         || loginUiState is LoginUiState.UnregisteredUser) return
     when (loginUiState) {

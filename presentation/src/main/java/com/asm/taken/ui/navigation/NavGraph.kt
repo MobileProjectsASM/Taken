@@ -134,9 +134,8 @@ fun NavGraphBuilder.navigationLogin(
                     loginVM.getCountriesInfo()
                 }
                 CreateGamerPage(
-                    authenticationClient = authenticationClient,
                     loginVM = loginVM,
-                    userData = authenticationClient.getCurrentUserSignedIn()!!,
+                    authenticationClient = authenticationClient,
                     navController = navController,
                     messageResolver = messageResolver,
                     snackBarHostState = snackBarHostState

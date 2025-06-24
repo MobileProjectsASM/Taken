@@ -1,5 +1,6 @@
 package com.asm.taken.vm
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.asm.domain.entities.Result
@@ -57,7 +58,7 @@ class LoginVM @Inject constructor(
     private val _loginCreateGamerFormUiState: MutableStateFlow<LoginCreateGamerFormUiState> = MutableStateFlow(
         LoginCreateGamerFormUiState(imageSelected = InputUiState(ImageSelected.Default), aliasUiState = InputUiState(""), ageUiState = InputUiState(""), countryUiState = InputUiState(""))
     )
-    private val _loginUiState: MutableStateFlow<LoginUiState?> = MutableStateFlow(null)
+    private val _loginUiState: MutableStateFlow<LoginUiState> = MutableStateFlow(LoginUiState.Logout)
     private val _otpFormUiState: MutableStateFlow<InputUiState<String, InputOtpError>> = MutableStateFlow(
         InputUiState("")
     )
@@ -65,15 +66,21 @@ class LoginVM @Inject constructor(
     //endregion
 
     //region StateFlows
+
     val loginFormUiState: StateFlow<LoginFormUiState> = _loginFormUiState
     val countriesUiState: StateFlow<CountriesUiState> = _countriesUiState
     val loginFormPhoneUiState: StateFlow<LoginFormPhoneUiState> = _loginFormPhoneUiState
     val loginFormCreateAccountState: StateFlow<LoginFormCreateAccountUiState> = _loginFormCreateAccountUiState
     val loginCreateGamerFormState: StateFlow<LoginCreateGamerFormUiState> = _loginCreateGamerFormUiState
-    val loginUiState: StateFlow<LoginUiState?> = _loginUiState
+    val loginUiState: StateFlow<LoginUiState> = _loginUiState
     val otpFormUiState: StateFlow<InputUiState<String, InputOtpError>> = _otpFormUiState
 
     //endregion
+
+    override fun onCleared() {
+        Log.i("VM_TEST", "onCleared")
+        super.onCleared()
+    }
 
     //region LoginForm
     fun validateLoginForm(email: String, password: String) {
@@ -147,7 +154,7 @@ class LoginVM @Inject constructor(
     }
 
     fun resetLoginUiState() {
-        _loginUiState.update { null }
+        _loginUiState.update { LoginUiState.Logout }
     }
 
     fun cleanLoginPhoneForm() {
@@ -237,7 +244,7 @@ class LoginVM @Inject constructor(
             return LoginUiState.RegisteredUser(gamer.gamerId)
         }
         return when (val failure = (gamerResult as Result.Unsuccessful).failure) {
-            GamerFailure.GamerNotExists -> LoginUiState.UnregisteredUser(userData.userId)
+            GamerFailure.GamerNotExists -> LoginUiState.UnregisteredUser(userData)
             is GamerFailure.General -> LoginUiState.Failure(LoginFailure.RegisterFailure(failure.generalFailure))
         }
     }
