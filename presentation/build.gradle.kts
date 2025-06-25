@@ -75,10 +75,13 @@ dependencies {
     val extJunitVersion = "1.1.5"
     val espressoVersion = "3.5.1"
     val facebookVersion = "17.0.1"
+    val splashScreen = "1.0.0"
+    val material = "1.12.0"
 
     implementation(project(":domain"))
     implementation(project(":data"))
 
+    implementation("com.google.android.material:material:$material")
     implementation("androidx.core:core-ktx:$coreKtxVersion")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:$lifecycleRuntimeVersion")
     implementation("androidx.activity:activity-compose:$activityComposeVersion")
@@ -104,6 +107,9 @@ dependencies {
 
     //COROUTINES
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:$kotlinCoroutinesAndroid")
+
+    //Splash Screen
+    implementation("androidx.core:core-splashscreen:$splashScreen")
 
     //DI
     implementation("com.google.dagger:hilt-android:$hiltVersion")

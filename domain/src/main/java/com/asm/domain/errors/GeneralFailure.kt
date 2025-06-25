@@ -5,9 +5,8 @@ sealed class GeneralFailure {
         val code: Int,
         val description: String
     ) : GeneralFailure()
-    data class OtherError(
-        val errorType: GeneralErrorType
-    ) : GeneralFailure()
+    data object NetworkConnection: GeneralFailure()
+    data object Unknown: GeneralFailure()
 }
 
 enum class GeneralErrorType {

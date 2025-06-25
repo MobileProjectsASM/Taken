@@ -95,7 +95,7 @@ class CreateGamerUC @Inject constructor(
             Result.Successful(Unit)
         } catch (exception: Exception) {
             logger.logE(TAG, exception)
-            Result.Unsuccessful(RegisterFailure.General(GeneralFailure.OtherError(GeneralErrorType.UNKNOWN)))
+            Result.Unsuccessful(RegisterFailure.General(GeneralFailure.Unknown))
         }
     }
 }

@@ -55,6 +55,6 @@ class GetMainGamesUC @Inject constructor(
             logger.logE { exception }
             Error.UnknownError.toFailure()
         }*/
-        return Result.Unsuccessful(GeneralFailure.OtherError(GeneralErrorType.UNKNOWN))
+        return Result.Unsuccessful(GeneralFailure.Unknown)
     }
 }

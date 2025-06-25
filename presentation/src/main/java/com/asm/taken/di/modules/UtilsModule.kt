@@ -1,12 +1,16 @@
 package com.asm.taken.di.modules
 
 import android.content.Context
+import android.content.SharedPreferences
 import androidx.room.Room
 import com.asm.data.sources.local.TakenDB
+import com.asm.data.sources.local.deserializer.SessionSerializer
 import com.asm.data.sources.remote.impl.rest.api_service.CountryInfoClient
 import com.asm.data.sources.remote.impl.rest.deserializer.CountryInfoDeserializer
 import com.asm.data.sources.remote.impl.rest.interceptors.CountryInfoInterceptor
 import com.asm.data.sources.remote.impl.rest.data.CountriesInfoRest
+import com.asm.domain.entities.Session
+import com.asm.taken.R
 import com.asm.taken.di.CountryInfoRetrofit
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.gson.Gson
@@ -25,6 +29,11 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 class UtilsModule {
+
+    @Provides
+    fun provideSharedPreferences(
+        @ApplicationContext context: Context
+    ): SharedPreferences = context.getSharedPreferences(context.getString(R.string.session_file), Context.MODE_PRIVATE)
 
     @Singleton
     @Provides
@@ -57,8 +66,12 @@ class UtilsModule {
         .build()
 
     @Provides
-    fun providesGson(countryInfoDeserializer: CountryInfoDeserializer): Gson {
+    fun providesGson(
+        sessionSerializer: SessionSerializer,
+        countryInfoDeserializer: CountryInfoDeserializer
+    ): Gson {
         return GsonBuilder()
+            .registerTypeAdapter(Session::class.java, sessionSerializer)
             .registerTypeAdapter(CountriesInfoRest::class.java, countryInfoDeserializer)
             .create()
     }

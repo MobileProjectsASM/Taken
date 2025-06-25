@@ -15,6 +15,7 @@ import com.asm.taken.R
 import com.asm.taken.model.AuthError
 import com.asm.taken.model.SendOtpError
 import com.asm.taken.model.SignUpError
+import com.facebook.AccessToken
 import com.facebook.CallbackManager
 import com.facebook.FacebookCallback
 import com.facebook.FacebookException
@@ -94,7 +95,6 @@ class AuthenticationClient @Inject constructor(
             AuthResult.Successful(
                 userData = UserData(
                     userId = firebaseUser.uid,
-                    username = firebaseUser.email,
                     profilePictureUrl = firebaseUser.photoUrl?.toString()
                 )
             )
@@ -241,11 +241,13 @@ class AuthenticationClient @Inject constructor(
                 Log.e(TAG, "FirebaseUser is null")
                 return AuthResult.Failure(AuthError.UNKNOWN_ERROR)
             }
+            val photoUrl = firebaseUser.photoUrl?.toString()?.let { baseUrl ->
+                AccessToken.getCurrentAccessToken()?.token?.let { "$baseUrl?access_token=$it" }
+            }
             AuthResult.Successful(
                 UserData(
                     firebaseUser.uid,
-                    firebaseUser.email,
-                    firebaseUser.photoUrl?.toString()
+                    photoUrl
                 )
             )
         } catch (exception: Exception) {
@@ -266,7 +268,6 @@ class AuthenticationClient @Inject constructor(
         return auth.currentUser?.let {
             UserData(
                 userId = auth.currentUser!!.uid,
-                username = auth.currentUser?.email,
                 profilePictureUrl = auth.currentUser?.photoUrl.toString()
             )
         }
@@ -367,7 +368,6 @@ sealed class SignUpResult {
 
 data class UserData(
     val userId: String,
-    val username: String?,
     val profilePictureUrl: String?
 )
 

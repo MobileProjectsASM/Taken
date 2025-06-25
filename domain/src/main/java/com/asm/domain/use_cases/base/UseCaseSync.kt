@@ -9,5 +9,12 @@ abstract class UseCaseSync<out Result, in Params> {
     suspend fun execute(params: Params): Result = withContext(Dispatchers.IO) {
         run(params)
     }
+}
 
+abstract class UseCaseSyncWithoutParams<out Result> {
+    abstract suspend fun run(): Result
+
+    suspend fun execute(): Result = withContext(Dispatchers.IO) {
+        run()
+    }
 }

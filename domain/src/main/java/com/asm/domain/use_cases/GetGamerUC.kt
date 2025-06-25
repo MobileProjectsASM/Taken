@@ -32,7 +32,7 @@ class GetGamerUC @Inject constructor(
             }
         } catch (exception: Exception) {
             logger.logE(TAG, exception)
-            Result.Unsuccessful(GamerFailure.General(GeneralFailure.OtherError(GeneralErrorType.UNKNOWN)))
+            Result.Unsuccessful(GamerFailure.General(GeneralFailure.Unknown))
         }
     }
 }

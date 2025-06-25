@@ -34,6 +34,7 @@
     <string name="txt_btn_create_gamer">CREATE GAMER</string>
     
     <!-- Errors -->
+    <string name="err_get_session_data">Error to get session data</string>
     <string name="err_empty_field">Empty field</string>
     <string name="err_email_invalid">Email invalid</string>
     <string name="err_min_8_characters">Must be at least 8 characters long</string>
@@ -70,6 +71,7 @@
     <string name="err_sign_up">SignUp error</string>
     <string name="err_logout">Logout Error</string>
 
+    <string name="session_file" translatable="false">session_info</string>
     <string name="default_web_client_id" translatable="false">537568996262-c7nrhuvi4s9jaukcg9uh0hvm98l9ubls.apps.googleusercontent.com</string>
     <string name="facebook_app_id" translatable="false">4098294007123784</string>
     <string name="facebook_login_protocol_scheme" translatable="false">fb4098294007123784</string>

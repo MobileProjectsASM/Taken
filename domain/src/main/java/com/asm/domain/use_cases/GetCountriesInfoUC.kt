@@ -30,7 +30,7 @@ class GetCountriesInfoUC @Inject constructor(
             countryInfoRepository.getCountriesInfoSortedByName()
         } catch (exception: Exception) {
             logger.logE(TAG, exception)
-            Result.Unsuccessful(GeneralFailure.OtherError(GeneralErrorType.UNKNOWN))
+            Result.Unsuccessful(GeneralFailure.Unknown)
         }
     }
 }

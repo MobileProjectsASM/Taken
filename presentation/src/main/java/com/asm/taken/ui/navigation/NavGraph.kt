@@ -32,18 +32,28 @@ import com.asm.taken.vm.LoginVM
 
 @Composable
 fun MainNavigation(
+    initRoute: Pair<Route, Any?>,
     innerPadding: PaddingValues,
     snackBarHostState: SnackbarHostState,
     authenticationClient: AuthenticationClient,
     messageResolver: MessageResolver
 ) {
     val navigationController = rememberNavController()
+
+    val mainDestination: String = if (initRoute.first == Authentication || initRoute.first == CreateGamer) Login.route
+    else MainPage.createRoute(initRoute.second?.toString() ?: "")
+
+    val secondaryDestination: String = if (initRoute.first == Authentication) initRoute.first.route
+    else if (initRoute.first == CreateGamer) CreateGamer.route
+    else Authentication.route
+
     NavHost(
         navController = navigationController,
-        startDestination = Login.route,
+        startDestination = mainDestination,
         modifier = Modifier.padding(innerPadding)
     ) {
         navigationLogin(
+            initRoute = secondaryDestination,
             navController = navigationController,
             snackBarHostState = snackBarHostState,
             authenticationClient = authenticationClient,
@@ -56,13 +66,14 @@ fun MainNavigation(
 }
 
 fun NavGraphBuilder.navigationLogin(
+    initRoute: String,
     navController: NavHostController,
     snackBarHostState: SnackbarHostState,
     authenticationClient: AuthenticationClient,
     messageResolver: MessageResolver
 ) {
     navigation(
-        startDestination = Authentication.route,
+        startDestination = initRoute,
         route = Login.route
     ) {
         composable(route = Authentication.route) { navBackStackEntry ->
