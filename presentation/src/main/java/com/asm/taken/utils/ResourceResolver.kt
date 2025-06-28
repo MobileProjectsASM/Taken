@@ -66,11 +66,9 @@ class MessageResolver @Inject constructor(
             AuthError.UNKNOWN_ERROR -> context.getString(R.string.err_unknown)
         }
         is LoginFailure.RegisterFailure -> when (val generalFailure = error.generalFailure) {
-            is GeneralFailure.OtherError -> when (generalFailure.errorType) {
-                GeneralErrorType.NETWORK_CONNECTION -> context.getString(R.string.err_network_connection)
-                GeneralErrorType.UNKNOWN -> context.getString(R.string.err_process_gamer)
-            }
             is GeneralFailure.ServerError -> "${generalFailure.code}: ${generalFailure.description}"
+            GeneralFailure.NetworkConnection -> context.getString(R.string.err_network_connection)
+            GeneralFailure.Unknown -> context.getString(R.string.err_process_gamer)
         }
         is LoginFailure.SendOtpFailure -> when (error.sendOtpError) {
             SendOtpError.PHONE_NUMBER_INVALID_ERROR -> context.getString(R.string.err_phone_number_invalid)

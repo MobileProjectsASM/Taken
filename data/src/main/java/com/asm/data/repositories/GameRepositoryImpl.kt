@@ -25,13 +25,13 @@ class GameRepositoryImpl @Inject constructor(
 
     override suspend fun saveGamerGames(games: List<Game>, gamerId: String): Result<Completed, GeneralFailure> {
         return try {
-            if (!connectionSource.isNetworkAvailable()) return Result.Unsuccessful(GeneralFailure.OtherError(GeneralErrorType.NETWORK_CONNECTION))
+            if (!connectionSource.isNetworkAvailable()) return Result.Unsuccessful(GeneralFailure.NetworkConnection)
             gameRemoteSource.insertGames(games, gamerId)
             gameLocalSource.saveGamesByGamerId(games, gamerId)
             Result.Successful(Completed)
         } catch (exception: Exception) {
             logger.logE(TAG, exception)
-            Result.Unsuccessful(GeneralFailure.OtherError(GeneralErrorType.UNKNOWN))
+            Result.Unsuccessful(GeneralFailure.Unknown)
         }
     }
 }

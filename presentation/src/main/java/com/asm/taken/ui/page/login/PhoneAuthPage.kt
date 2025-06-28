@@ -149,21 +149,20 @@ fun ErrorCountries(
 ) {
     LaunchedEffect(true) {
         when (generalFailure) {
-            is GeneralFailure.OtherError -> when (generalFailure.errorType) {
-                GeneralErrorType.NETWORK_CONNECTION -> {
-                    val actionPerformed = snackBarHostState.showSnackbar(
-                        message = messageResolver.getMessage(R.string.err_network_connection),
-                        actionLabel = messageResolver.getMessage(R.string.txt_label_retry),
-                        duration = SnackbarDuration.Long
-                    )
-                    if (actionPerformed == SnackbarResult.ActionPerformed) loginVM.getCountriesInfo()
-                }
-                GeneralErrorType.UNKNOWN -> {
-                    snackBarHostState.showSnackbar(messageResolver.getMessage(R.string.err_get_countries), withDismissAction = true)
-                }
-            }
             is GeneralFailure.ServerError -> {
                 snackBarHostState.showSnackbar("${generalFailure.code}: ${generalFailure.description}", withDismissAction = true)
+            }
+
+            GeneralFailure.NetworkConnection -> {
+                val actionPerformed = snackBarHostState.showSnackbar(
+                    message = messageResolver.getMessage(R.string.err_network_connection),
+                    actionLabel = messageResolver.getMessage(R.string.txt_label_retry),
+                    duration = SnackbarDuration.Long
+                )
+                if (actionPerformed == SnackbarResult.ActionPerformed) loginVM.getCountriesInfo()
+            }
+            GeneralFailure.Unknown -> {
+                snackBarHostState.showSnackbar(messageResolver.getMessage(R.string.err_get_countries), withDismissAction = true)
             }
         }
     }

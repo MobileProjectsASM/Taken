@@ -25,14 +25,14 @@ class MultimediaRepositoryImpl @Inject constructor(
     }
     override suspend fun uploadUserImage(userId: String, profileImageName: String, base64: String): Result<String, GeneralFailure> {
         return try {
-            if (!connectionSource.isNetworkAvailable()) return Result.Unsuccessful(GeneralFailure.OtherError(GeneralErrorType.NETWORK_CONNECTION))
+            if (!connectionSource.isNetworkAvailable()) return Result.Unsuccessful(GeneralFailure.NetworkConnection)
             val folderPath = "$userId/$DEFAULT_PATH_USER_IMAGES"
             multimediaRemoteSource.uploadImage(folderPath, profileImageName, base64)
             val imagePath = multimediaLocalSource.saveImage(folderPath, profileImageName, base64)
             Result.Successful(imagePath)
         } catch (exception: Exception) {
             logger.logE(TAG, exception)
-            Result.Unsuccessful(GeneralFailure.OtherError(GeneralErrorType.UNKNOWN))
+            Result.Unsuccessful(GeneralFailure.Unknown)
         }
     }
 
@@ -41,13 +41,13 @@ class MultimediaRepositoryImpl @Inject constructor(
             val fullPath = "$DEFAULT_FOLDER_PATH_USER_IMAGE_PROFILE/$DEFAULT_IMAGE_NAME_PROFILE"
             val existsImage = multimediaLocalSource.existsImage(fullPath)
             if (existsImage) return Result.Successful(fullPath)
-            if (!connectionSource.isNetworkAvailable()) return Result.Unsuccessful(GeneralFailure.OtherError(GeneralErrorType.NETWORK_CONNECTION))
+            if (!connectionSource.isNetworkAvailable()) return Result.Unsuccessful(GeneralFailure.NetworkConnection)
             val base64 = multimediaRemoteSource.downloadImage(fullPath)
             val path = multimediaLocalSource.saveImage(DEFAULT_FOLDER_PATH_USER_IMAGE_PROFILE, DEFAULT_IMAGE_NAME_PROFILE, base64)
             return Result.Successful(path)
         } catch (exception: Exception) {
             logger.logE(TAG, exception)
-            Result.Unsuccessful(GeneralFailure.OtherError(GeneralErrorType.UNKNOWN))
+            Result.Unsuccessful(GeneralFailure.Unknown)
         }
     }
 }

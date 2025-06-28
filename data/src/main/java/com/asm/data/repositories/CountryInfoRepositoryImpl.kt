@@ -29,13 +29,13 @@ class CountryInfoRepositoryImpl @Inject constructor(
             Result.Successful(countries)
         } catch (exception: Exception) {
             logger.logE(TAG, exception)
-            Result.Unsuccessful(GeneralFailure.OtherError(GeneralErrorType.UNKNOWN))
+            Result.Unsuccessful(GeneralFailure.Unknown)
         }
     }
 
     override suspend fun downloadCountriesInfo(): Result<Unit, GeneralFailure> {
         return try {
-            if (!connectionSource.isNetworkAvailable()) return Result.Unsuccessful(GeneralFailure.OtherError(GeneralErrorType.NETWORK_CONNECTION))
+            if (!connectionSource.isNetworkAvailable()) return Result.Unsuccessful(GeneralFailure.NetworkConnection)
             val countriesCallCodeResult = countryInfoRemoteSource.getCountriesCallCode()
             if (countriesCallCodeResult is Result.Unsuccessful) return countriesCallCodeResult
             val countriesCallCode = countriesCallCodeResult.asSuccessful().data
@@ -43,7 +43,7 @@ class CountryInfoRepositoryImpl @Inject constructor(
             Result.Successful(Unit)
         } catch (exception: Exception) {
             logger.logE(TAG, exception)
-            Result.Unsuccessful(GeneralFailure.OtherError(GeneralErrorType.UNKNOWN))
+            Result.Unsuccessful(GeneralFailure.Unknown)
         }
     }
 }

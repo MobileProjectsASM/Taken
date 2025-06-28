@@ -24,13 +24,13 @@ class LevelRepositoryImpl @Inject constructor(
 
     override suspend fun downloadLevelsByOrderCriteria(ids: List<Int>): Result<List<Level>, GeneralFailure> {
         return try {
-            if (!connectionSource.isNetworkAvailable()) return Result.Unsuccessful(GeneralFailure.OtherError(GeneralErrorType.NETWORK_CONNECTION))
+            if (!connectionSource.isNetworkAvailable()) return Result.Unsuccessful(GeneralFailure.NetworkConnection)
             val levels = levelRemoteSource.getLevelsByOrders(ids)
             levelLocalSource.saveLevels(levels)
             Result.Successful(levels)
         } catch (exception: Exception) {
             logger.logE(TAG, exception)
-            Result.Unsuccessful(GeneralFailure.OtherError(GeneralErrorType.UNKNOWN))
+            Result.Unsuccessful(GeneralFailure.Unknown)
         }
 
     }

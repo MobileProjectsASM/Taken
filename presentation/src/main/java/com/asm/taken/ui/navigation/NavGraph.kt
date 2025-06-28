@@ -43,9 +43,11 @@ fun MainNavigation(
     val mainDestination: String = if (initRoute.first == Authentication || initRoute.first == CreateGamer) Login.route
     else MainPage.createRoute(initRoute.second?.toString() ?: "")
 
-    val secondaryDestination: String = if (initRoute.first == Authentication) initRoute.first.route
-    else if (initRoute.first == CreateGamer) CreateGamer.route
-    else Authentication.route
+    val secondaryDestination: String = when (initRoute.first) {
+        Authentication -> Authentication.route
+        CreateGamer -> CreateGamer.route
+        else -> Authentication.route
+    }
 
     NavHost(
         navController = navigationController,

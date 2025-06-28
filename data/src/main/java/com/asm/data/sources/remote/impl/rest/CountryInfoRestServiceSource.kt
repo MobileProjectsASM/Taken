@@ -38,7 +38,7 @@ class CountryInfoRestServiceSource @Inject constructor(
             Result.Successful(countriesInfo)
         } catch(exception: Exception) {
             Log.e(TAG, exception.stackTraceToString())
-            Result.Unsuccessful(GeneralFailure.OtherError(GeneralErrorType.UNKNOWN))
+            Result.Unsuccessful(GeneralFailure.Unknown)
         }
     }
 }

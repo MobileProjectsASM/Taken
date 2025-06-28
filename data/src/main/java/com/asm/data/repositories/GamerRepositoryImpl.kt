@@ -24,13 +24,13 @@ class GamerRepositoryImpl @Inject constructor(
 
     override suspend fun registerGamer(gamer: Gamer): Result<Completed, GeneralFailure> {
         return try {
-            if (!connectionSource.isNetworkAvailable()) return Result.Unsuccessful(GeneralFailure.OtherError(GeneralErrorType.NETWORK_CONNECTION))
+            if (!connectionSource.isNetworkAvailable()) return Result.Unsuccessful(GeneralFailure.NetworkConnection)
             gamerRemoteSource.saveGamer(gamer)
             gamerLocalSource.saveGamer(gamer)
             Result.Successful(Completed)
         } catch (exception: Exception) {
             logger.logE(TAG, exception)
-            Result.Unsuccessful(GeneralFailure.OtherError(GeneralErrorType.UNKNOWN))
+            Result.Unsuccessful(GeneralFailure.Unknown)
         }
     }
 
@@ -40,7 +40,7 @@ class GamerRepositoryImpl @Inject constructor(
             Result.Successful(gamerExists)
         } catch (exception: Exception) {
             logger.logE(TAG, exception)
-            Result.Unsuccessful(GeneralFailure.OtherError(GeneralErrorType.UNKNOWN))
+            Result.Unsuccessful(GeneralFailure.Unknown)
         }
     }
 
@@ -49,7 +49,7 @@ class GamerRepositoryImpl @Inject constructor(
             Result.Successful(gamerLocalSource.getGamer(gamerId))
         } catch (exception: Exception) {
             logger.logE(TAG, exception)
-            Result.Unsuccessful(GeneralFailure.OtherError(GeneralErrorType.UNKNOWN))
+            Result.Unsuccessful(GeneralFailure.Unknown)
         }
     }
 

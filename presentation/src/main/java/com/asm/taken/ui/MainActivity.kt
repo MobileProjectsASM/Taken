@@ -58,9 +58,11 @@ class MainActivity : ComponentActivity() {
                 SessionUiState.Loading -> keepSplashScreen = true
                 else -> {
                     keepSplashScreen = false
-                    val initRoute: Pair<Route, Any?> = if (sessionState is SessionUiState.UserRegister) Pair(MainPage, sessionState.gamerId)
-                    else if (sessionState is SessionUiState.UnregisterUser) Pair(CreateGamer, sessionState.userData)
-                    else Pair(Authentication, null)
+                    val initRoute: Pair<Route, Any?> = when (sessionState) {
+                        is SessionUiState.UnregisterUser -> Pair(CreateGamer, sessionState.userData)
+                        is SessionUiState.UserRegister -> Pair(MainPage, sessionState.gamerId)
+                        else -> Pair(Authentication, null)
+                    }
                     setContent {
                         TakenTheme {
                             Surface {
