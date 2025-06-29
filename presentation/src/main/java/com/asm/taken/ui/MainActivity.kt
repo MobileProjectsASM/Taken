@@ -19,7 +19,6 @@ import com.asm.taken.R
 import com.asm.taken.model.SessionUiState
 import com.asm.taken.ui.navigation.Authentication
 import com.asm.taken.ui.navigation.CreateGamer
-import com.asm.taken.ui.navigation.Login
 import com.asm.taken.ui.navigation.MainNavigation
 import com.asm.taken.ui.navigation.MainPage
 import com.asm.taken.ui.navigation.Route
