@@ -8,12 +8,14 @@ import com.asm.domain.errors.GeneralFailure
 import com.asm.domain.use_cases.GetSessionUC
 import com.asm.taken.model.SessionUiState
 import com.asm.taken.utils.UserData
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+@HiltViewModel
 class SessionVM @Inject constructor(
     private val getSessionUC: GetSessionUC
 ): ViewModel() {
