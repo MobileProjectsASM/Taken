@@ -26,4 +26,24 @@ class SessionRepositoryImpl @Inject constructor(
             Result.Unsuccessful(GeneralFailure.Unknown)
         }
     }
+
+    override suspend fun saveSession(session: Session): Result<Unit, GeneralFailure> {
+        return try {
+            sessionLocalSource.saveSession(session)
+            Result.Successful(Unit)
+        } catch (exception: Exception) {
+            logger.logE(TAG, exception)
+            Result.Unsuccessful(GeneralFailure.Unknown)
+        }
+    }
+
+    override suspend fun closeSession(): Result<Unit, GeneralFailure> {
+        return try {
+            sessionLocalSource.closeSession()
+            Result.Successful(Unit)
+        } catch (exception: Exception) {
+            logger.logE(TAG, exception)
+            Result.Unsuccessful(GeneralFailure.Unknown)
+        }
+    }
 }

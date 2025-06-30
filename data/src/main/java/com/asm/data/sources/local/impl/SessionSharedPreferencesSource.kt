@@ -24,7 +24,7 @@ class SessionSharedPreferencesSource @Inject constructor(
     }
 
     override suspend fun saveSession(session: Session) {
-        val data = gson.toJson(session)
+        val data = gson.toJson(session, Session::class.java)
         sharedPreferences.edit(commit = true) {
             putString(SESSION_KEY, data)
         }

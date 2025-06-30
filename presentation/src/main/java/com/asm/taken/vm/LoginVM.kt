@@ -3,11 +3,15 @@ package com.asm.taken.vm
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.asm.domain.entities.Gamer
 import com.asm.domain.entities.Result
-import com.asm.domain.entities.asSuccessful
+import com.asm.domain.entities.Session
 import com.asm.domain.errors.GamerFailure
+import com.asm.domain.errors.GeneralFailure
+import com.asm.domain.use_cases.CloseSessionUC
 import com.asm.domain.use_cases.GetCountriesInfoUC
 import com.asm.domain.use_cases.GetGamerUC
+import com.asm.domain.use_cases.SaveSessionUC
 import com.asm.taken.mappers.PhoneCodeMapper
 import com.asm.taken.model.CountriesUiState
 import com.asm.taken.model.ImageSelected
@@ -29,6 +33,7 @@ import com.asm.taken.model.LoginFormPhoneUiState
 import com.asm.taken.model.LoginFormUiState
 import com.asm.taken.model.LoginUiState
 import com.asm.taken.utils.AuthResult
+import com.asm.taken.utils.LogoutResult
 import com.asm.taken.utils.SendOtpResult
 import com.asm.taken.utils.SignUpResult
 import com.asm.taken.utils.UserData
@@ -43,6 +48,8 @@ import javax.inject.Inject
 class LoginVM @Inject constructor(
     private val getGamerUC: GetGamerUC,
     private val getCountriesInfoUC: GetCountriesInfoUC,
+    private val saveSessionUC: SaveSessionUC,
+    private val closeSessionUC: CloseSessionUC,
     private val phoneCodeMapper: PhoneCodeMapper
 ) : ViewModel() {
 
@@ -128,7 +135,7 @@ class LoginVM @Inject constructor(
     fun updateLoginUiState(authResult: AuthResult) {
         viewModelScope.launch {
             val loginWithPhoneUiState = when (authResult) {
-                is AuthResult.Successful -> verifyGamerExists(authResult.userData)
+                is AuthResult.Successful -> updateSession(authResult.userData)
                 is AuthResult.Failure -> LoginUiState.Failure(LoginFailure.AuthFailure(authResult.authError))
                 AuthResult.Loading -> LoginUiState.Loading
             }
@@ -163,6 +170,19 @@ class LoginVM @Inject constructor(
                 phoneCodeUiState = InputUiState(""),
                 phoneNumberUiState = InputUiState("")
             )
+        }
+    }
+
+    fun closeSession(signOut: suspend () -> Result<Unit, GeneralFailure>) {
+        viewModelScope.launch {
+            _loginUiState.update { LoginUiState.Loading }
+            val closeSessionResult = closeSessionUC.execute(signOut)
+            when (closeSessionResult) {
+                is Result.Successful<Unit> -> _loginUiState.update { LoginUiState.Logout }
+                is Result.Unsuccessful<GeneralFailure> -> _loginUiState.update {
+                    LoginUiState.Failure(LoginFailure.LogoutFailure)
+                }
+            }
         }
     }
 
@@ -237,15 +257,27 @@ class LoginVM @Inject constructor(
         return errors
     }
 
-    private suspend fun verifyGamerExists(userData: UserData): LoginUiState {
-        val gamerResult = getGamerUC.execute(userData.userId)
-        if (gamerResult is Result.Successful) {
-            val gamer = gamerResult.asSuccessful().data
-            return LoginUiState.RegisteredUser(gamer.gamerId)
-        }
-        return when (val failure = (gamerResult as Result.Unsuccessful).failure) {
-            GamerFailure.GamerNotExists -> LoginUiState.UnregisteredUser(userData)
-            is GamerFailure.General -> LoginUiState.Failure(LoginFailure.RegisterFailure(failure.generalFailure))
+    private suspend fun updateSession(userData: UserData): LoginUiState {
+        return when (val gamerResult = getGamerUC.execute(userData.userId)) {
+            is Result.Successful<Gamer> -> {
+                val saveSessionResult = saveSessionUC.execute(Session.UserRegister(gamerResult.data.gamerId))
+                when (saveSessionResult) {
+                    is Result.Successful<Unit> -> LoginUiState.RegisteredUser(gamerResult.data.gamerId)
+                    is Result.Unsuccessful<GeneralFailure> -> LoginUiState.Failure(LoginFailure.RegisterFailure(saveSessionResult.failure))
+                }
+            }
+            is Result.Unsuccessful<GamerFailure> -> when (val failure = gamerResult.failure) {
+                GamerFailure.GamerNotExists -> {
+                    val userUnregister = userData.run {
+                        Session.UserUnregister(userId, profilePictureUrl)
+                    }
+                    when (val saveSessionResult = saveSessionUC.execute(userUnregister)) {
+                        is Result.Successful<Unit> -> LoginUiState.UnregisteredUser(userData)
+                        is Result.Unsuccessful<GeneralFailure> -> LoginUiState.Failure(LoginFailure.RegisterFailure(saveSessionResult.failure))
+                    }
+                }
+                is GamerFailure.General -> LoginUiState.Failure(LoginFailure.RegisterFailure(failure.generalFailure))
+            }
         }
     }
     //endregion

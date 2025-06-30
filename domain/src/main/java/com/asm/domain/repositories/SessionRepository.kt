@@ -6,4 +6,6 @@ import com.asm.domain.errors.GeneralFailure
 
 interface SessionRepository {
     suspend fun isThereSessionActive(): Result<Session?, GeneralFailure>
+    suspend fun saveSession(session: Session): Result<Unit, GeneralFailure>
+    suspend fun closeSession(): Result<Unit, GeneralFailure>
 }

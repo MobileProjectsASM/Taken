@@ -6,6 +6,7 @@ import com.asm.domain.entities.Result
 import com.asm.domain.entities.Session
 import com.asm.domain.errors.GeneralFailure
 import com.asm.domain.use_cases.GetSessionUC
+import com.asm.domain.use_cases.SaveSessionUC
 import com.asm.taken.model.SessionUiState
 import com.asm.taken.utils.UserData
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -29,7 +30,7 @@ class SessionVM @Inject constructor(
 
     fun isThereSessionActive() {
         viewModelScope.launch {
-            val sessionUiState = when (val resultSession = getSessionUC.run()) {
+            val sessionUiState = when (val resultSession = getSessionUC.execute()) {
                 is Result.Successful<Session?> -> when (val data = resultSession.data) {
                     is Session.UserRegister -> SessionUiState.UserRegister(data.gamerId)
                     is Session.UserUnregister -> SessionUiState.UnregisterUser(UserData(data.userId, data.userImage))
@@ -42,6 +43,4 @@ class SessionVM @Inject constructor(
             }
         }
     }
-
-
 }

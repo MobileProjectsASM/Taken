@@ -67,7 +67,6 @@ import com.asm.taken.model.InputCountryError
 import com.asm.taken.model.InputImageError
 import com.asm.taken.model.InputState
 import com.asm.taken.model.LoginCreateGamerFormUiState
-import com.asm.taken.model.LoginFailure
 import com.asm.taken.model.LoginUiState
 import com.asm.taken.ui.CircularProgressDialog
 import com.asm.taken.ui.DefaultButton
@@ -76,12 +75,9 @@ import com.asm.taken.ui.DefaultText
 import com.asm.taken.ui.PuzzleGeneralTitle
 import com.asm.taken.ui.puzzleFontFamily
 import com.asm.taken.utils.AuthenticationClient
-import com.asm.taken.utils.LogoutResult
 import com.asm.taken.utils.MessageResolver
 import com.asm.taken.utils.UserData
 import com.asm.taken.vm.LoginVM
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
 
 @Composable
 fun CreateGamerPage(
@@ -91,11 +87,10 @@ fun CreateGamerPage(
     snackBarHostState: SnackbarHostState,
     onNavigateToAuthentication: () -> Unit
 ) {
-    val coroutineScope =  rememberCoroutineScope()
+    rememberCoroutineScope()
     val loginUiState: LoginUiState by loginVM.loginUiState.collectAsStateWithLifecycle()
     LoginState(
         loginVM = loginVM,
-        coroutineScope = coroutineScope,
         authenticationClient = authenticationClient,
         loginUiState = loginUiState,
         snackBarHostState = snackBarHostState,
@@ -107,7 +102,6 @@ fun CreateGamerPage(
 @Composable
 fun LoginState(
     loginVM: LoginVM,
-    coroutineScope: CoroutineScope,
     authenticationClient: AuthenticationClient,
     loginUiState: LoginUiState,
     snackBarHostState: SnackbarHostState,
@@ -125,11 +119,10 @@ fun LoginState(
             CreateGamerSection(
                 authenticationClient = authenticationClient,
                 loginVM = loginVM,
-                coroutineScope = coroutineScope,
-                messageResolver = messageResolver,
-                countriesUiState = countriesUiState,
+                userData = loginUiState.userData,
                 snackBarHostState = snackBarHostState,
-                userData = loginUiState.userData
+                countriesUiState = countriesUiState,
+                messageResolver = messageResolver
             )
         }
         is LoginUiState.Failure -> LaunchedEffect(true) {
@@ -144,7 +137,6 @@ fun LoginState(
 fun CreateGamerSection(
     authenticationClient: AuthenticationClient,
     loginVM: LoginVM,
-    coroutineScope: CoroutineScope,
     userData: UserData,
     snackBarHostState: SnackbarHostState,
     countriesUiState: CountriesUiState,
@@ -154,10 +146,9 @@ fun CreateGamerSection(
         is CountriesUiState.Failure -> ErrorCountries(
             authenticationClient = authenticationClient,
             loginVM = loginVM,
-            coroutineScope = coroutineScope,
-            userData = userData,
             snackBarHostState = snackBarHostState,
-            messageResolver = messageResolver
+            messageResolver = messageResolver,
+            userData = userData
         )
 
         CountriesUiState.Loading -> CircularProgressDialog()
@@ -165,10 +156,9 @@ fun CreateGamerSection(
         is CountriesUiState.Successful -> PanelCreateGamer(
             authenticationClient = authenticationClient,
             loginVM = loginVM,
-            coroutineScope = coroutineScope,
+            userData = userData,
             countriesUiState = countriesUiState.countriesInfo,
-            messageResolver = messageResolver,
-            userData = userData
+            messageResolver = messageResolver
         )
     }
 }
@@ -177,7 +167,6 @@ fun CreateGamerSection(
 fun ErrorCountries(
     authenticationClient: AuthenticationClient,
     loginVM: LoginVM,
-    coroutineScope: CoroutineScope,
     snackBarHostState: SnackbarHostState,
     messageResolver: MessageResolver,
     userData: UserData,
@@ -187,11 +176,10 @@ fun ErrorCountries(
     }
     PanelCreateGamer(
         authenticationClient = authenticationClient,
-        coroutineScope = coroutineScope,
         loginVM = loginVM,
+        userData = userData,
         countriesUiState = null,
-        messageResolver = messageResolver,
-        userData = userData
+        messageResolver = messageResolver
     )
 }
 
@@ -199,7 +187,6 @@ fun ErrorCountries(
 fun PanelCreateGamer(
     authenticationClient: AuthenticationClient,
     loginVM: LoginVM,
-    coroutineScope: CoroutineScope,
     userData: UserData,
     countriesUiState: List<CountryUiState>?,
     messageResolver: MessageResolver,
@@ -234,14 +221,7 @@ fun PanelCreateGamer(
                         ),
                         contentPadding = PaddingValues(7.dp),
                         onClick = {
-                            coroutineScope.launch {
-                                loginVM.updateLoginUiState(LoginUiState.Loading)
-                                val logoutResult = authenticationClient.signOut()
-                                when (logoutResult) {
-                                    LogoutResult.SUCCESSFUL -> loginVM.updateLoginUiState(LoginUiState.Logout)
-                                    LogoutResult.FAILURE -> loginVM.updateLoginUiState(LoginUiState.Failure(LoginFailure.LogoutFailure))
-                                }
-                            }
+                            loginVM.closeSession(authenticationClient::signOut)
                         }
                     ) {
                         Icon(

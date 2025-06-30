@@ -5,6 +5,7 @@ import android.content.SharedPreferences
 import androidx.room.Room
 import com.asm.data.sources.local.TakenDB
 import com.asm.data.sources.local.deserializer.SessionSerializer
+import com.asm.data.sources.local.deserializer.SessionTypeAdapterFactory
 import com.asm.data.sources.remote.impl.rest.api_service.CountryInfoClient
 import com.asm.data.sources.remote.impl.rest.deserializer.CountryInfoDeserializer
 import com.asm.data.sources.remote.impl.rest.interceptors.CountryInfoInterceptor
@@ -67,11 +68,11 @@ class UtilsModule {
 
     @Provides
     fun providesGson(
-        sessionSerializer: SessionSerializer,
+        sessionTypeAdapterFactory: SessionTypeAdapterFactory,
         countryInfoDeserializer: CountryInfoDeserializer
     ): Gson {
         return GsonBuilder()
-            .registerTypeAdapter(Session::class.java, sessionSerializer)
+            .registerTypeAdapterFactory(sessionTypeAdapterFactory)
             .registerTypeAdapter(CountriesInfoRest::class.java, countryInfoDeserializer)
             .create()
     }
