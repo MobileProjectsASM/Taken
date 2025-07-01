@@ -87,7 +87,6 @@ fun CreateGamerPage(
     snackBarHostState: SnackbarHostState,
     onNavigateToAuthentication: () -> Unit
 ) {
-    rememberCoroutineScope()
     val loginUiState: LoginUiState by loginVM.loginUiState.collectAsStateWithLifecycle()
     LoginState(
         loginVM = loginVM,

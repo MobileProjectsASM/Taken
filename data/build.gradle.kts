@@ -7,7 +7,7 @@ plugins {
 
 android {
     namespace = "com.asm.data"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         minSdk = 27

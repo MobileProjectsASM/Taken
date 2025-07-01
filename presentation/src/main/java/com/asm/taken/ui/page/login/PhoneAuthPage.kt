@@ -66,6 +66,7 @@ import com.asm.taken.ui.puzzleFontFamily
 import com.asm.taken.utils.AuthResult
 import com.asm.taken.utils.AuthenticationClient
 import com.asm.taken.utils.MessageResolver
+import com.asm.taken.utils.UserData
 import com.asm.taken.vm.LoginVM
 import kotlinx.coroutines.launch
 
@@ -78,7 +79,7 @@ fun PhoneAuthPage(
     onSentPhone: (String, String) -> Unit,
     popBackStack: () -> Unit,
     onNavigateToMainPage: (String) -> Unit,
-    onNavigateToCreateGamer: () -> Unit
+    onNavigateToCreateGamer: (String, String?) -> Unit
 ) {
     val countriesUiState: CountriesUiState by loginVM.countriesUiState.collectAsStateWithLifecycle()
     val loginUiState: LoginUiState by loginVM.loginUiState.collectAsStateWithLifecycle()
@@ -101,7 +102,9 @@ fun PhoneAuthPage(
         loginUiState = loginUiState,
         snackBarHostState = snackBarHostState,
         onNavigateToMainPage = onNavigateToMainPage,
-        onNavigateToCreateGamer = onNavigateToCreateGamer
+        onNavigateToCreateGamer = { userData ->
+            onNavigateToCreateGamer(userData.userId, userData.profilePictureUrl)
+        }
     )
 }
 
@@ -383,7 +386,7 @@ fun LoginState(
     loginUiState: LoginUiState,
     snackBarHostState: SnackbarHostState,
     onNavigateToMainPage: (String) -> Unit,
-    onNavigateToCreateGamer: () -> Unit
+    onNavigateToCreateGamer: (UserData) -> Unit
 ) {
     val scope = rememberCoroutineScope()
     when (loginUiState) {
@@ -395,7 +398,7 @@ fun LoginState(
         }
         is LoginUiState.UnregisteredUser -> {
             LaunchedEffect(true) {
-                onNavigateToCreateGamer()
+                onNavigateToCreateGamer(loginUiState.userData)
             }
         }
         is LoginUiState.Failure -> {

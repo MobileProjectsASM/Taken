@@ -21,6 +21,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navigation
+import androidx.navigation.toRoute
 import com.asm.taken.ui.page.login.BackgroundLogin
 import com.asm.taken.ui.page.login.CreateAccountPage
 import com.asm.taken.ui.page.login.CreateGamerPage
@@ -32,7 +33,7 @@ import com.asm.taken.vm.LoginVM
 
 @Composable
 fun MainNavigation(
-    initRoute: Pair<Route, Any?>,
+    initRoute: Route,
     innerPadding: PaddingValues,
     snackBarHostState: SnackbarHostState,
     authenticationClient: AuthenticationClient,
@@ -40,13 +41,12 @@ fun MainNavigation(
 ) {
     val navigationController = rememberNavController()
 
-    val mainDestination: String = if (initRoute.first == Authentication || initRoute.first == CreateGamer) Login.route
-    else MainPage.createRoute(initRoute.second?.toString() ?: "")
+    val mainDestination: Route = if (initRoute == Authentication || initRoute is CreateGamer) Login
+    else initRoute
 
-    val secondaryDestination: String = when (initRoute.first) {
-        Authentication -> Authentication.route
-        CreateGamer -> CreateGamer.route
-        else -> Authentication.route
+    val secondaryDestination: Route = when (initRoute) {
+        Authentication, is CreateGamer -> initRoute
+        else -> Authentication
     }
 
     NavHost(
@@ -68,19 +68,16 @@ fun MainNavigation(
 }
 
 fun NavGraphBuilder.navigationLogin(
-    initRoute: String,
+    initRoute: Route,
     navController: NavHostController,
     snackBarHostState: SnackbarHostState,
     authenticationClient: AuthenticationClient,
     messageResolver: MessageResolver
 ) {
-    navigation(
-        startDestination = initRoute,
-        route = Login.route
-    ) {
-        composable(route = Authentication.route) { navBackStackEntry ->
+    navigation<Login>(startDestination = initRoute) {
+        composable<Authentication> { navBackStackEntry ->
             val parentEntry = remember(navBackStackEntry) {
-                navController.getBackStackEntry(Login.route)
+                navController.getBackStackEntry(Login)
             }
             val loginVM = hiltViewModel<LoginVM>(parentEntry)
             BackgroundLogin {
@@ -90,26 +87,29 @@ fun NavGraphBuilder.navigationLogin(
                     snackBarHostState = snackBarHostState,
                     messageResolver = messageResolver,
                     onNavigateToCreateAccount = {
-                        navController.navigate(CreateAccount.route)
+                        navController.navigate(CreateAccount)
                     },
                     onNavigateToAuthWithPhone = {
-                        navController.navigate(AuthenticationPhone.route)
+                        navController.navigate(AuthenticationPhone)
                     },
                     onNavigateToMainPage = {
-                        navController.navigate(MainPage.createRoute(it))
+                        navController.navigate(MainPage(gamerId = it))
                     },
-                    onNavigateToCreateGamer = {
-                        navController.navigate(CreateGamer.route) {
-                            popUpTo(Login.route) { inclusive = false }
+                    onNavigateToCreateGamer = { userId, imageUrl ->
+                        navController.navigate(CreateGamer(
+                            id = userId,
+                            image = imageUrl
+                        )) {
+                            popUpTo(Login) { inclusive = false }
                         }
                     }
                 )
             }
         }
-        composable(route = AuthenticationPhone.route) { navBackStackEntry ->
+        composable<AuthenticationPhone> { navBackStackEntry ->
             val coroutineScope = rememberCoroutineScope()
             val parentEntry = remember(navBackStackEntry) {
-                navController.getBackStackEntry(Login.route)
+                navController.getBackStackEntry(Login)
             }
             val context = LocalContext.current
             val loginVM = hiltViewModel<LoginVM>(parentEntry)
@@ -131,21 +131,24 @@ fun NavGraphBuilder.navigationLogin(
                             onAuthResult = loginVM::updateLoginUiState
                         )
                     },
-                    onNavigateToCreateGamer = {
-                        navController.navigate(CreateGamer.route) {
-                            popUpTo(Login.route) { inclusive = false }
+                    onNavigateToCreateGamer = { userId, imageUrl ->
+                        navController.navigate(CreateGamer(
+                            id = userId,
+                            image = imageUrl
+                        )) {
+                            popUpTo(Login) { inclusive = false }
                         }
                     },
                     onNavigateToMainPage = {
-                        navController.navigate(MainPage.createRoute(it))
+                        navController.navigate(MainPage(gamerId = it))
                     },
                     popBackStack = navController::popBackStack
                 )
             }
         }
-        composable(route = CreateAccount.route) { navBackStackEntry ->
+        composable<CreateAccount> { navBackStackEntry ->
             val parentEntry = remember(navBackStackEntry) {
-                navController.getBackStackEntry(Login.route)
+                navController.getBackStackEntry(Login)
             }
             val loginVM = hiltViewModel<LoginVM>(parentEntry)
             BackgroundLogin {
@@ -158,9 +161,9 @@ fun NavGraphBuilder.navigationLogin(
                 )
             }
         }
-        composable(route = CreateGamer.route) { navBackStackEntry ->
+        composable<CreateGamer> { navBackStackEntry ->
             val parentEntry = remember(navBackStackEntry) {
-                navController.getBackStackEntry(Login.route)
+                navController.getBackStackEntry(Login)
             }
             val loginVM = hiltViewModel<LoginVM>(parentEntry)
             BackgroundLogin {
@@ -173,8 +176,8 @@ fun NavGraphBuilder.navigationLogin(
                     messageResolver = messageResolver,
                     snackBarHostState = snackBarHostState,
                     onNavigateToAuthentication = {
-                        navController.navigate(Authentication.route) {
-                            popUpTo(Login.route) { inclusive = false }
+                        navController.navigate(Authentication) {
+                            popUpTo(Login) { inclusive = false }
                         }
                     }
                 )
@@ -186,17 +189,12 @@ fun NavGraphBuilder.navigationLogin(
 fun NavGraphBuilder.navigationMainPage(
     navController: NavHostController
 ) {
-    navigation(
-        startDestination = Home.route,
-        route = MainPage.route
-    ) {
-        composable(
-            route = Home.route
-        ) { navBackStackEntry ->
+    navigation<MainPage>(startDestination = Home) {
+        composable<Home> { navBackStackEntry ->
             val parentEntry = remember(navBackStackEntry) {
-                navController.getBackStackEntry(MainPage.route)
+                navController.getBackStackEntry(MainPage)
             }
-            val gamerId = parentEntry.arguments?.getString(MainPage.gamerIdArg) ?: ""
+            val gamerId = parentEntry.toRoute<MainPage>().gamerId
             Box(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center

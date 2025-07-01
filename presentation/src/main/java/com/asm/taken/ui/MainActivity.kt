@@ -57,10 +57,10 @@ class MainActivity : ComponentActivity() {
                 SessionUiState.Loading -> keepSplashScreen = true
                 else -> {
                     keepSplashScreen = false
-                    val initRoute: Pair<Route, Any?> = when (sessionState) {
-                        is SessionUiState.UnregisterUser -> Pair(CreateGamer, sessionState.userData)
-                        is SessionUiState.UserRegister -> Pair(MainPage, sessionState.gamerId)
-                        else -> Pair(Authentication, null)
+                    val initRoute: Route = when (sessionState) {
+                        is SessionUiState.UnregisterUser -> sessionState.userData.let { CreateGamer(it.userId, it.profilePictureUrl) }
+                        is SessionUiState.UserRegister -> MainPage(sessionState.gamerId)
+                        else -> Authentication
                     }
                     setContent {
                         TakenTheme {
@@ -83,7 +83,7 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun PuzzleScaffold(
-    initRoute: Pair<Route, Any?>,
+    initRoute: Route,
     authenticationClient: AuthenticationClient,
     messageResolver: MessageResolver
 ) {

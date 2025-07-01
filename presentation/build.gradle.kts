@@ -3,12 +3,14 @@ plugins {
     id("org.jetbrains.kotlin.android")
     id("com.google.dagger.hilt.android")
     id("com.google.gms.google-services")
+    id("org.jetbrains.kotlin.plugin.compose") version "2.0.0"
+    kotlin("plugin.serialization") version "2.0.21"
     kotlin("kapt")
 }
 
 android {
     namespace = "com.asm.taken"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.asm.taken"
@@ -42,9 +44,6 @@ android {
     buildFeatures {
         compose = true
     }
-    composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.15"
-    }
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
@@ -52,12 +51,17 @@ android {
     }
 }
 
+composeCompiler {
+    enableStrongSkippingMode = true
+}
+
 dependencies {
 
     val coreKtxVersion = "1.13.1"
     val roomVersion = "2.6.1"
     val hiltVersion = "2.51.1"
-    val navVersion = "2.7.7"
+    val navVersion = "2.9.0"
+    val kotlinSerializer = "1.7.3"
     val firebaseVersion = "33.1.0"
     val gsonVersion = "2.11.0"
     val credentials = "1.2.2"
@@ -104,6 +108,7 @@ dependencies {
 
     //NAVIGATION
     implementation("androidx.navigation:navigation-compose:$navVersion")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:$kotlinSerializer")
 
     //COROUTINES
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:$kotlinCoroutinesAndroid")

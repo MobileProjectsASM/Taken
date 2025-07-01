@@ -1,6 +1,7 @@
 package com.asm.taken.vm
 
 import android.util.Log
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.asm.domain.entities.Gamer
@@ -26,14 +27,14 @@ import com.asm.taken.model.InputPhoneNumberError
 import com.asm.taken.model.InputRepeatValueError
 import com.asm.taken.model.InputState
 import com.asm.taken.model.InputUiState
+import com.asm.taken.model.LoginCreateGamerFormUiState
 import com.asm.taken.model.LoginFailure
 import com.asm.taken.model.LoginFormCreateAccountUiState
-import com.asm.taken.model.LoginCreateGamerFormUiState
 import com.asm.taken.model.LoginFormPhoneUiState
 import com.asm.taken.model.LoginFormUiState
 import com.asm.taken.model.LoginUiState
+import com.asm.taken.ui.navigation.CreateGamer
 import com.asm.taken.utils.AuthResult
-import com.asm.taken.utils.LogoutResult
 import com.asm.taken.utils.SendOtpResult
 import com.asm.taken.utils.SignUpResult
 import com.asm.taken.utils.UserData
@@ -46,6 +47,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class LoginVM @Inject constructor(
+    private val savedStateHandle: SavedStateHandle,
     private val getGamerUC: GetGamerUC,
     private val getCountriesInfoUC: GetCountriesInfoUC,
     private val saveSessionUC: SaveSessionUC,
@@ -65,7 +67,7 @@ class LoginVM @Inject constructor(
     private val _loginCreateGamerFormUiState: MutableStateFlow<LoginCreateGamerFormUiState> = MutableStateFlow(
         LoginCreateGamerFormUiState(imageSelected = InputUiState(ImageSelected.Default), aliasUiState = InputUiState(""), ageUiState = InputUiState(""), countryUiState = InputUiState(""))
     )
-    private val _loginUiState: MutableStateFlow<LoginUiState> = MutableStateFlow(LoginUiState.Logout)
+    private val _loginUiState: MutableStateFlow<LoginUiState> = MutableStateFlow(LoginUiState.Logout/*savedStateHandle.get<String>(CreateGamer.USER_DATA)?.let { LoginUiState.UnregisteredUser(UserData("", "")) } ?: LoginUiState.Logout*/)
     private val _otpFormUiState: MutableStateFlow<InputUiState<String, InputOtpError>> = MutableStateFlow(
         InputUiState("")
     )

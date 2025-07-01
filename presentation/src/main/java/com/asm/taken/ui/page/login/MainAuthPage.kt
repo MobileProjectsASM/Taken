@@ -45,6 +45,7 @@ import com.asm.taken.ui.PuzzleGeneralTitle
 import com.asm.taken.utils.AuthResult
 import com.asm.taken.utils.AuthenticationClient
 import com.asm.taken.utils.MessageResolver
+import com.asm.taken.utils.UserData
 import com.asm.taken.vm.LoginVM
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -57,8 +58,8 @@ fun MainAuthPage(
     snackBarHostState: SnackbarHostState,
     onNavigateToCreateAccount: () -> Unit,
     onNavigateToAuthWithPhone: () -> Unit,
-    onNavigateToMainPage: (gamerId: String) -> Unit,
-    onNavigateToCreateGamer: () -> Unit
+    onNavigateToMainPage: (String) -> Unit,
+    onNavigateToCreateGamer: (String, String?) -> Unit
 ) {
     val coroutineScope = rememberCoroutineScope()
 
@@ -75,7 +76,9 @@ fun MainAuthPage(
         messageResolver = messageResolver,
         snackBarHostState = snackBarHostState,
         onNavigateToMainPage = onNavigateToMainPage,
-        onNavigateToCreateGamer = onNavigateToCreateGamer
+        onNavigateToCreateGamer = {
+            onNavigateToCreateGamer(it.userId, it.profilePictureUrl)
+        }
     )
 }
 
@@ -170,7 +173,7 @@ fun LoginState(
     messageResolver: MessageResolver,
     snackBarHostState: SnackbarHostState,
     onNavigateToMainPage: (gamerId: String) -> Unit,
-    onNavigateToCreateGamer: () -> Unit
+    onNavigateToCreateGamer: (UserData) -> Unit
 ) {
     val loginUiState: LoginUiState by loginVM.loginUiState.collectAsStateWithLifecycle()
     when (val state = loginUiState) {
@@ -186,7 +189,7 @@ fun LoginState(
             onNavigateToMainPage(state.gamerId)
         }
         is LoginUiState.UnregisteredUser -> LaunchedEffect(true) {
-           onNavigateToCreateGamer()
+           onNavigateToCreateGamer(state.userData)
         }
         else -> return
     }
