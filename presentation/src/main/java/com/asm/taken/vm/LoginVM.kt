@@ -1,7 +1,6 @@
 package com.asm.taken.vm
 
 import android.util.Log
-import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.asm.domain.entities.Gamer
@@ -13,7 +12,7 @@ import com.asm.domain.use_cases.CloseSessionUC
 import com.asm.domain.use_cases.GetCountriesInfoUC
 import com.asm.domain.use_cases.GetGamerUC
 import com.asm.domain.use_cases.SaveSessionUC
-import com.asm.taken.mappers.PhoneCodeMapper
+import com.asm.taken.mappers.CountryMapper
 import com.asm.taken.model.CountriesUiState
 import com.asm.taken.model.ImageSelected
 import com.asm.taken.model.InputAgeError
@@ -33,7 +32,6 @@ import com.asm.taken.model.LoginFormCreateAccountUiState
 import com.asm.taken.model.LoginFormPhoneUiState
 import com.asm.taken.model.LoginFormUiState
 import com.asm.taken.model.LoginUiState
-import com.asm.taken.ui.navigation.CreateGamer
 import com.asm.taken.utils.AuthResult
 import com.asm.taken.utils.SendOtpResult
 import com.asm.taken.utils.SignUpResult
@@ -47,13 +45,15 @@ import javax.inject.Inject
 
 @HiltViewModel
 class LoginVM @Inject constructor(
-    private val savedStateHandle: SavedStateHandle,
     private val getGamerUC: GetGamerUC,
     private val getCountriesInfoUC: GetCountriesInfoUC,
     private val saveSessionUC: SaveSessionUC,
-    private val closeSessionUC: CloseSessionUC,
-    private val phoneCodeMapper: PhoneCodeMapper
+    private val countryMapper: CountryMapper
 ) : ViewModel() {
+
+    companion object {
+        const val TAG = "LoginVW"
+    }
 
     //region MutableStateFlows
     private val _loginFormUiState = MutableStateFlow(LoginFormUiState(emailUiState = InputUiState(""), passwordUiState = InputUiState("")))
@@ -64,10 +64,7 @@ class LoginVM @Inject constructor(
     private val _loginFormCreateAccountUiState: MutableStateFlow<LoginFormCreateAccountUiState> = MutableStateFlow(
         LoginFormCreateAccountUiState(emailUiState = InputUiState(""), passwordUiState = InputUiState(""), passwordRepeatUiState = InputUiState(""))
     )
-    private val _loginCreateGamerFormUiState: MutableStateFlow<LoginCreateGamerFormUiState> = MutableStateFlow(
-        LoginCreateGamerFormUiState(imageSelected = InputUiState(ImageSelected.Default), aliasUiState = InputUiState(""), ageUiState = InputUiState(""), countryUiState = InputUiState(""))
-    )
-    private val _loginUiState: MutableStateFlow<LoginUiState> = MutableStateFlow(LoginUiState.Logout/*savedStateHandle.get<String>(CreateGamer.USER_DATA)?.let { LoginUiState.UnregisteredUser(UserData("", "")) } ?: LoginUiState.Logout*/)
+    private val _loginUiState: MutableStateFlow<LoginUiState> = MutableStateFlow(LoginUiState.Logout)
     private val _otpFormUiState: MutableStateFlow<InputUiState<String, InputOtpError>> = MutableStateFlow(
         InputUiState("")
     )
@@ -80,14 +77,13 @@ class LoginVM @Inject constructor(
     val countriesUiState: StateFlow<CountriesUiState> = _countriesUiState
     val loginFormPhoneUiState: StateFlow<LoginFormPhoneUiState> = _loginFormPhoneUiState
     val loginFormCreateAccountState: StateFlow<LoginFormCreateAccountUiState> = _loginFormCreateAccountUiState
-    val loginCreateGamerFormState: StateFlow<LoginCreateGamerFormUiState> = _loginCreateGamerFormUiState
     val loginUiState: StateFlow<LoginUiState> = _loginUiState
     val otpFormUiState: StateFlow<InputUiState<String, InputOtpError>> = _otpFormUiState
 
     //endregion
 
     override fun onCleared() {
-        Log.i("VM_TEST", "onCleared")
+        Log.i(TAG, "onCleared")
         super.onCleared()
     }
 
@@ -117,7 +113,7 @@ class LoginVM @Inject constructor(
             val countriesState: CountriesUiState = when (val countriesResult = getCountriesInfoUC.execute(Unit)) {
                 is Result.Unsuccessful -> CountriesUiState.Failure(countriesResult.failure)
                 is Result.Successful -> {
-                    val phoneCodes = countriesResult.data.map(phoneCodeMapper::getPhoneCode)
+                    val phoneCodes = countriesResult.data.map(countryMapper::toCountryUiState)
                     CountriesUiState.Successful(phoneCodes)
                 }
             }
@@ -156,12 +152,6 @@ class LoginVM @Inject constructor(
         }
     }
 
-    fun updateLoginUiState(loginUiState: LoginUiState) {
-        _loginUiState.update {
-            loginUiState
-        }
-    }
-
     fun resetLoginUiState() {
         _loginUiState.update { LoginUiState.Logout }
     }
@@ -172,19 +162,6 @@ class LoginVM @Inject constructor(
                 phoneCodeUiState = InputUiState(""),
                 phoneNumberUiState = InputUiState("")
             )
-        }
-    }
-
-    fun closeSession(signOut: suspend () -> Result<Unit, GeneralFailure>) {
-        viewModelScope.launch {
-            _loginUiState.update { LoginUiState.Loading }
-            val closeSessionResult = closeSessionUC.execute(signOut)
-            when (closeSessionResult) {
-                is Result.Successful<Unit> -> _loginUiState.update { LoginUiState.Logout }
-                is Result.Unsuccessful<GeneralFailure> -> _loginUiState.update {
-                    LoginUiState.Failure(LoginFailure.LogoutFailure)
-                }
-            }
         }
     }
 
@@ -334,64 +311,6 @@ class LoginVM @Inject constructor(
         val errors = mutableListOf<InputRepeatValueError>()
         if (password != passwordRepeat) errors.add(InputRepeatValueError.IS_NOT_SAME_VALUE)
         return errors
-    }
-
-    //endregion
-
-    //region createGamer
-
-    fun createGamer(id: String, alias: String, age: Int, country: String, imageSelected: ImageSelected) {
-        viewModelScope.launch {
-
-        }
-    }
-
-    fun validateCreateGamerForm(alias: String, age: String, country: String, imageSelected: ImageSelected) {
-        val aliasErrors = validateAlias(alias)
-        val ageErrors = validateAge(age)
-        val countryErrors = validateCountry(country)
-        _loginCreateGamerFormUiState.update {
-            LoginCreateGamerFormUiState(
-                aliasUiState = aliasErrors.run {
-                    if (isEmpty()) InputUiState(alias, InputState.Success)
-                    else InputUiState(alias, InputState.Error(this))
-                },
-                ageUiState = ageErrors.run {
-                    if (isEmpty()) InputUiState(age, InputState.Success)
-                    else InputUiState(age, InputState.Error(this))
-                },
-                countryUiState = countryErrors.run {
-                    if (isEmpty()) InputUiState(country, InputState.Success)
-                    else InputUiState(country, InputState.Error(this))
-                },
-                imageSelected = InputUiState(imageSelected)
-            )
-        }
-    }
-
-    private fun validateAlias(alias: String): List<InputAliasError> {
-        val aliasErrors = mutableListOf<InputAliasError>()
-        if (alias.isEmpty()) aliasErrors.add(InputAliasError.EMPTY)
-        return aliasErrors
-    }
-
-    private fun validateAge(age: String): List<InputAgeError> {
-        val ageErrors = mutableListOf<InputAgeError>()
-        if (age.isEmpty()) ageErrors.add(InputAgeError.EMPTY)
-        try {
-            val ageInt = age.toInt()
-            if (ageInt > 100) ageErrors.add(InputAgeError.GREATER_THAN_100)
-            if (ageInt < 8) ageErrors.add(InputAgeError.LESS_THAN_8)
-        } catch (exception: NumberFormatException) {
-            ageErrors.add(InputAgeError.ONLY_NUMBERS)
-        }
-        return ageErrors
-    }
-
-    private fun validateCountry(country: String): List<InputCountryError> {
-        val countryErrors = mutableListOf<InputCountryError>()
-        if (country.isEmpty()) countryErrors.add(InputCountryError.EMPTY)
-        return countryErrors
     }
 
     //endregion

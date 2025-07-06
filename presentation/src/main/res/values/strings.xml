@@ -69,6 +69,7 @@
     <string name="err_age_less_than_8">Age is less than 8</string>
     <string name="err_image_is_very_weight">Image is very weight</string>
     <string name="err_sign_up">SignUp error</string>
+    <string name="err_server">Server error</string>
     <string name="err_logout">Logout Error</string>
 
     <string name="session_file" translatable="false">session_info</string>

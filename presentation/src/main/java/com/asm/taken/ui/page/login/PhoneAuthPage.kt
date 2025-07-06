@@ -95,7 +95,7 @@ fun PhoneAuthPage(
         snackBarHostState = snackBarHostState,
         onSentPhone = onSentPhone
     )
-    LoginState(
+    SessionSection(
         loginVM = loginVM,
         authenticationClient = authenticationClient,
         messageResolver = messageResolver,
@@ -379,7 +379,7 @@ fun ItemCountry(countryUiState: CountryUiState, onClick: (CountryUiState) -> Uni
 }
 
 @Composable
-fun LoginState(
+fun SessionSection(
     loginVM: LoginVM,
     authenticationClient: AuthenticationClient,
     messageResolver: MessageResolver,
@@ -391,15 +391,11 @@ fun LoginState(
     val scope = rememberCoroutineScope()
     when (loginUiState) {
         LoginUiState.Loading -> CircularProgressDialog()
-        is LoginUiState.RegisteredUser -> {
-            LaunchedEffect(true) {
-                onNavigateToMainPage(loginUiState.gamerId)
-            }
+        is LoginUiState.RegisteredUser -> LaunchedEffect(true) {
+            onNavigateToMainPage(loginUiState.gamerId)
         }
-        is LoginUiState.UnregisteredUser -> {
-            LaunchedEffect(true) {
-                onNavigateToCreateGamer(loginUiState.userData)
-            }
+        is LoginUiState.UnregisteredUser -> LaunchedEffect(true) {
+            onNavigateToCreateGamer(loginUiState.userData)
         }
         is LoginUiState.Failure -> {
             val message = messageResolver.getErrorLogin(loginUiState.loginFailure)

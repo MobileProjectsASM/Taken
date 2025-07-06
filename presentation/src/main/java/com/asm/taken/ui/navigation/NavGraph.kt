@@ -29,10 +29,13 @@ import com.asm.taken.ui.page.login.MainAuthPage
 import com.asm.taken.ui.page.login.PhoneAuthPage
 import com.asm.taken.utils.AuthenticationClient
 import com.asm.taken.utils.MessageResolver
+import com.asm.taken.vm.EditGamerVM
 import com.asm.taken.vm.LoginVM
+import com.asm.taken.vm.SessionVM
 
 @Composable
 fun MainNavigation(
+    sessionVM: SessionVM,
     initRoute: Route,
     innerPadding: PaddingValues,
     snackBarHostState: SnackbarHostState,
@@ -41,26 +44,50 @@ fun MainNavigation(
 ) {
     val navigationController = rememberNavController()
 
-    val mainDestination: Route = if (initRoute == Authentication || initRoute is CreateGamer) Login
-    else initRoute
-
-    val secondaryDestination: Route = when (initRoute) {
-        Authentication, is CreateGamer -> initRoute
-        else -> Authentication
-    }
-
     NavHost(
         navController = navigationController,
-        startDestination = mainDestination,
+        startDestination = initRoute,
         modifier = Modifier.padding(innerPadding)
     ) {
         navigationLogin(
-            initRoute = secondaryDestination,
+            sessionVM = sessionVM,
             navController = navigationController,
             snackBarHostState = snackBarHostState,
             authenticationClient = authenticationClient,
             messageResolver = messageResolver
         )
+        composable<CreateGamer> { navBackStackEntry ->
+            LaunchedEffect(true) {
+                sessionVM.getSession()
+            }
+            val editGamerVM = hiltViewModel<EditGamerVM>(navBackStackEntry)
+            BackgroundLogin {
+                LaunchedEffect(true) {
+                    editGamerVM.getCountriesInfo()
+                }
+                CreateGamerPage(
+                    sessionVM = sessionVM,
+                    editGamerVM = editGamerVM,
+                    authenticationClient = authenticationClient,
+                    messageResolver = messageResolver,
+                    snackBarHostState = snackBarHostState,
+                    onNavigateToAuthentication = {
+                        navigationController.navigate(Login) {
+                            popUpTo(navigationController.graph.startDestinationId) {
+                                inclusive = true
+                            }
+                        }
+                    },
+                    onNavigateToHome = { gamerId ->
+                        navigationController.navigate(MainPage(gamerId = gamerId)) {
+                            popUpTo(navigationController.graph.startDestinationId) {
+                                inclusive = true
+                            }
+                        }
+                    }
+                )
+            }
+        }
         navigationMainPage(
             navController = navigationController
         )
@@ -68,14 +95,15 @@ fun MainNavigation(
 }
 
 fun NavGraphBuilder.navigationLogin(
-    initRoute: Route,
+    sessionVM: SessionVM,
     navController: NavHostController,
     snackBarHostState: SnackbarHostState,
     authenticationClient: AuthenticationClient,
     messageResolver: MessageResolver
 ) {
-    navigation<Login>(startDestination = initRoute) {
+    navigation<Login>(startDestination = Authentication) {
         composable<Authentication> { navBackStackEntry ->
+            LaunchedEffect(true) { sessionVM.resetSession() }
             val parentEntry = remember(navBackStackEntry) {
                 navController.getBackStackEntry(Login)
             }
@@ -93,14 +121,20 @@ fun NavGraphBuilder.navigationLogin(
                         navController.navigate(AuthenticationPhone)
                     },
                     onNavigateToMainPage = {
-                        navController.navigate(MainPage(gamerId = it))
+                        navController.navigate(MainPage(gamerId = it)) {
+                            popUpTo(navController.graph.startDestinationId) {
+                                inclusive = true
+                            }
+                        }
                     },
                     onNavigateToCreateGamer = { userId, imageUrl ->
                         navController.navigate(CreateGamer(
                             id = userId,
                             image = imageUrl
                         )) {
-                            popUpTo(Login) { inclusive = false }
+                            popUpTo(navController.graph.startDestinationId) {
+                                inclusive = true
+                            }
                         }
                     }
                 )
@@ -136,11 +170,17 @@ fun NavGraphBuilder.navigationLogin(
                             id = userId,
                             image = imageUrl
                         )) {
-                            popUpTo(Login) { inclusive = false }
+                            popUpTo(navController.graph.startDestinationId) {
+                                inclusive = true
+                            }
                         }
                     },
                     onNavigateToMainPage = {
-                        navController.navigate(MainPage(gamerId = it))
+                        navController.navigate(MainPage(gamerId = it)) {
+                            popUpTo(navController.graph.startDestinationId) {
+                                inclusive = true
+                            }
+                        }
                     },
                     popBackStack = navController::popBackStack
                 )
@@ -158,28 +198,6 @@ fun NavGraphBuilder.navigationLogin(
                     messageResolver = messageResolver,
                     snackBarHostState = snackBarHostState,
                     popBackStack = navController::popBackStack
-                )
-            }
-        }
-        composable<CreateGamer> { navBackStackEntry ->
-            val parentEntry = remember(navBackStackEntry) {
-                navController.getBackStackEntry(Login)
-            }
-            val loginVM = hiltViewModel<LoginVM>(parentEntry)
-            BackgroundLogin {
-                LaunchedEffect(true) {
-                    loginVM.getCountriesInfo()
-                }
-                CreateGamerPage(
-                    loginVM = loginVM,
-                    authenticationClient = authenticationClient,
-                    messageResolver = messageResolver,
-                    snackBarHostState = snackBarHostState,
-                    onNavigateToAuthentication = {
-                        navController.navigate(Authentication) {
-                            popUpTo(Login) { inclusive = false }
-                        }
-                    }
                 )
             }
         }

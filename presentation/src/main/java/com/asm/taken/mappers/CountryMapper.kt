@@ -4,8 +4,8 @@ import com.asm.domain.entities.CountryInfo
 import com.asm.taken.model.CountryUiState
 import javax.inject.Inject
 
-class PhoneCodeMapper @Inject constructor() {
-    fun getPhoneCode(countryInfo: CountryInfo): CountryUiState =
+class CountryMapper @Inject constructor() {
+    fun toCountryUiState(countryInfo: CountryInfo): CountryUiState =
         CountryUiState(
             country = countryInfo.name,
             phoneCode = countryInfo.code,

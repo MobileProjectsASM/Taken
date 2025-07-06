@@ -19,6 +19,7 @@ import com.asm.taken.model.InputImageError.*
 import com.asm.taken.model.InputRepeatValueError
 import com.asm.taken.model.LoginFailure
 import com.asm.taken.model.SendOtpError
+import com.asm.taken.model.SessionError
 import com.asm.taken.model.SignUpError
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
@@ -110,6 +111,12 @@ class MessageResolver @Inject constructor(
     fun getErrorImage(error: InputImageError): String = when (error) {
         IMAGE_IS_VERY_WEIGHT -> context.getString(R.string.err_image_is_very_weight)
         UNKNOWN_ERROR -> context.getString(R.string.err_unknown)
+    }
+
+    fun getErrorSession(error: SessionError) = when (error) {
+        SessionError.SERVER_ERROR -> context.getString(R.string.err_server)
+        SessionError.NETWORK_CONNECTION -> context.getString(R.string.err_network_connection)
+        SessionError.UNKNOWN -> context.getString(R.string.err_unknown)
     }
 
     fun getMessage(@StringRes resId: Int) = context.getString(resId)

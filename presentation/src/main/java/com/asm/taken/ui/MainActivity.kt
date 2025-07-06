@@ -15,10 +15,14 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import com.asm.domain.errors.GeneralFailure
 import com.asm.taken.R
+import com.asm.taken.model.InitRouteUiState
+import com.asm.taken.model.SessionError
 import com.asm.taken.model.SessionUiState
 import com.asm.taken.ui.navigation.Authentication
 import com.asm.taken.ui.navigation.CreateGamer
+import com.asm.taken.ui.navigation.Login
 import com.asm.taken.ui.navigation.MainNavigation
 import com.asm.taken.ui.navigation.MainPage
 import com.asm.taken.ui.navigation.Route
@@ -48,25 +52,21 @@ class MainActivity : ComponentActivity() {
         var keepSplashScreen = true
         super.onCreate(savedInstanceState)
         splashScreen.setKeepOnScreenCondition { keepSplashScreen }
-        launchOverStarted(sessionVM.sessionState::collect) { sessionState ->
-            when (sessionState) {
-                is SessionUiState.Fail -> {
+        launchOverStarted(sessionVM.initRouteState::collect) { initRouteState ->
+            when (initRouteState) {
+                is InitRouteUiState.Fail -> {
                     keepSplashScreen = true
-                    Snackbar.make(window.decorView, getText(R.string.err_get_session_data), Snackbar.LENGTH_SHORT).show()
+                    Snackbar.make(window.decorView, messageResolver.getErrorSession(initRouteState.error), Snackbar.LENGTH_SHORT).show()
                 }
-                SessionUiState.Loading -> keepSplashScreen = true
-                else -> {
+                InitRouteUiState.Loading -> keepSplashScreen = true
+                is InitRouteUiState.Success -> {
                     keepSplashScreen = false
-                    val initRoute: Route = when (sessionState) {
-                        is SessionUiState.UnregisterUser -> sessionState.userData.let { CreateGamer(it.userId, it.profilePictureUrl) }
-                        is SessionUiState.UserRegister -> MainPage(sessionState.gamerId)
-                        else -> Authentication
-                    }
                     setContent {
                         TakenTheme {
                             Surface {
                                 PuzzleScaffold(
-                                    initRoute = initRoute,
+                                    sessionVM = sessionVM,
+                                    initRoute = initRouteState.initRoute,
                                     authenticationClient = authenticationClient,
                                     messageResolver = messageResolver
                                 )
@@ -76,13 +76,14 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
-        sessionVM.isThereSessionActive()
+        sessionVM.getInitRoute()
         enableEdgeToEdge()
     }
 }
 
 @Composable
 fun PuzzleScaffold(
+    sessionVM: SessionVM,
     initRoute: Route,
     authenticationClient: AuthenticationClient,
     messageResolver: MessageResolver
@@ -93,6 +94,7 @@ fun PuzzleScaffold(
         snackbarHost = { SnackbarHost(snackBarHostState) }
     ) { innerPadding ->
         MainNavigation(
+            sessionVM = sessionVM,
             initRoute = initRoute,
             innerPadding = innerPadding,
             snackBarHostState = snackBarHostState,

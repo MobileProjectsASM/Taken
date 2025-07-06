@@ -33,13 +33,11 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -67,7 +65,7 @@ import com.asm.taken.model.InputCountryError
 import com.asm.taken.model.InputImageError
 import com.asm.taken.model.InputState
 import com.asm.taken.model.LoginCreateGamerFormUiState
-import com.asm.taken.model.LoginUiState
+import com.asm.taken.model.SessionUiState
 import com.asm.taken.ui.CircularProgressDialog
 import com.asm.taken.ui.DefaultButton
 import com.asm.taken.ui.DefaultOutlinedTextFieldLI
@@ -77,65 +75,78 @@ import com.asm.taken.ui.puzzleFontFamily
 import com.asm.taken.utils.AuthenticationClient
 import com.asm.taken.utils.MessageResolver
 import com.asm.taken.utils.UserData
-import com.asm.taken.vm.LoginVM
+import com.asm.taken.vm.EditGamerVM
+import com.asm.taken.vm.SessionVM
 
 @Composable
 fun CreateGamerPage(
-    loginVM: LoginVM,
+    sessionVM: SessionVM,
+    editGamerVM: EditGamerVM,
     authenticationClient: AuthenticationClient,
     messageResolver: MessageResolver,
     snackBarHostState: SnackbarHostState,
-    onNavigateToAuthentication: () -> Unit
+    onNavigateToAuthentication: () -> Unit,
+    onNavigateToHome: (String) -> Unit
 ) {
-    val loginUiState: LoginUiState by loginVM.loginUiState.collectAsStateWithLifecycle()
-    LoginState(
-        loginVM = loginVM,
+    val sessionUiState: SessionUiState? by sessionVM.sessionState.collectAsStateWithLifecycle()
+    SessionSection(
+        sessionVM = sessionVM,
+        editGamerVM = editGamerVM,
         authenticationClient = authenticationClient,
-        loginUiState = loginUiState,
+        sessionUiState = sessionUiState,
         snackBarHostState = snackBarHostState,
         messageResolver = messageResolver,
-        onNavigateToAuthentication = onNavigateToAuthentication
+        onNavigateToAuthentication = onNavigateToAuthentication,
+        onNavigateToHome = onNavigateToHome
     )
 }
 
 @Composable
-fun LoginState(
-    loginVM: LoginVM,
+fun SessionSection(
+    sessionVM: SessionVM,
+    editGamerVM: EditGamerVM,
     authenticationClient: AuthenticationClient,
-    loginUiState: LoginUiState,
+    sessionUiState: SessionUiState?,
     snackBarHostState: SnackbarHostState,
     messageResolver: MessageResolver,
-    onNavigateToAuthentication: () -> Unit
+    onNavigateToAuthentication: () -> Unit,
+    onNavigateToHome: (String) -> Unit
 ) {
-    when (loginUiState) {
-        LoginUiState.AccountCreated, is LoginUiState.RegisteredUser, is LoginUiState.SentOtp -> return
-        LoginUiState.Loading -> CircularProgressDialog()
-        LoginUiState.Logout -> LaunchedEffect(true) {
+    when (sessionUiState) {
+        SessionUiState.Loading -> CircularProgressDialog()
+        is SessionUiState.Fail -> LaunchedEffect(true) {
+            val message = messageResolver.getErrorSession(sessionUiState.error)
+            val snackBarResult = snackBarHostState.showSnackbar(message, withDismissAction = true)
+            //if (snackBarResult == SnackbarResult.Dismissed) sessionVM.
+        }
+        SessionUiState.Logout -> LaunchedEffect(true) {
             onNavigateToAuthentication()
         }
-        is LoginUiState.UnregisteredUser -> {
-            val countriesUiState: CountriesUiState by loginVM.countriesUiState.collectAsStateWithLifecycle()
+        is SessionUiState.UserRegister -> LaunchedEffect(true) {
+            onNavigateToHome(sessionUiState.gamerId)
+        }
+        is SessionUiState.UnregisterUser -> {
+            val countriesUiState: CountriesUiState by editGamerVM.countriesUiState.collectAsStateWithLifecycle()
             CreateGamerSection(
                 authenticationClient = authenticationClient,
-                loginVM = loginVM,
-                userData = loginUiState.userData,
+                sessionVM = sessionVM,
+                editGamerVM = editGamerVM,
+                userData = sessionUiState.userData,
                 snackBarHostState = snackBarHostState,
                 countriesUiState = countriesUiState,
                 messageResolver = messageResolver
             )
         }
-        is LoginUiState.Failure -> LaunchedEffect(true) {
-            val message = messageResolver.getErrorLogin(loginUiState.loginFailure)
-            val snackBarResult = snackBarHostState.showSnackbar(message, withDismissAction = true)
-            if (snackBarResult == SnackbarResult.Dismissed) loginVM.resetLoginUiState()
-        }
+
+        null -> return
     }
 }
 
 @Composable
 fun CreateGamerSection(
     authenticationClient: AuthenticationClient,
-    loginVM: LoginVM,
+    sessionVM: SessionVM,
+    editGamerVM: EditGamerVM,
     userData: UserData,
     snackBarHostState: SnackbarHostState,
     countriesUiState: CountriesUiState,
@@ -144,7 +155,8 @@ fun CreateGamerSection(
     when (countriesUiState) {
         is CountriesUiState.Failure -> ErrorCountries(
             authenticationClient = authenticationClient,
-            loginVM = loginVM,
+            sessionVM = sessionVM,
+            editGamerVM = editGamerVM,
             snackBarHostState = snackBarHostState,
             messageResolver = messageResolver,
             userData = userData
@@ -154,7 +166,8 @@ fun CreateGamerSection(
 
         is CountriesUiState.Successful -> PanelCreateGamer(
             authenticationClient = authenticationClient,
-            loginVM = loginVM,
+            sessionVM = sessionVM,
+            editGamerVM = editGamerVM,
             userData = userData,
             countriesUiState = countriesUiState.countriesInfo,
             messageResolver = messageResolver
@@ -165,7 +178,8 @@ fun CreateGamerSection(
 @Composable
 fun ErrorCountries(
     authenticationClient: AuthenticationClient,
-    loginVM: LoginVM,
+    sessionVM: SessionVM,
+    editGamerVM: EditGamerVM,
     snackBarHostState: SnackbarHostState,
     messageResolver: MessageResolver,
     userData: UserData,
@@ -175,7 +189,8 @@ fun ErrorCountries(
     }
     PanelCreateGamer(
         authenticationClient = authenticationClient,
-        loginVM = loginVM,
+        editGamerVM = editGamerVM,
+        sessionVM = sessionVM,
         userData = userData,
         countriesUiState = null,
         messageResolver = messageResolver
@@ -185,7 +200,8 @@ fun ErrorCountries(
 @Composable
 fun PanelCreateGamer(
     authenticationClient: AuthenticationClient,
-    loginVM: LoginVM,
+    sessionVM: SessionVM,
+    editGamerVM: EditGamerVM,
     userData: UserData,
     countriesUiState: List<CountryUiState>?,
     messageResolver: MessageResolver,
@@ -220,7 +236,7 @@ fun PanelCreateGamer(
                         ),
                         contentPadding = PaddingValues(7.dp),
                         onClick = {
-                            loginVM.closeSession(authenticationClient::signOut)
+                            sessionVM.closeSession(authenticationClient::signOut)
                         }
                     ) {
                         Icon(
@@ -236,7 +252,7 @@ fun PanelCreateGamer(
                 )
                 Spacer(modifier = Modifier.height(50.dp))
                 FormCreateGamer(
-                    loginVM = loginVM,
+                    editGamerVM = editGamerVM,
                     userData = userData,
                     countriesUiState = countriesUiState,
                     messageResolver = messageResolver,
@@ -249,12 +265,12 @@ fun PanelCreateGamer(
 
 @Composable
 fun FormCreateGamer(
-    loginVM: LoginVM,
+    editGamerVM: EditGamerVM,
     userData: UserData,
     countriesUiState: List<CountryUiState>?,
     messageResolver: MessageResolver
 ) {
-    val loginCreateGamerFormState: LoginCreateGamerFormUiState by loginVM.loginCreateGamerFormState.collectAsStateWithLifecycle()
+    val loginCreateGamerFormState: LoginCreateGamerFormUiState by editGamerVM.loginCreateGamerFormState.collectAsStateWithLifecycle()
     var showChangeProfileImageDialog: Boolean by rememberSaveable { mutableStateOf(false) }
     val aliasErrors: List<String> = when (val aliasUiState = loginCreateGamerFormState.aliasUiState.state) {
         is InputState.Error<InputAliasError> -> aliasUiState.errors.map { messageResolver.getErrorAlias(it) }
@@ -274,7 +290,7 @@ fun FormCreateGamer(
     }
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
         if (uri != null) {
-            loginVM.validateCreateGamerForm(
+            editGamerVM.validateCreateGamerForm(
                 alias = loginCreateGamerFormState.aliasUiState.value,
                 age = loginCreateGamerFormState.aliasUiState.value,
                 country = loginCreateGamerFormState.countryUiState.value,
@@ -289,14 +305,14 @@ fun FormCreateGamer(
         ) { optionChosen ->
             showChangeProfileImageDialog = false
             when (optionChosen) {
-                OptionChosen.Default -> loginVM.validateCreateGamerForm(
+                OptionChosen.Default -> editGamerVM.validateCreateGamerForm(
                     alias = loginCreateGamerFormState.aliasUiState.value,
                     age = loginCreateGamerFormState.ageUiState.value,
                     country = loginCreateGamerFormState.countryUiState.value,
                     imageSelected = ImageSelected.Default
                 )
                 OptionChosen.Gallery -> launcher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
-                is OptionChosen.SocialNetwork -> loginVM.validateCreateGamerForm(
+                is OptionChosen.SocialNetwork -> editGamerVM.validateCreateGamerForm(
                     alias = loginCreateGamerFormState.aliasUiState.value,
                     age = loginCreateGamerFormState.aliasUiState.value,
                     country = loginCreateGamerFormState.countryUiState.value,
@@ -322,7 +338,7 @@ fun FormCreateGamer(
             cdLeadingIcon = null,
             errors = aliasErrors
         ) { newAlias ->
-            loginVM.validateCreateGamerForm(
+            editGamerVM.validateCreateGamerForm(
                 alias = newAlias,
                 age = loginCreateGamerFormState.ageUiState.value,
                 country = loginCreateGamerFormState.countryUiState.value,
@@ -341,7 +357,7 @@ fun FormCreateGamer(
             cdLeadingIcon = null,
             errors = ageErrors
         ) { newAge ->
-            loginVM.validateCreateGamerForm(
+            editGamerVM.validateCreateGamerForm(
                 alias = loginCreateGamerFormState.aliasUiState.value,
                 age = newAge,
                 country = loginCreateGamerFormState.countryUiState.value,
@@ -357,7 +373,7 @@ fun FormCreateGamer(
             value = loginCreateGamerFormState.countryUiState.value,
             countryErrors = countryErrors
         ) { newCountry ->
-            loginVM.validateCreateGamerForm(
+            editGamerVM.validateCreateGamerForm(
                 alias = loginCreateGamerFormState.aliasUiState.value,
                 age = loginCreateGamerFormState.ageUiState.value,
                 country = newCountry,
@@ -373,7 +389,7 @@ fun FormCreateGamer(
                 text = stringResource(id = R.string.txt_btn_create_gamer),
                 enable = loginCreateGamerFormState.ageUiState.state is InputState.Success && loginCreateGamerFormState.ageUiState.state is InputState.Success && loginCreateGamerFormState.countryUiState.state is InputState.Success,
             ) {
-                loginVM.createGamer(userData.userId, loginCreateGamerFormState.aliasUiState.value, loginCreateGamerFormState.ageUiState.value.toInt(), loginCreateGamerFormState.countryUiState.value, loginCreateGamerFormState.imageSelected.value)
+                editGamerVM.createGamer(userData.userId, loginCreateGamerFormState.aliasUiState.value, loginCreateGamerFormState.ageUiState.value.toInt(), loginCreateGamerFormState.countryUiState.value, loginCreateGamerFormState.imageSelected.value)
             }
         }
         Spacer(modifier = Modifier.height(20.dp))

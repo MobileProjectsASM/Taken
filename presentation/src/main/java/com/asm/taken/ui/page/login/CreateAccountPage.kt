@@ -26,7 +26,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.navigation.NavController
 import com.asm.taken.R
 import com.asm.taken.model.InputState
 import com.asm.taken.model.LoginFormCreateAccountUiState
@@ -63,7 +62,7 @@ fun CreateAccountPage(
         messageResolver = messageResolver,
         coroutineScope = coroutineScope
     )
-    LoginState(
+    SessionSection(
         loginVM = loginVM,
         messageResolver = messageResolver,
         snackBarHostState = snackBarHostState,
@@ -72,7 +71,7 @@ fun CreateAccountPage(
 }
 
 @Composable
-fun LoginState(
+fun SessionSection(
     loginVM: LoginVM,
     messageResolver: MessageResolver,
     snackBarHostState: SnackbarHostState,

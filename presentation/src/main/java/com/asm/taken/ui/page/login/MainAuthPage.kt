@@ -71,7 +71,7 @@ fun MainAuthPage(
         onNavigateToCreateAccount = onNavigateToCreateAccount,
         onNavigateToAuthWithPhone = onNavigateToAuthWithPhone
     )
-    LoginState(
+    SessionSection(
         loginVM = loginVM,
         messageResolver = messageResolver,
         snackBarHostState = snackBarHostState,
@@ -168,7 +168,7 @@ fun PanelLogin(
 }
 
 @Composable
-fun LoginState(
+fun SessionSection(
     loginVM: LoginVM,
     messageResolver: MessageResolver,
     snackBarHostState: SnackbarHostState,
