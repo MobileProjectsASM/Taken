@@ -1,6 +1,7 @@
 package com.asm.taken.ui.navigation
 
 import android.app.Activity
+import android.util.Log
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -73,14 +74,14 @@ fun MainNavigation(
                     snackBarHostState = snackBarHostState,
                     onNavigateToAuthentication = {
                         navigationController.navigate(Login) {
-                            popUpTo(navigationController.graph.startDestinationId) {
+                            popUpTo(CreateGamer::class) {
                                 inclusive = true
                             }
                         }
                     },
                     onNavigateToHome = { gamerId ->
                         navigationController.navigate(MainPage(gamerId = gamerId)) {
-                            popUpTo(navigationController.graph.startDestinationId) {
+                            popUpTo(CreateGamer::class) {
                                 inclusive = true
                             }
                         }
@@ -122,7 +123,7 @@ fun NavGraphBuilder.navigationLogin(
                     },
                     onNavigateToMainPage = {
                         navController.navigate(MainPage(gamerId = it)) {
-                            popUpTo(navController.graph.startDestinationId) {
+                            popUpTo(Login::class) {
                                 inclusive = true
                             }
                         }
@@ -132,7 +133,7 @@ fun NavGraphBuilder.navigationLogin(
                             id = userId,
                             image = imageUrl
                         )) {
-                            popUpTo(navController.graph.startDestinationId) {
+                            popUpTo(Login::class) {
                                 inclusive = true
                             }
                         }
@@ -170,14 +171,14 @@ fun NavGraphBuilder.navigationLogin(
                             id = userId,
                             image = imageUrl
                         )) {
-                            popUpTo(navController.graph.startDestinationId) {
+                            popUpTo(Login::class) {
                                 inclusive = true
                             }
                         }
                     },
                     onNavigateToMainPage = {
                         navController.navigate(MainPage(gamerId = it)) {
-                            popUpTo(navController.graph.startDestinationId) {
+                            popUpTo(Login::class) {
                                 inclusive = true
                             }
                         }
