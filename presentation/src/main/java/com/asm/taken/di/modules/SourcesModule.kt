@@ -16,7 +16,7 @@ import com.asm.data.sources.local.interfaces.LevelLocalSource
 import com.asm.data.sources.local.interfaces.MultimediaLocalSource
 import com.asm.data.sources.local.interfaces.SessionLocalSource
 import com.asm.data.sources.remote.impl.firebase.GameFireStoreSource
-import com.asm.data.sources.remote.impl.firebase.GamerFireStoreSource
+import com.asm.data.sources.remote.impl.firebase.GamerFirebaseSource
 import com.asm.data.sources.remote.impl.firebase.LevelFireStoreSource
 import com.asm.data.sources.remote.impl.firebase.MultimediaStorageSource
 import com.asm.data.sources.remote.impl.rest.CountryInfoRestServiceSource
@@ -45,7 +45,7 @@ abstract class SourcesModule {
 
     @ViewModelScoped
     @Binds
-    abstract fun getGamerRemoteSource(gamerRemoteSource: GamerFireStoreSource): GamerRemoteSource
+    abstract fun getGamerRemoteSource(gamerRemoteSource: GamerFirebaseSource): GamerRemoteSource
 
     @ViewModelScoped
     @Binds

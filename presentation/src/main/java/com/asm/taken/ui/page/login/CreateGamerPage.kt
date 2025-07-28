@@ -53,6 +53,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import androidx.core.graphics.drawable.toIcon
+import androidx.core.net.toFile
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import com.asm.taken.R
@@ -126,6 +128,9 @@ fun SessionSection(
             onNavigateToHome(sessionUiState.gamerId)
         }
         is SessionUiState.UnregisterUser -> {
+            LaunchedEffect(true) {
+                editGamerVM.getCountriesInfo()
+            }
             val countriesUiState: CountriesUiState by editGamerVM.countriesUiState.collectAsStateWithLifecycle()
             CreateGamerSection(
                 authenticationClient = authenticationClient,

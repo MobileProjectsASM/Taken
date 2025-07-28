@@ -102,6 +102,7 @@ dependencies {
     implementation("com.google.firebase:firebase-analytics")
     implementation("com.google.firebase:firebase-firestore")
     implementation("com.google.firebase:firebase-storage")
+    implementation("com.google.firebase:firebase-functions")
 
     //ICONS
     implementation("androidx.compose.material:material-icons-extended:$iconsExtendedVersion")

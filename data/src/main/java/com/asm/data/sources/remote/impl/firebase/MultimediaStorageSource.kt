@@ -1,15 +1,13 @@
 package com.asm.data.sources.remote.impl.firebase
 
-import android.util.Base64
 import android.util.Log
 import com.asm.data.sources.remote.abstract_remotes.MultimediaRemoteSource
-import com.google.firebase.storage.StorageReference
-import dagger.hilt.android.qualifiers.ApplicationContext
+import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
 class MultimediaStorageSource @Inject constructor(
-    @ApplicationContext val storageReference: StorageReference
+    private val firebaseStorage: FirebaseStorage
 ): MultimediaRemoteSource {
 
     companion object {
@@ -17,11 +15,10 @@ class MultimediaStorageSource @Inject constructor(
         const val MAX_DOWNLOAD_BYTES = 1_024L * 1_024L
     }
 
-    override suspend fun uploadImage(path: String, imageName: String, base64: String): String {
+    override suspend fun uploadImage(path: String, imageName: String, byteArray: ByteArray): String {
         try {
-            val imageReference = storageReference.child("$path/$imageName")
-            val bytes = base64.toByteArray()
-            imageReference.putBytes(bytes).await()
+            val imageReference = firebaseStorage.reference.child("$path/$imageName")
+            imageReference.putBytes(byteArray).await()
             val imageUri = imageReference.downloadUrl.await()
             return imageUri.path ?: throw Exception("Uri invalid")
         } catch (exception: Exception) {
@@ -30,16 +27,14 @@ class MultimediaStorageSource @Inject constructor(
         }
     }
 
-    override suspend fun downloadImage(path: String): String {
+    override suspend fun downloadImage(path: String): ByteArray {
         try {
-            val imageReference = storageReference.child(path)
+            val imageReference = firebaseStorage.reference.child(path)
             val bytes = imageReference.getBytes(MAX_DOWNLOAD_BYTES).await()
-            return bytes.toBase64()
+            return bytes
         } catch (exception: Exception) {
             Log.e(TAG, exception.stackTraceToString())
             throw Exception("Error to downloadImage local source")
         }
     }
-
-    private fun ByteArray.toBase64(): String = Base64.encodeToString(this, Base64.DEFAULT)
 }

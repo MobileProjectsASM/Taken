@@ -55,6 +55,7 @@ dependencies {
     implementation("com.google.firebase:firebase-analytics")
     implementation("com.google.firebase:firebase-firestore")
     implementation("com.google.firebase:firebase-storage")
+    implementation("com.google.firebase:firebase-functions")
 
     //DI
     implementation("com.google.dagger:hilt-android:${hiltVersion}")

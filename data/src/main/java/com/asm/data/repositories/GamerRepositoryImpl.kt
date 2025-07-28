@@ -5,10 +5,8 @@ import com.asm.data.sources.local.interfaces.GamerLocalSource
 import com.asm.data.sources.remote.abstract_remotes.GamerRemoteSource
 import com.asm.domain.entities.Gamer
 import com.asm.domain.entities.Result
-import com.asm.domain.errors.GeneralErrorType
 import com.asm.domain.errors.GeneralFailure
 import com.asm.domain.repositories.GamerRepository
-import com.asm.domain.utils.Completed
 import com.asm.domain.utils.Logger
 import javax.inject.Inject
 
@@ -22,23 +20,30 @@ class GamerRepositoryImpl @Inject constructor(
         const val TAG = "GamerRepositoryImpl"
     }
 
-    override suspend fun registerGamer(gamer: Gamer): Result<Completed, GeneralFailure> {
+    override suspend fun registerGamer(
+        userId: String,
+        gamerAlias: String,
+        gamerAge: Int,
+        gamerCountry: String
+    ): Result<String, GeneralFailure> {
         return try {
             if (!connectionSource.isNetworkAvailable()) return Result.Unsuccessful(GeneralFailure.NetworkConnection)
-            gamerRemoteSource.saveGamer(gamer)
-            gamerLocalSource.saveGamer(gamer)
-            Result.Successful(Completed)
+            val gamerId = gamerRemoteSource.saveGamer(userId, gamerAlias, gamerAge, gamerCountry)
+            Result.Successful(gamerId)
         } catch (exception: Exception) {
             logger.logE(TAG, exception)
             Result.Unsuccessful(GeneralFailure.Unknown)
         }
     }
 
-    override suspend fun checkIfGamerExists(gamerId: String): Result<Boolean, GeneralFailure> {
+    override suspend fun updateGamerImage(
+        gamerId: String,
+        imageUrl: String
+    ): Result<Unit, GeneralFailure> {
         return try {
-            val gamerExists = gamerLocalSource.checkGamerExists(gamerId)
-            Result.Successful(gamerExists)
-        } catch (exception: Exception) {
+            gamerRemoteSource.updateGamerImage(gamerId, imageUrl)
+            Result.Successful(Unit)
+        } catch(exception: Exception) {
             logger.logE(TAG, exception)
             Result.Unsuccessful(GeneralFailure.Unknown)
         }
@@ -52,5 +57,4 @@ class GamerRepositoryImpl @Inject constructor(
             Result.Unsuccessful(GeneralFailure.Unknown)
         }
     }
-
 }

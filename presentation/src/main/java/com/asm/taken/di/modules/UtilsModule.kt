@@ -14,6 +14,9 @@ import com.asm.domain.entities.Session
 import com.asm.taken.R
 import com.asm.taken.di.CountryInfoRetrofit
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.functions.FirebaseFunctions
+import com.google.firebase.storage.FirebaseStorage
+import com.google.firebase.storage.StorageReference
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import dagger.Module
@@ -47,6 +50,14 @@ class UtilsModule {
     @Singleton
     @Provides
     fun providesFireStore(): FirebaseFirestore = FirebaseFirestore.getInstance()
+
+    @Singleton
+    @Provides
+    fun providesStorageReference(): FirebaseStorage = FirebaseStorage.getInstance()
+
+    @Singleton
+    @Provides
+    fun providesFirebaseFunctions(): FirebaseFunctions = FirebaseFunctions.getInstance()
 
     @Singleton
     @Provides

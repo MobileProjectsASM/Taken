@@ -20,7 +20,7 @@ class GameFireStoreSource @Inject constructor(
     override suspend fun insertGames(games: List<Game>, gamerId: String) {
         try {
             val gamesFireStore = games.map(gameMapper::getGameFireStore)
-            val collectionPath = fs.collection(GamerFireStoreSource.GAMER_COLLECTION).document(gamerId).collection(
+            val collectionPath = fs.collection(GamerFirebaseSource.GAMER_COLLECTION).document(gamerId).collection(
                 GAME_COLLECTION
             )
             fs.runBatch { batch ->

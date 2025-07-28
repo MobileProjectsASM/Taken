@@ -16,7 +16,7 @@ class MultimediaDeviceSource @Inject constructor(
         const val TAG = "Multimedia_Device_Source"
     }
 
-    override suspend fun saveImage(folderPath: String, imageName: String, base64: String): String {
+    /*override suspend fun saveImage(folderPath: String, imageName: String, base64: String): String {
         try {
             val folders = getDirsFromPath(folderPath)
             var auxFile: File? = null
@@ -44,6 +44,14 @@ class MultimediaDeviceSource @Inject constructor(
             Log.e(TAG, exception.stackTraceToString())
             throw Exception("Error to saveImage remote source")
         }
+    }*/
+
+    override suspend fun saveImage(
+        folderPath: String,
+        imageName: String,
+        byteArray: ByteArray
+    ): String {
+        TODO("Not yet implemented")
     }
 
     override suspend fun existsImage(path: String): Boolean {

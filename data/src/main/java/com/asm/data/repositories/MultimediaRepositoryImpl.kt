@@ -4,7 +4,6 @@ import com.asm.data.sources.hardware.ConnectionSource
 import com.asm.data.sources.local.interfaces.MultimediaLocalSource
 import com.asm.data.sources.remote.abstract_remotes.MultimediaRemoteSource
 import com.asm.domain.entities.Result
-import com.asm.domain.errors.GeneralErrorType
 import com.asm.domain.errors.GeneralFailure
 import com.asm.domain.repositories.MultimediaRepository
 import com.asm.domain.utils.Logger
@@ -23,12 +22,12 @@ class MultimediaRepositoryImpl @Inject constructor(
         const val DEFAULT_IMAGE_NAME_PROFILE = "default_profile_image.jpg"
         const val TAG = "MultimediaRepositoryImpl"
     }
-    override suspend fun uploadUserImage(userId: String, profileImageName: String, base64: String): Result<String, GeneralFailure> {
+    override suspend fun uploadUserImage(userId: String, profileImageName: String, byteArray: ByteArray): Result<String, GeneralFailure> {
         return try {
             if (!connectionSource.isNetworkAvailable()) return Result.Unsuccessful(GeneralFailure.NetworkConnection)
             val folderPath = "$userId/$DEFAULT_PATH_USER_IMAGES"
-            multimediaRemoteSource.uploadImage(folderPath, profileImageName, base64)
-            val imagePath = multimediaLocalSource.saveImage(folderPath, profileImageName, base64)
+            multimediaRemoteSource.uploadImage(folderPath, profileImageName, byteArray)
+            val imagePath = multimediaLocalSource.saveImage(folderPath, profileImageName, byteArray)
             Result.Successful(imagePath)
         } catch (exception: Exception) {
             logger.logE(TAG, exception)
@@ -42,8 +41,8 @@ class MultimediaRepositoryImpl @Inject constructor(
             val existsImage = multimediaLocalSource.existsImage(fullPath)
             if (existsImage) return Result.Successful(fullPath)
             if (!connectionSource.isNetworkAvailable()) return Result.Unsuccessful(GeneralFailure.NetworkConnection)
-            val base64 = multimediaRemoteSource.downloadImage(fullPath)
-            val path = multimediaLocalSource.saveImage(DEFAULT_FOLDER_PATH_USER_IMAGE_PROFILE, DEFAULT_IMAGE_NAME_PROFILE, base64)
+            val byteArray = multimediaRemoteSource.downloadImage(fullPath)
+            val path = multimediaLocalSource.saveImage(DEFAULT_FOLDER_PATH_USER_IMAGE_PROFILE, DEFAULT_IMAGE_NAME_PROFILE, byteArray)
             return Result.Successful(path)
         } catch (exception: Exception) {
             logger.logE(TAG, exception)

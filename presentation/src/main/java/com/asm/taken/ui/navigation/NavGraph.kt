@@ -63,9 +63,6 @@ fun MainNavigation(
             }
             val editGamerVM = hiltViewModel<EditGamerVM>(navBackStackEntry)
             BackgroundLogin {
-                LaunchedEffect(true) {
-                    editGamerVM.getCountriesInfo()
-                }
                 CreateGamerPage(
                     sessionVM = sessionVM,
                     editGamerVM = editGamerVM,
