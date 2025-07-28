@@ -7,11 +7,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.asm.domain.entities.Result
 import com.asm.domain.errors.GeneralFailure
+import com.asm.domain.use_cases.CloseSessionUC
 import com.asm.domain.use_cases.CreateGamerUC
 import com.asm.domain.use_cases.GetCountriesInfoUC
 import com.asm.taken.mappers.CountryMapper
+import com.asm.taken.model.CloseSessionUiState
 import com.asm.taken.model.CountriesUiState
-import com.asm.taken.model.CreateGamerState
+import com.asm.taken.model.NavigationState
 import com.asm.taken.model.ImageSelected
 import com.asm.taken.model.InputAgeError
 import com.asm.taken.model.InputAliasError
@@ -19,6 +21,7 @@ import com.asm.taken.model.InputCountryError
 import com.asm.taken.model.InputState
 import com.asm.taken.model.InputUiState
 import com.asm.taken.model.LoginCreateGamerFormUiState
+import com.asm.taken.model.SessionError
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -32,6 +35,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class EditGamerVM @Inject constructor(
+    private val closeSessionUC: CloseSessionUC,
     private val getCountriesInfoUC: GetCountriesInfoUC,
     private val createGamerUC: CreateGamerUC,
     private val countryMapper: CountryMapper,
@@ -46,11 +50,11 @@ class EditGamerVM @Inject constructor(
     private val _loginCreateGamerFormUiState: MutableStateFlow<LoginCreateGamerFormUiState> = MutableStateFlow(
         LoginCreateGamerFormUiState(imageSelected = InputUiState(ImageSelected.Default), aliasUiState = InputUiState(""), ageUiState = InputUiState(""), countryUiState = InputUiState(""))
     )
-    private val _createGamerState: MutableStateFlow<CreateGamerState?> = MutableStateFlow(null)
+    private val _navigationState: MutableStateFlow<NavigationState?> = MutableStateFlow(null)
 
     val countriesUiState: StateFlow<CountriesUiState> = _countriesUiState
     val loginCreateGamerFormState: StateFlow<LoginCreateGamerFormUiState> = _loginCreateGamerFormUiState
-    val createGamerState: StateFlow<CreateGamerState?> = _createGamerState
+    val navigationState: StateFlow<NavigationState?> = _navigationState
 
     fun getCountriesInfo() {
         viewModelScope.launch {
@@ -70,7 +74,7 @@ class EditGamerVM @Inject constructor(
 
     fun createGamer(id: String, alias: String, age: Int, country: String, imageSelected: ImageSelected) {
         viewModelScope.launch {
-            _createGamerState.update { CreateGamerState.Loading }
+            _navigationState.update { NavigationState.Loading }
             try {
                 val image = when (imageSelected) {
                     ImageSelected.Default -> null
@@ -78,7 +82,7 @@ class EditGamerVM @Inject constructor(
                         val bytes = getByteArrayFromUri(imageSelected.uri)
                         val mimeType = application.contentResolver.getType(imageSelected.uri)
                         if (bytes == null || mimeType == null) {
-                            _createGamerState.update { CreateGamerState.Failure(GeneralFailure.Unknown) }
+                            _navigationState.update { NavigationState.Failure(GeneralFailure.Unknown) }
                             return@launch
                         }
                         CreateGamerUC.ProfileImage.InfoImage(mimeType, bytes)
@@ -92,14 +96,14 @@ class EditGamerVM @Inject constructor(
                     country = country,
                     image = image
                 )
-                val createGamerState = when (val createGamerResult = createGamerUC.execute(params)) {
-                    is Result.Successful<String> -> CreateGamerState.GamerCreated(createGamerResult.data)
-                    is Result.Unsuccessful<GeneralFailure> -> CreateGamerState.Failure(createGamerResult.failure)
+                val navigationState = when (val createGamerResult = createGamerUC.execute(params)) {
+                    is Result.Successful<String> -> NavigationState.GamerCreated(createGamerResult.data)
+                    is Result.Unsuccessful<GeneralFailure> -> NavigationState.Failure(createGamerResult.failure)
                 }
-                _createGamerState.update { createGamerState }
+                _navigationState.update { navigationState }
             } catch (exception: Exception) {
                 Log.e(TAG, exception.stackTraceToString())
-                _createGamerState.update { CreateGamerState.Failure(GeneralFailure.Unknown) }
+                _navigationState.update { NavigationState.Failure(GeneralFailure.Unknown) }
             }
         }
     }
@@ -174,6 +178,26 @@ class EditGamerVM @Inject constructor(
         if (country.isEmpty()) countryErrors.add(InputCountryError.EMPTY)
         return countryErrors
     }
+
+    //endregion
+
+    //region close session
+
+    fun closeSession(signOut: suspend () -> Result<Unit, GeneralFailure>) {
+        viewModelScope.launch {
+            _navigationState.update { NavigationState.Loading }
+            when (val closeSessionResult = closeSessionUC.execute(signOut)) {
+                is Result.Successful<Unit> -> _navigationState.update { NavigationState.SessionClosed }
+                is Result.Unsuccessful<GeneralFailure> -> _navigationState.update {
+                    NavigationState.Failure(closeSessionResult.failure)
+                }
+            }
+        }
+    }
+
+    /*fun resetSession() {
+        _closeSessionState.update { null }
+    }*/
 
     //endregion
 }

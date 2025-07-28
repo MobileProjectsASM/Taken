@@ -15,16 +15,8 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import com.asm.domain.errors.GeneralFailure
-import com.asm.taken.R
 import com.asm.taken.model.InitRouteUiState
-import com.asm.taken.model.SessionError
-import com.asm.taken.model.SessionUiState
-import com.asm.taken.ui.navigation.Authentication
-import com.asm.taken.ui.navigation.CreateGamer
-import com.asm.taken.ui.navigation.Login
 import com.asm.taken.ui.navigation.MainNavigation
-import com.asm.taken.ui.navigation.MainPage
 import com.asm.taken.ui.navigation.Route
 import com.asm.taken.ui.theme.TakenTheme
 import com.asm.taken.utils.AuthenticationClient
@@ -65,7 +57,6 @@ class MainActivity : ComponentActivity() {
                         TakenTheme {
                             Surface {
                                 PuzzleScaffold(
-                                    sessionVM = sessionVM,
                                     initRoute = initRouteState.initRoute,
                                     authenticationClient = authenticationClient,
                                     messageResolver = messageResolver
@@ -83,7 +74,6 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun PuzzleScaffold(
-    sessionVM: SessionVM,
     initRoute: Route,
     authenticationClient: AuthenticationClient,
     messageResolver: MessageResolver
@@ -94,7 +84,6 @@ fun PuzzleScaffold(
         snackbarHost = { SnackbarHost(snackBarHostState) }
     ) { innerPadding ->
         MainNavigation(
-            sessionVM = sessionVM,
             initRoute = initRoute,
             innerPadding = innerPadding,
             snackBarHostState = snackBarHostState,

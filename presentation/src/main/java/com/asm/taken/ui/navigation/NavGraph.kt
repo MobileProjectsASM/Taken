@@ -36,7 +36,6 @@ import com.asm.taken.vm.SessionVM
 
 @Composable
 fun MainNavigation(
-    sessionVM: SessionVM,
     initRoute: Route,
     innerPadding: PaddingValues,
     snackBarHostState: SnackbarHostState,
@@ -51,20 +50,17 @@ fun MainNavigation(
         modifier = Modifier.padding(innerPadding)
     ) {
         navigationLogin(
-            sessionVM = sessionVM,
             navController = navigationController,
             snackBarHostState = snackBarHostState,
             authenticationClient = authenticationClient,
             messageResolver = messageResolver
         )
         composable<CreateGamer> { navBackStackEntry ->
-            LaunchedEffect(true) {
-                sessionVM.getSession()
-            }
+            val createGamer: CreateGamer = navBackStackEntry.toRoute()
             val editGamerVM = hiltViewModel<EditGamerVM>(navBackStackEntry)
             BackgroundLogin {
                 CreateGamerPage(
-                    sessionVM = sessionVM,
+                    createGamerInfo = createGamer,
                     editGamerVM = editGamerVM,
                     authenticationClient = authenticationClient,
                     messageResolver = messageResolver,
@@ -93,7 +89,6 @@ fun MainNavigation(
 }
 
 fun NavGraphBuilder.navigationLogin(
-    sessionVM: SessionVM,
     navController: NavHostController,
     snackBarHostState: SnackbarHostState,
     authenticationClient: AuthenticationClient,
@@ -101,7 +96,6 @@ fun NavGraphBuilder.navigationLogin(
 ) {
     navigation<Login>(startDestination = Authentication) {
         composable<Authentication> { navBackStackEntry ->
-            LaunchedEffect(true) { sessionVM.resetSession() }
             val parentEntry = remember(navBackStackEntry) {
                 navController.getBackStackEntry(Login)
             }

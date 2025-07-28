@@ -14,7 +14,7 @@ data object CreateAccount: Route()
 
 @Serializable
 data class CreateGamer(
-    val id: String? = null,
+    val id: String,
     val image: String? = null
 ): Route()
 

@@ -2,9 +2,10 @@ package com.asm.taken.model
 
 import com.asm.domain.errors.GeneralFailure
 
-sealed class CreateGamerState {
-    data object Loading: CreateGamerState()
-    data class GamerCreated(val gamerId: String): CreateGamerState()
-    data class Failure(val failure: GeneralFailure): CreateGamerState()
+sealed class NavigationState {
+    data object Loading: NavigationState()
+    data object SessionClosed: NavigationState()
+    data class GamerCreated(val gamerId: String): NavigationState()
+    data class Failure(val failure: GeneralFailure): NavigationState()
 }
 

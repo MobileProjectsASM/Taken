@@ -9,12 +9,10 @@ sealed class InitRouteUiState {
     data class Fail(val error: SessionError): InitRouteUiState()
 }
 
-sealed class SessionUiState {
-    data object Loading: SessionUiState()
-    data object Logout: SessionUiState()
-    data class UnregisterUser(val userData: UserData): SessionUiState()
-    data class UserRegister(val gamerId: String): SessionUiState()
-    data class Fail(val error: SessionError): SessionUiState()
+sealed class CloseSessionUiState {
+    data object Loading: CloseSessionUiState()
+    data object Logout: CloseSessionUiState()
+    data class Fail(val error: SessionError): CloseSessionUiState()
 }
 
 enum class SessionError {
