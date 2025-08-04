@@ -102,38 +102,4 @@ class CreateGamerUC @Inject constructor(
             Result.Unsuccessful(GeneralFailure.Unknown)
         }
     }
-
-    /*override suspend fun run(params: GamerParams): Result<Unit, RegisterFailure> {
-        return try {
-            val resultGamerExists = gamerRepository.checkIfGamerExists(params.gamerId)
-            if (resultGamerExists is Result.Unsuccessful) return Result.Unsuccessful(resultGamerExists.failure.toRegisterFailure())
-            val gamerExists = resultGamerExists.asSuccessful().data
-            if (gamerExists) return Result.Unsuccessful(RegisterFailure.GamerExists)
-            val resultImage = if (params.image == null) {
-                multimediaRepository.getDefaultUserImage()
-            } else {
-                multimediaRepository.uploadUserImage(
-                    params.gamerId,
-                    "${PROFILE_IMAGE}_${params.gamerId}.${params.image.formatImage}",
-                    params.image.base64
-                )
-            }
-            if (resultImage is Result.Unsuccessful) return Result.Unsuccessful(resultImage.failure.toRegisterFailure())
-            val gamer = resultImage.asSuccessful().data.run {
-                Gamer(params.gamerId, params.nickName, params.age, params.country, this)
-            }
-            val resultRegisterGamer = gamerRepository.registerGamer(gamer)
-            if (resultRegisterGamer is Result.Unsuccessful) return Result.Unsuccessful(resultRegisterGamer.failure.toRegisterFailure())
-            val levelsResult = levelRepository.downloadLevelsByOrderCriteria(listOf(1, 2))
-            if (levelsResult is Result.Unsuccessful) return Result.Unsuccessful(levelsResult.failure.toRegisterFailure())
-            val initLevels = levelsResult.asSuccessful().data
-            val initialGames = createInitGames(initLevels)
-            val resultSaveGamerGames = gameRepository.saveGamerGames(initialGames, params.gamerId)
-            if (resultSaveGamerGames is Result.Unsuccessful) return Result.Unsuccessful(resultSaveGamerGames.failure.toRegisterFailure())
-            Result.Successful(Unit)
-        } catch (exception: Exception) {
-            logger.logE(TAG, exception)
-            Result.Unsuccessful(RegisterFailure.General(GeneralFailure.Unknown))
-        }
-    }*/
 }

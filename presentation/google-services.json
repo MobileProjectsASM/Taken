@@ -2,7 +2,7 @@
   "project_info": {
     "project_number": "537568996262",
     "project_id": "puzzle-16426",
-    "storage_bucket": "puzzle-16426.appspot.com"
+    "storage_bucket": "puzzle-16426.firebasestorage.app"
   },
   "client": [
     {

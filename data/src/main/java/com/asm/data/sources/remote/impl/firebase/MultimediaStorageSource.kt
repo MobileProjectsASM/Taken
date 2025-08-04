@@ -12,29 +12,29 @@ class MultimediaStorageSource @Inject constructor(
 
     companion object {
         const val TAG = "MULTIMEDIA_STORAGE_SOURCE"
-        const val MAX_DOWNLOAD_BYTES = 1_024L * 1_024L
     }
 
-    override suspend fun uploadImage(path: String, imageName: String, byteArray: ByteArray): String {
+    override suspend fun uploadResource(path: String, byteArray: ByteArray): String {
         try {
-            val imageReference = firebaseStorage.reference.child("$path/$imageName")
+            val imageReference = firebaseStorage.reference.child(path)
             imageReference.putBytes(byteArray).await()
             val imageUri = imageReference.downloadUrl.await()
-            return imageUri.path ?: throw Exception("Uri invalid")
+            return imageUri.path ?: throw Exception("Resource url is null")
         } catch (exception: Exception) {
             Log.e(TAG, exception.stackTraceToString())
             throw Exception("Error to uploadImage local source")
         }
     }
 
-    override suspend fun downloadImage(path: String): ByteArray {
+    override suspend fun getUrlResource(path: String): String {
         try {
-            val imageReference = firebaseStorage.reference.child(path)
-            val bytes = imageReference.getBytes(MAX_DOWNLOAD_BYTES).await()
-            return bytes
-        } catch (exception: Exception) {
+            val resourceReference = firebaseStorage.reference.child(path)
+            val resourceUrl = resourceReference.downloadUrl.await().path
+                ?: throw Exception("Resource url is null")
+            return resourceUrl
+        } catch(exception: Exception) {
             Log.e(TAG, exception.stackTraceToString())
-            throw Exception("Error to downloadImage local source")
+            throw Exception("Error to get path image source")
         }
     }
 }
