@@ -49,9 +49,20 @@ class GamerRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun verifyGamerExists(gamerId: String): Result<Boolean, GeneralFailure> {
+        return try {
+            val gamerExists = gamerRemoteSource.checkGamerExists(gamerId)
+            Result.Successful(gamerExists)
+        } catch(exception: Exception) {
+            logger.logE(TAG, exception)
+            Result.Unsuccessful(GeneralFailure.Unknown)
+        }
+    }
+
     override suspend fun getGamerById(gamerId: String): Result<Gamer?, GeneralFailure> {
         return try {
-            Result.Successful(gamerLocalSource.getGamer(gamerId))
+            val gamer = gamerRemoteSource.getGamerById(gamerId)
+            Result.Successful(gamer)
         } catch (exception: Exception) {
             logger.logE(TAG, exception)
             Result.Unsuccessful(GeneralFailure.Unknown)

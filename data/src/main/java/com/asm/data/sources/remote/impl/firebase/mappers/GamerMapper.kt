@@ -12,4 +12,6 @@ class GamerMapper {
         gamerCountry = gamer.gamerCountry,
         gamerImage = gamer.gamerImage
     )
+
+
 }

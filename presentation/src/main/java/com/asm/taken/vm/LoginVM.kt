@@ -9,8 +9,10 @@ import com.asm.domain.entities.Session
 import com.asm.domain.errors.GamerFailure
 import com.asm.domain.errors.GeneralFailure
 import com.asm.domain.use_cases.CloseSessionUC
+import com.asm.domain.use_cases.GamerExistsUC
 import com.asm.domain.use_cases.GetCountriesInfoUC
 import com.asm.domain.use_cases.GetGamerUC
+import com.asm.domain.use_cases.GetSessionUC
 import com.asm.domain.use_cases.SaveSessionUC
 import com.asm.taken.mappers.CountryMapper
 import com.asm.taken.model.CountriesUiState
@@ -45,7 +47,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class LoginVM @Inject constructor(
-    private val getGamerUC: GetGamerUC,
+    private val gamerExistsUC: GamerExistsUC,
     private val getCountriesInfoUC: GetCountriesInfoUC,
     private val saveSessionUC: SaveSessionUC,
     private val countryMapper: CountryMapper
@@ -237,26 +239,21 @@ class LoginVM @Inject constructor(
     }
 
     private suspend fun updateSession(userData: UserData): LoginUiState {
-        return when (val gamerResult = getGamerUC.execute(userData.userId)) {
-            is Result.Successful<Gamer> -> {
-                val saveSessionResult = saveSessionUC.execute(Session.UserRegister(gamerResult.data.gamerId))
-                when (saveSessionResult) {
-                    is Result.Successful<Unit> -> LoginUiState.RegisteredUser(gamerResult.data.gamerId)
+        return when (val gamerExistsResult = gamerExistsUC.execute(userData.userId)) {
+            is Result.Successful<Boolean> -> {
+                val session = when(gamerExistsResult.data) {
+                    true -> Session.UserRegister(userData.userId)
+                    false -> userData.run { Session.UserUnregister(userId, profilePictureUrl) }
+                }
+                when (val saveSessionResult = saveSessionUC.execute(session)) {
+                    is Result.Successful<Unit> -> when (gamerExistsResult.data) {
+                        true -> LoginUiState.RegisteredUser(userData.userId)
+                        false -> LoginUiState.UnregisteredUser(userData)
+                    }
                     is Result.Unsuccessful<GeneralFailure> -> LoginUiState.Failure(LoginFailure.RegisterFailure(saveSessionResult.failure))
                 }
             }
-            is Result.Unsuccessful<GamerFailure> -> when (val failure = gamerResult.failure) {
-                GamerFailure.GamerNotExists -> {
-                    val userUnregister = userData.run {
-                        Session.UserUnregister(userId, profilePictureUrl)
-                    }
-                    when (val saveSessionResult = saveSessionUC.execute(userUnregister)) {
-                        is Result.Successful<Unit> -> LoginUiState.UnregisteredUser(userData)
-                        is Result.Unsuccessful<GeneralFailure> -> LoginUiState.Failure(LoginFailure.RegisterFailure(saveSessionResult.failure))
-                    }
-                }
-                is GamerFailure.General -> LoginUiState.Failure(LoginFailure.RegisterFailure(failure.generalFailure))
-            }
+            is Result.Unsuccessful<GeneralFailure> ->  LoginUiState.Failure(LoginFailure.RegisterFailure(gamerExistsResult.failure))
         }
     }
     //endregion

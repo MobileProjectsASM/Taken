@@ -6,6 +6,7 @@ import com.asm.data.R
 import com.asm.data.sources.remote.abstract_remotes.GamerRemoteSource
 import com.asm.data.sources.remote.impl.firebase.data.GamerFirebase
 import com.asm.data.sources.remote.impl.firebase.data.GamerKeys
+import com.asm.domain.entities.Gamer
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.toObject
 import com.google.firebase.functions.FirebaseFunctions
@@ -25,6 +26,24 @@ class GamerFirebaseSource @Inject constructor(
     companion object {
         const val TAG = "GamerFireStoreSource"
         const val GAMER_COLLECTION = "gamers"
+    }
+
+    override suspend fun getGamerById(gamerId: String): Gamer {
+        try {
+            val documentSnapshot = fs.collection(GAMER_COLLECTION).document(gamerId).get().await()
+            val gamerFirebase = documentSnapshot.toObject(GamerFirebase::class.java) ?: throw Exception("gamer not exists")
+            val gamer = Gamer(
+                gamerId = gamerFirebase.gamerId,
+                gamerNickName = gamerFirebase.gamerNickName,
+                gamerAge = gamerFirebase.gamerAge,
+                gamerCountry = gamerFirebase.gamerCountry,
+                gamerImage = gamerFirebase.gamerImage
+            )
+            return gamer
+        } catch (exception: Exception) {
+            Log.e(TAG, exception.stackTraceToString())
+            throw Exception("Error to saveGame remote source")
+        }
     }
 
     override suspend fun saveGamer(
@@ -50,8 +69,7 @@ class GamerFirebaseSource @Inject constructor(
     override suspend fun checkGamerExists(gamerId: String): Boolean {
         try {
             val snapshot = fs.collection(GAMER_COLLECTION).document(gamerId).get().await()
-            val gamer = snapshot.toObject<GamerFirebase>()
-            return gamer != null
+            return snapshot.exists()
         } catch (exception: Exception) {
             Log.e(TAG, exception.stackTraceToString())
             throw Exception("Error to checkGamerExists remote source")

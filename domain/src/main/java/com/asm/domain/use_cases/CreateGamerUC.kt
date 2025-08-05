@@ -1,9 +1,5 @@
 package com.asm.domain.use_cases
 
-import com.asm.domain.entities.Game
-import com.asm.domain.entities.GameStatus
-import com.asm.domain.entities.Level
-import com.asm.domain.entities.LevelInfo
 import com.asm.domain.entities.Result
 import com.asm.domain.entities.asSuccessful
 import com.asm.domain.errors.GeneralFailure
@@ -11,7 +7,6 @@ import com.asm.domain.repositories.GamerRepository
 import com.asm.domain.repositories.MultimediaRepository
 import com.asm.domain.use_cases.base.UseCaseSync
 import com.asm.domain.utils.Logger
-import java.util.UUID
 import javax.inject.Inject
 
 class CreateGamerUC @Inject constructor(
