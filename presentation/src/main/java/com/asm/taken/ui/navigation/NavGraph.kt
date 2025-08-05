@@ -202,7 +202,7 @@ fun NavGraphBuilder.navigationMainPage(
     navigation<MainPage>(startDestination = Home) {
         composable<Home> { navBackStackEntry ->
             val parentEntry = remember(navBackStackEntry) {
-                navController.getBackStackEntry(MainPage)
+                navController.getBackStackEntry(MainPage::class)
             }
             val gamerId = parentEntry.toRoute<MainPage>().gamerId
             Box(
