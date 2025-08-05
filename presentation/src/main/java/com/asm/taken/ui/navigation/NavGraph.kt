@@ -80,9 +80,7 @@ fun MainNavigation(
                 )
             }
         }
-        navigationMainPage(
-            navController = navigationController
-        )
+        navigationMainPage()
     }
 }
 
@@ -194,15 +192,10 @@ fun NavGraphBuilder.navigationLogin(
     }
 }
 
-fun NavGraphBuilder.navigationMainPage(
-    navController: NavHostController
-) {
+fun NavGraphBuilder.navigationMainPage() {
     navigation<MainPage>(startDestination = Home) {
         composable<Home> { navBackStackEntry ->
-            val parentEntry = remember(navBackStackEntry) {
-                navController.getBackStackEntry(MainPage::class)
-            }
-            val gamerId = parentEntry.toRoute<MainPage>().gamerId
+            val gamerId = navBackStackEntry.arguments?.getString("gamerId") ?: "default"
             Box(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
