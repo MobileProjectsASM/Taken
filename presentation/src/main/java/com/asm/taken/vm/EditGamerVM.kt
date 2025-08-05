@@ -6,14 +6,14 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.asm.domain.entities.Result
+import com.asm.domain.entities.Session
 import com.asm.domain.errors.GeneralFailure
 import com.asm.domain.use_cases.CloseSessionUC
 import com.asm.domain.use_cases.CreateGamerUC
 import com.asm.domain.use_cases.GetCountriesInfoUC
+import com.asm.domain.use_cases.SaveSessionUC
 import com.asm.taken.mappers.CountryMapper
-import com.asm.taken.model.CloseSessionUiState
 import com.asm.taken.model.CountriesUiState
-import com.asm.taken.model.NavigationState
 import com.asm.taken.model.ImageSelected
 import com.asm.taken.model.InputAgeError
 import com.asm.taken.model.InputAliasError
@@ -21,7 +21,7 @@ import com.asm.taken.model.InputCountryError
 import com.asm.taken.model.InputState
 import com.asm.taken.model.InputUiState
 import com.asm.taken.model.LoginCreateGamerFormUiState
-import com.asm.taken.model.SessionError
+import com.asm.taken.model.NavigationState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -38,6 +38,7 @@ class EditGamerVM @Inject constructor(
     private val closeSessionUC: CloseSessionUC,
     private val getCountriesInfoUC: GetCountriesInfoUC,
     private val createGamerUC: CreateGamerUC,
+    private val saveSessionUC: SaveSessionUC,
     private val countryMapper: CountryMapper,
     private val application: Application
 ): ViewModel() {
@@ -97,7 +98,10 @@ class EditGamerVM @Inject constructor(
                     image = image
                 )
                 val navigationState = when (val createGamerResult = createGamerUC.execute(params)) {
-                    is Result.Successful<String> -> NavigationState.GamerCreated(createGamerResult.data)
+                    is Result.Successful<String> -> when (val saveSessionResult = saveSessionUC.execute(Session.UserRegister(gamerId = createGamerResult.data))) {
+                        is Result.Successful<Unit> -> NavigationState.GamerCreated(createGamerResult.data)
+                        is Result.Unsuccessful<GeneralFailure> -> NavigationState.Failure(saveSessionResult.failure)
+                    }
                     is Result.Unsuccessful<GeneralFailure> -> NavigationState.Failure(createGamerResult.failure)
                 }
                 _navigationState.update { navigationState }
