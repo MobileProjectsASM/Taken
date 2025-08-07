@@ -8,9 +8,9 @@ class CountryInfoMapper @Inject constructor() {
 
     fun getCountryInfo(countryInfoRest: CountryData): CountryInfo {
         return CountryInfo(
-            code = countryInfoRest.phoneCode ?: "",
+            phoneCode = countryInfoRest.phoneCode ?: "",
             name = countryInfoRest.name ?: "",
-            iso3 = countryInfoRest.isoCode ?: "",
+            iso = countryInfoRest.isoCode ?: "",
             flag = countryInfoRest.flag ?: ""
         )
     }

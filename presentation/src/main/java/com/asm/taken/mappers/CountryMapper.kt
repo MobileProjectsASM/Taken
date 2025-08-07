@@ -8,7 +8,7 @@ class CountryMapper @Inject constructor() {
     fun toCountryUiState(countryInfo: CountryInfo): CountryUiState =
         CountryUiState(
             country = countryInfo.name,
-            phoneCode = countryInfo.code,
+            phoneCode = countryInfo.phoneCode,
             flag = countryInfo.flag
         )
 }
