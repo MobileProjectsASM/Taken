@@ -39,7 +39,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.dimensionResource
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -49,7 +48,6 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import coil.compose.AsyncImage
 import com.asm.domain.errors.GeneralFailure
 import com.asm.taken.R
 import com.asm.taken.model.CountriesUiState
@@ -363,13 +361,15 @@ fun ItemCountry(countryUiState: CountryUiState, onClick: (CountryUiState) -> Uni
             .padding(horizontal = 16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        AsyncImage(
-            modifier = Modifier.size(50.dp),
-            model = countryUiState.flag,
-            contentDescription = null,
-            placeholder = painterResource(id = R.drawable.american_flag),
-            error = painterResource(id = R.drawable.american_flag)
-        )
+        Box(
+            modifier = Modifier.padding(15.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = countryUiState.flag,
+                textAlign = TextAlign.Center
+            )
+        }
         Spacer(modifier = Modifier.width(10.dp))
         DefaultText(
             modifier = Modifier.fillMaxWidth(),
