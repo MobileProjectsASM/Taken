@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="create_gamer_cloud_function_url" translatable="false">https://us-central1-puzzle-16426.cloudfunctions.net/createGamer</string>
-    <string name="api_base_url_countries_info" translatable="false">https://restfulcountries.com/api/v1/</string>
-    <string name="api_key_country_service" translatable="false">1274|gSQVz5Qf9OfRRwUhxEbDBhzz2c48b21KbXDjvnPB</string>
+    <string name="api_base_url_countries_info" translatable="false">https://country-state-city-search-rest-api.p.rapidapi.com/</string>
+    <string name="api_key_country_service" translatable="false">b09c60f463mshbd8d5a45eee8e1bp145abfjsnbd5c62ea8fc3</string>
+    <string name="api_host_country_service" translatable="false">country-state-city-search-rest-api.p.rapidapi.com</string>
 </resources>

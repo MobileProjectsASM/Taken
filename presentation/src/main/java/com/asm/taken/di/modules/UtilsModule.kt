@@ -4,19 +4,14 @@ import android.content.Context
 import android.content.SharedPreferences
 import androidx.room.Room
 import com.asm.data.sources.local.TakenDB
-import com.asm.data.sources.local.deserializer.SessionSerializer
 import com.asm.data.sources.local.deserializer.SessionTypeAdapterFactory
 import com.asm.data.sources.remote.impl.rest.api_service.CountryInfoClient
-import com.asm.data.sources.remote.impl.rest.deserializer.CountryInfoDeserializer
 import com.asm.data.sources.remote.impl.rest.interceptors.CountryInfoInterceptor
-import com.asm.data.sources.remote.impl.rest.data.CountriesInfoRest
-import com.asm.domain.entities.Session
 import com.asm.taken.R
 import com.asm.taken.di.CountryInfoRetrofit
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.functions.FirebaseFunctions
 import com.google.firebase.storage.FirebaseStorage
-import com.google.firebase.storage.StorageReference
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import dagger.Module
@@ -80,11 +75,9 @@ class UtilsModule {
     @Provides
     fun providesGson(
         sessionTypeAdapterFactory: SessionTypeAdapterFactory,
-        countryInfoDeserializer: CountryInfoDeserializer
     ): Gson {
         return GsonBuilder()
             .registerTypeAdapterFactory(sessionTypeAdapterFactory)
-            .registerTypeAdapter(CountriesInfoRest::class.java, countryInfoDeserializer)
             .create()
     }
 
@@ -95,6 +88,7 @@ class UtilsModule {
 
     @Provides
     fun providesCountryInfoInterceptor(@ApplicationContext context: Context): Interceptor = CountryInfoInterceptor(
-        "Bearer ${context.getString(com.asm.data.R.string.api_key_country_service)}"
+        apiHost = context.getString(com.asm.data.R.string.api_host_country_service),
+        apiKey = context.getString(com.asm.data.R.string.api_key_country_service)
     )
 }
