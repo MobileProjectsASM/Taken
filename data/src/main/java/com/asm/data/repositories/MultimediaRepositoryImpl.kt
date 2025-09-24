@@ -4,6 +4,7 @@ import com.asm.data.sources.hardware.ConnectionSource
 import com.asm.data.sources.remote.abstract_remotes.MultimediaRemoteSource
 import com.asm.domain.entities.Result
 import com.asm.domain.errors.GeneralError
+import com.asm.domain.errors.toUnsuccessful
 import com.asm.domain.repositories.MultimediaRepository
 import com.asm.domain.utils.Logger
 import javax.inject.Inject
@@ -31,18 +32,18 @@ class MultimediaRepositoryImpl @Inject constructor(
             multimediaRemoteSource.uploadResource(imagePath, byteArray)
         } catch (exception: Exception) {
             logger.logE(TAG, exception)
-            Result.Unsuccessful(GeneralError.Unknown)
+            GeneralError.Unknown.toUnsuccessful()
         }
     }
 
-    override suspend fun getDefaultUserImage(): Result<String, GeneralError> {
+    override suspend fun getDefaultUserImage(): Result<String?, GeneralError> {
         return try {
             val fullPath = "$PROFILE_IMAGES_PATH/$DEFAULT_PROFILE_IMAGE"
             if (!connectionSource.isNetworkAvailable()) return Result.Unsuccessful(GeneralError.NetworkError)
             multimediaRemoteSource.getUrlResource(fullPath)
         } catch (exception: Exception) {
             logger.logE(TAG, exception)
-            Result.Unsuccessful(GeneralError.Unknown)
+            GeneralError.Unknown.toUnsuccessful()
         }
     }
 }

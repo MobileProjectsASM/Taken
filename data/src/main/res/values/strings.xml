@@ -4,4 +4,7 @@
     <string name="api_base_url_countries_info" translatable="false">https://country-state-city-search-rest-api.p.rapidapi.com/</string>
     <string name="api_key_country_service" translatable="false">b09c60f463mshbd8d5a45eee8e1bp145abfjsnbd5c62ea8fc3</string>
     <string name="api_host_country_service" translatable="false">country-state-city-search-rest-api.p.rapidapi.com</string>
+    <string name="err_server_response">Unexpected server response</string>
+    <string name="err_server_process">Unexpected server error</string>
+    <string name="err_client_request">Unexpected error when trying to consume service</string>
 </resources>

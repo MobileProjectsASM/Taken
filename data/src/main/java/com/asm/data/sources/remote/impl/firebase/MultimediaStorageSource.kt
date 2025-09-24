@@ -1,16 +1,20 @@
 package com.asm.data.sources.remote.impl.firebase
 
+import android.content.Context
 import android.util.Log
+import com.asm.data.R
 import com.asm.data.sources.remote.abstract_remotes.MultimediaRemoteSource
 import com.asm.domain.entities.Result
 import com.asm.domain.errors.GeneralError
 import com.asm.domain.errors.toUnsuccessful
 import com.google.firebase.storage.FirebaseStorage
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
 class MultimediaStorageSource @Inject constructor(
-    private val firebaseStorage: FirebaseStorage
+    private val firebaseStorage: FirebaseStorage,
+    @ApplicationContext private val context: Context
 ): MultimediaRemoteSource {
 
     companion object {
@@ -24,19 +28,21 @@ class MultimediaStorageSource @Inject constructor(
             val imageUri = imageReference.downloadUrl.await()
             imageUri?.path?.let {
                 Result.Successful(it)
-            } ?: GeneralError.ServerError("INVALID_RESPONSE").toUnsuccessful()
+            } ?: GeneralError.ServerError(context.getString(R.string.err_server_response)).toUnsuccessful().also {
+                Log.e(TAG, "path is null")
+            }
         } catch (exception: Exception) {
             Log.e(TAG, exception.message, exception)
             GeneralError.Unknown.toUnsuccessful()
         }
     }
 
-    override suspend fun getUrlResource(path: String): Result<String, GeneralError> {
+    override suspend fun getUrlResource(path: String): Result<String?, GeneralError> {
         return try {
             val resourceReference = firebaseStorage.reference.child(path)
             resourceReference.downloadUrl.await()?.path?.let {
                 Result.Successful(it)
-            } ?: GeneralError.ServerError("INVALID_RESPONSE").toUnsuccessful()
+            } ?: Result.Successful(null)
         } catch(exception: Exception) {
             Log.e(TAG, exception.message, exception)
             GeneralError.Unknown.toUnsuccessful()

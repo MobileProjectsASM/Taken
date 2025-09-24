@@ -5,5 +5,5 @@ import com.asm.domain.errors.GeneralError
 
 interface MultimediaRemoteSource {
     suspend fun uploadResource(path: String, byteArray: ByteArray): Result<String, GeneralError>
-    suspend fun getUrlResource(path: String): Result<String, GeneralError>
+    suspend fun getUrlResource(path: String): Result<String?, GeneralError>
 }

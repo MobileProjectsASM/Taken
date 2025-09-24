@@ -7,8 +7,6 @@ import com.asm.data.sources.local.interfaces.SessionLocalSource
 import com.asm.domain.entities.Result
 import com.asm.domain.entities.Session
 import com.asm.domain.errors.GeneralError
-import com.asm.domain.errors.SessionError
-import com.asm.domain.errors.toSessionError
 import com.asm.domain.errors.toUnsuccessful
 import com.google.gson.Gson
 import javax.inject.Inject
@@ -16,26 +14,28 @@ import javax.inject.Inject
 class SessionSharedPreferencesSource @Inject constructor(
     private val sharedPreferences: SharedPreferences,
     private val gson: Gson,
-): SessionLocalSource {
+) : SessionLocalSource {
 
     companion object {
         const val SESSION_KEY = "session"
         const val TAG = "SessionSharedPreferencesSource"
     }
 
-    override suspend fun fetchSession(): Result<Session, SessionError> {
+    override suspend fun fetchSession(): Result<Session?, GeneralError> {
         return try {
-            val data = sharedPreferences.getString(SESSION_KEY, "") ?: return SessionError.SessionNotExists.toUnsuccessful()
-            gson.fromJson(data, Session::class.java).let {
-                Result.Successful(it)
-            }
+            sharedPreferences.getString(SESSION_KEY, null)?.takeIf { it.isNotBlank() }
+                ?.let { data ->
+                    gson.fromJson(data, Session::class.java).let {
+                        Result.Successful(it)
+                    }
+                } ?: Result.Successful(null)
         } catch (e: Exception) {
             Log.e(TAG, e.message, e)
-            GeneralError.Unknown.toSessionError().toUnsuccessful()
+            GeneralError.Unknown.toUnsuccessful()
         }
     }
 
-    override suspend fun saveSession(session: Session): Result<Unit, SessionError> {
+    override suspend fun saveSession(session: Session): Result<Unit, GeneralError> {
         return try {
             val data = gson.toJson(session, Session::class.java)
             sharedPreferences.edit(commit = true) {
@@ -44,11 +44,11 @@ class SessionSharedPreferencesSource @Inject constructor(
             Result.Successful(Unit)
         } catch (e: Exception) {
             Log.e(TAG, e.message, e)
-            GeneralError.Unknown.toSessionError().toUnsuccessful()
+            GeneralError.Unknown.toUnsuccessful()
         }
     }
 
-    override suspend fun closeSession(): Result<Unit, SessionError> {
+    override suspend fun closeSession(): Result<Unit, GeneralError> {
         return try {
             sharedPreferences.edit(commit = true) {
                 remove(SESSION_KEY)
@@ -56,7 +56,7 @@ class SessionSharedPreferencesSource @Inject constructor(
             Result.Successful(Unit)
         } catch (e: Exception) {
             Log.e(TAG, e.message, e)
-            GeneralError.Unknown.toSessionError().toUnsuccessful()
+            GeneralError.Unknown.toUnsuccessful()
         }
     }
 }

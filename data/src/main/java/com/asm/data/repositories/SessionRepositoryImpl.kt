@@ -4,8 +4,6 @@ import com.asm.data.sources.local.interfaces.SessionLocalSource
 import com.asm.domain.entities.Result
 import com.asm.domain.entities.Session
 import com.asm.domain.errors.GeneralError
-import com.asm.domain.errors.SessionError
-import com.asm.domain.errors.toSessionError
 import com.asm.domain.errors.toUnsuccessful
 import com.asm.domain.repositories.SessionRepository
 import com.asm.domain.utils.Logger
@@ -20,30 +18,30 @@ class SessionRepositoryImpl @Inject constructor(
         const val TAG = "SessionRepositoryImpl"
     }
 
-    override suspend fun isThereSessionActive(): Result<Session, SessionError> {
+    override suspend fun isThereSessionActive(): Result<Session?, GeneralError> {
         return try {
             sessionLocalSource.fetchSession()
         } catch (exception: Exception) {
             logger.logE(TAG, exception)
-            GeneralError.Unknown.toSessionError().toUnsuccessful()
+            GeneralError.Unknown.toUnsuccessful()
         }
     }
 
-    override suspend fun saveSession(session: Session): Result<Unit, SessionError> {
+    override suspend fun saveSession(session: Session): Result<Unit, GeneralError> {
         return try {
             sessionLocalSource.saveSession(session).let { Result.Successful(Unit) }
         } catch (exception: Exception) {
             logger.logE(TAG, exception)
-            GeneralError.Unknown.toSessionError().toUnsuccessful()
+            GeneralError.Unknown.toUnsuccessful()
         }
     }
 
-    override suspend fun closeSession(): Result<Unit, SessionError> {
+    override suspend fun closeSession(): Result<Unit, GeneralError> {
         return try {
             sessionLocalSource.closeSession().let { Result.Successful(Unit) }
         } catch (exception: Exception) {
             logger.logE(TAG, exception)
-            GeneralError.Unknown.toSessionError().toUnsuccessful()
+            GeneralError.Unknown.toUnsuccessful()
         }
     }
 }
