@@ -1,10 +1,9 @@
 package com.asm.domain.repositories
 
 import com.asm.domain.entities.Result
-import com.asm.domain.errors.GeneralFailure
-import java.io.InputStream
+import com.asm.domain.errors.GeneralError
 
 interface MultimediaRepository {
-    suspend fun uploadUserImage(userId: String, profileImageName: String, byteArray: ByteArray): Result<String, GeneralFailure>
-    suspend fun getDefaultUserImage(): Result<String, GeneralFailure>
+    suspend fun uploadUserImage(userId: String, profileImageName: String, byteArray: ByteArray): Result<String, GeneralError>
+    suspend fun getDefaultUserImage(): Result<String, GeneralError>
 }
