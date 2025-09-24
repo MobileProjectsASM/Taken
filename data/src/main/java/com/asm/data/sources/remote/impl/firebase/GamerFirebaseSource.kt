@@ -76,9 +76,9 @@ class GamerFirebaseSource @Inject constructor(
             Log.e(TAG, exception.message, exception)
             when (exception) {
                 is IOException -> GeneralError.NetworkError.toGamerError().toUnsuccessful()
-                is FirebaseFunctionsException -> GeneralError.ServerError(
-                    exception.message ?: "Unknown Error"
-                ).toGamerError().toUnsuccessful()
+                is FirebaseFunctionsException -> handleFirebaseFunctionException(exception).toGamerError()
+                    .toUnsuccessful()
+
                 else -> GeneralError.Unknown.toGamerError().toUnsuccessful()
             }
         }
@@ -105,6 +105,16 @@ class GamerFirebaseSource @Inject constructor(
         } catch (exception: Exception) {
             Log.e(TAG, exception.stackTraceToString())
             GeneralError.Unknown.toGamerError().toUnsuccessful()
+        }
+    }
+
+    private fun handleFirebaseFunctionException(firebaseFunctionsException: FirebaseFunctionsException): GeneralError {
+        return when (val code = firebaseFunctionsException.code) {
+            FirebaseFunctionsException.Code.INVALID_ARGUMENT, FirebaseFunctionsException.Code.NOT_FOUND, FirebaseFunctionsException.Code.ALREADY_EXISTS, FirebaseFunctionsException.Code.UNAUTHENTICATED -> GeneralError.ClientError(
+                code.name
+            )
+
+            else -> GeneralError.ServerError(code.name)
         }
     }
 }
