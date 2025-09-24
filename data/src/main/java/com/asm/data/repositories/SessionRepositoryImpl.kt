@@ -3,7 +3,10 @@ package com.asm.data.repositories
 import com.asm.data.sources.local.interfaces.SessionLocalSource
 import com.asm.domain.entities.Result
 import com.asm.domain.entities.Session
-import com.asm.domain.errors.GeneralFailure
+import com.asm.domain.errors.GeneralError
+import com.asm.domain.errors.SessionError
+import com.asm.domain.errors.toSessionError
+import com.asm.domain.errors.toUnsuccessful
 import com.asm.domain.repositories.SessionRepository
 import com.asm.domain.utils.Logger
 import javax.inject.Inject
@@ -17,33 +20,30 @@ class SessionRepositoryImpl @Inject constructor(
         const val TAG = "SessionRepositoryImpl"
     }
 
-    override suspend fun isThereSessionActive(): Result<Session?, GeneralFailure> {
+    override suspend fun isThereSessionActive(): Result<Session, SessionError> {
         return try {
-            val session = sessionLocalSource.fetchSession()
-            Result.Successful(session)
+            sessionLocalSource.fetchSession()
         } catch (exception: Exception) {
             logger.logE(TAG, exception)
-            Result.Unsuccessful(GeneralFailure.Unknown)
+            GeneralError.Unknown.toSessionError().toUnsuccessful()
         }
     }
 
-    override suspend fun saveSession(session: Session): Result<Unit, GeneralFailure> {
+    override suspend fun saveSession(session: Session): Result<Unit, SessionError> {
         return try {
-            sessionLocalSource.saveSession(session)
-            Result.Successful(Unit)
+            sessionLocalSource.saveSession(session).let { Result.Successful(Unit) }
         } catch (exception: Exception) {
             logger.logE(TAG, exception)
-            Result.Unsuccessful(GeneralFailure.Unknown)
+            GeneralError.Unknown.toSessionError().toUnsuccessful()
         }
     }
 
-    override suspend fun closeSession(): Result<Unit, GeneralFailure> {
+    override suspend fun closeSession(): Result<Unit, SessionError> {
         return try {
-            sessionLocalSource.closeSession()
-            Result.Successful(Unit)
+            sessionLocalSource.closeSession().let { Result.Successful(Unit) }
         } catch (exception: Exception) {
             logger.logE(TAG, exception)
-            Result.Unsuccessful(GeneralFailure.Unknown)
+            GeneralError.Unknown.toSessionError().toUnsuccessful()
         }
     }
 }
