@@ -2,6 +2,9 @@ package com.asm.data.sources.remote.impl.firebase
 
 import android.util.Log
 import com.asm.data.sources.remote.abstract_remotes.MultimediaRemoteSource
+import com.asm.domain.entities.Result
+import com.asm.domain.errors.GeneralError
+import com.asm.domain.errors.toUnsuccessful
 import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
@@ -14,27 +17,29 @@ class MultimediaStorageSource @Inject constructor(
         const val TAG = "MULTIMEDIA_STORAGE_SOURCE"
     }
 
-    override suspend fun uploadResource(path: String, byteArray: ByteArray): String {
-        try {
+    override suspend fun uploadResource(path: String, byteArray: ByteArray): Result<String, GeneralError> {
+        return try {
             val imageReference = firebaseStorage.reference.child(path)
             imageReference.putBytes(byteArray).await()
             val imageUri = imageReference.downloadUrl.await()
-            return imageUri.path ?: throw Exception("Resource url is null")
+            imageUri?.path?.let {
+                Result.Successful(it)
+            } ?: GeneralError.ServerError("INVALID_RESPONSE").toUnsuccessful()
         } catch (exception: Exception) {
-            Log.e(TAG, exception.stackTraceToString())
-            throw Exception("Error to uploadImage local source")
+            Log.e(TAG, exception.message, exception)
+            GeneralError.Unknown.toUnsuccessful()
         }
     }
 
-    override suspend fun getUrlResource(path: String): String {
-        try {
+    override suspend fun getUrlResource(path: String): Result<String, GeneralError> {
+        return try {
             val resourceReference = firebaseStorage.reference.child(path)
-            val resourceUrl = resourceReference.downloadUrl.await().path
-                ?: throw Exception("Resource url is null")
-            return resourceUrl
+            resourceReference.downloadUrl.await()?.path?.let {
+                Result.Successful(it)
+            } ?: GeneralError.ServerError("INVALID_RESPONSE").toUnsuccessful()
         } catch(exception: Exception) {
-            Log.e(TAG, exception.stackTraceToString())
-            throw Exception("Error to get path image source")
+            Log.e(TAG, exception.message, exception)
+            GeneralError.Unknown.toUnsuccessful()
         }
     }
 }
