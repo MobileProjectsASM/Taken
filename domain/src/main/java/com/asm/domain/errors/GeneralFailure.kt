@@ -21,6 +21,7 @@ sealed class SessionError {
 
 fun GeneralError.toGamerError() = GamerError.General(this)
 fun GeneralError.toSessionError() = SessionError.General(this)
+fun GeneralError.toUnsuccessful() = Result.Unsuccessful(this)
 
 fun GamerError.toUnsuccessful() = Result.Unsuccessful(this)
 fun SessionError.toUnsuccessful() = Result.Unsuccessful(this)
