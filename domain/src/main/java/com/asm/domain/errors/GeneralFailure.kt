@@ -19,6 +19,10 @@ sealed class SessionError {
     data class General(val generalError: GeneralError): SessionError()
 }
 
+enum class GamerError2 {
+
+}
+
 fun GeneralError.toGamerError() = GamerError.General(this)
 fun GeneralError.toSessionError() = SessionError.General(this)
 fun GeneralError.toUnsuccessful() = Result.Unsuccessful(this)
