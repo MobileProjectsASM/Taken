@@ -1,41 +1,24 @@
 package com.asm.domain.errors
 
-sealed class GeneralFailure {
-    data class ServerError(
-        val code: Int,
-        val description: String
-    ) : GeneralFailure()
-    data object NetworkConnection: GeneralFailure()
-    data object Unknown: GeneralFailure()
+import com.asm.domain.entities.Result
+
+sealed class GeneralError {
+    data object NetworkError: GeneralError()
+    data object Unknown: GeneralError()
+    data class ServerError(val message: String): GeneralError()
 }
 
-enum class GeneralErrorType {
-    NETWORK_CONNECTION,
-    UNKNOWN
+sealed class GamerError {
+    data object GamerNotExists: GamerError()
+    data class General(val generalError: GeneralError): GamerError()
 }
 
-sealed class RegisterFailure {
-    data object GamerExists: RegisterFailure()
-    data class General(val generalFailure: GeneralFailure): RegisterFailure()
-}
+fun GeneralError.toGamerError() = GamerError.General(this)
 
-sealed class GamerFailure {
-    data object GamerNotExists: GamerFailure()
-    data class General(val generalFailure: GeneralFailure): GamerFailure()
-}
+fun GamerError.toUnsuccessful() = Result.Unsuccessful(this)
 
-sealed class GameFailure {
-    data object ThereIsNotGameInProcess: GameFailure()
-    data object ThereIsGameInProcess: GameFailure()
-    data object MoreThanOneNewGame: GameFailure()
-    data object MoreThanOneLockGame: GameFailure()
-    data class General(val generalFailure: GeneralFailure): GameFailure()
-}
 
 sealed class TimerFailure {
     data object TimeInitIsNull: TimerFailure()
-    data class General(val generalFailure: GeneralFailure): TimerFailure()
+    data class General(val generalFailure: GeneralError): TimerFailure()
 }
-
-fun GeneralFailure.toGamerFailure() = GamerFailure.General(this)
-fun GeneralFailure.toRegisterFailure() = RegisterFailure.General(this)
