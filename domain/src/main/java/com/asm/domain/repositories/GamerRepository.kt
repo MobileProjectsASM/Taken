@@ -2,7 +2,6 @@ package com.asm.domain.repositories
 
 import com.asm.domain.entities.Gamer
 import com.asm.domain.entities.Result
-import com.asm.domain.errors.GamerError
 import com.asm.domain.errors.GeneralError
 
 interface GamerRepository {
