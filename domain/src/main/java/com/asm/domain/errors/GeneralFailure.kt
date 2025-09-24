@@ -6,6 +6,7 @@ sealed class GeneralError {
     data object NetworkError: GeneralError()
     data object Unknown: GeneralError()
     data class ServerError(val message: String): GeneralError()
+    data class ClientError(val code: String): GeneralError()
 }
 
 sealed class GamerError {
@@ -13,9 +14,16 @@ sealed class GamerError {
     data class General(val generalError: GeneralError): GamerError()
 }
 
+sealed class SessionError {
+    data object SessionNotExists: SessionError()
+    data class General(val generalError: GeneralError): SessionError()
+}
+
 fun GeneralError.toGamerError() = GamerError.General(this)
+fun GeneralError.toSessionError() = SessionError.General(this)
 
 fun GamerError.toUnsuccessful() = Result.Unsuccessful(this)
+fun SessionError.toUnsuccessful() = Result.Unsuccessful(this)
 
 
 sealed class TimerFailure {
