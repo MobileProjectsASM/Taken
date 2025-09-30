@@ -2,7 +2,7 @@ package com.asm.domain.use_cases
 
 import com.asm.domain.entities.Result
 import com.asm.domain.entities.asSuccessful
-import com.asm.domain.errors.GeneralFailure
+import com.asm.domain.errors.GeneralError
 import com.asm.domain.repositories.GamerRepository
 import com.asm.domain.repositories.MultimediaRepository
 import com.asm.domain.use_cases.base.UseCaseSync
@@ -13,7 +13,7 @@ class CreateGamerUC @Inject constructor(
     private val gamerRepository: GamerRepository,
     private val multimediaRepository: MultimediaRepository,
     private val logger: Logger
-) : UseCaseSync<Result<String, GeneralFailure>, CreateGamerUC.GamerParams>() {
+) : UseCaseSync<Result<String, CreateGamerUC.CreateGamerError>, CreateGamerUC.GamerParams>() {
 
     companion object {
         const val PROFILE_IMAGE = "pi"
@@ -24,7 +24,7 @@ class CreateGamerUC @Inject constructor(
         data class InfoImage(
             val mimeType: String,
             val byteArray: ByteArray
-        ): ProfileImage() {
+        ) : ProfileImage() {
             override fun equals(other: Any?): Boolean {
                 if (this === other) return true
                 if (javaClass != other?.javaClass) return false
@@ -46,7 +46,7 @@ class CreateGamerUC @Inject constructor(
 
         data class UrlImage(
             val urlImage: String
-        ): ProfileImage()
+        ) : ProfileImage()
     }
 
     data class GamerParams(
@@ -57,7 +57,15 @@ class CreateGamerUC @Inject constructor(
         val image: ProfileImage?
     )
 
-    override suspend fun run(params: GamerParams): Result<String, GeneralFailure> {
+    sealed class CreateGamerError {
+        data object NotFoundDefaultImage : CreateGamerError()
+        data class CreateGamerGeneralError(val generalError: GeneralError) : CreateGamerError()
+    }
+
+    private fun GeneralError.toCreateGamerError() = CreateGamerError.CreateGamerGeneralError(this)
+    private fun CreateGamerError.toResult() = Result.Unsuccessful(this)
+
+    override suspend fun run(params: GamerParams): Result<String, CreateGamerError> {
         return try {
             val resultCreateGamer = gamerRepository.registerGamer(
                 userId = params.gamerId,
@@ -67,7 +75,9 @@ class CreateGamerUC @Inject constructor(
             )
             val gamerIdCreated = when (resultCreateGamer) {
                 is Result.Successful<String> -> resultCreateGamer.data
-                is Result.Unsuccessful<GeneralFailure> -> return resultCreateGamer
+                is Result.Unsuccessful<GeneralError> -> {
+                    return resultCreateGamer.failure.toCreateGamerError().toResult()
+                }
             }
             val imageUrl = when (params.image) {
                 is ProfileImage.InfoImage -> {
@@ -77,24 +87,36 @@ class CreateGamerUC @Inject constructor(
                         profileImageName = "${PROFILE_IMAGE}_${params.gamerId}.$extension",
                         byteArray = params.image.byteArray
                     )
-                    if (uploadImageResult is Result.Unsuccessful) return uploadImageResult
-                    uploadImageResult.asSuccessful().data
+                    when (uploadImageResult) {
+                        is Result.Successful<String> -> uploadImageResult.asSuccessful().data
+                        is Result.Unsuccessful<GeneralError> -> {
+                            return uploadImageResult.failure.toCreateGamerError().toResult()
+                        }
+                    }
                 }
+
                 is ProfileImage.UrlImage -> params.image.urlImage
                 null -> {
-                    val defaultImageResult = multimediaRepository.getDefaultUserImage()
-                    if (defaultImageResult is Result.Unsuccessful) return defaultImageResult
-                    defaultImageResult.asSuccessful().data
+                    when (val defaultImageResult = multimediaRepository.getDefaultUserImage()) {
+                        is Result.Successful<String?> -> defaultImageResult.data
+                            ?: return CreateGamerError.NotFoundDefaultImage.toResult()
+
+                        is Result.Unsuccessful<GeneralError> -> {
+                            return defaultImageResult.failure.toCreateGamerError().toResult()
+                        }
+                    }
                 }
             }
             val updateImageResult = gamerRepository.updateGamerImage(gamerIdCreated, imageUrl)
             when (updateImageResult) {
                 is Result.Successful<Unit> -> Result.Successful(gamerIdCreated)
-                is Result.Unsuccessful<GeneralFailure> -> updateImageResult
+                is Result.Unsuccessful<GeneralError> -> {
+                    updateImageResult.failure.toCreateGamerError().toResult()
+                }
             }
         } catch (exception: Exception) {
             logger.logE(TAG, exception)
-            Result.Unsuccessful(GeneralFailure.Unknown)
+            GeneralError.Unknown.toCreateGamerError().toResult()
         }
     }
 }
