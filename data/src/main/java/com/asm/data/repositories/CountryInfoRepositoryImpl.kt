@@ -5,9 +5,8 @@ import com.asm.data.sources.local.interfaces.CountryInfoLocalSource
 import com.asm.data.sources.remote.abstract_remotes.CountryInfoRemoteSource
 import com.asm.domain.entities.CountryInfo
 import com.asm.domain.entities.Result
-import com.asm.domain.entities.asSuccessful
-import com.asm.domain.errors.GeneralErrorType
-import com.asm.domain.errors.GeneralFailure
+import com.asm.domain.errors.GeneralError
+import com.asm.domain.errors.toUnsuccessful
 import com.asm.domain.repositories.CountryInfoRepository
 import com.asm.domain.utils.Logger
 import javax.inject.Inject
@@ -17,33 +16,33 @@ class CountryInfoRepositoryImpl @Inject constructor(
     private val countryInfoRemoteSource: CountryInfoRemoteSource,
     private val connectionSource: ConnectionSource,
     private val logger: Logger
-): CountryInfoRepository {
+) : CountryInfoRepository {
 
     companion object {
         const val TAG = "CountryRepositoryImpl"
     }
 
-    override suspend fun getCountriesInfoSortedByName(ascending: Boolean): Result<List<CountryInfo>, GeneralFailure> {
+    override suspend fun getCountriesInfoSortedByName(ascending: Boolean): Result<List<CountryInfo>, GeneralError> {
         return try {
-            val countries = countryInfoLocalSource.getCountriesInfoSortedByName()
-            Result.Successful(countries)
+            countryInfoLocalSource.getCountriesInfoSortedByName()
         } catch (exception: Exception) {
             logger.logE(TAG, exception)
-            Result.Unsuccessful(GeneralFailure.Unknown)
+            GeneralError.Unknown.toUnsuccessful()
         }
     }
 
-    override suspend fun downloadCountriesInfo(): Result<Unit, GeneralFailure> {
+    override suspend fun downloadCountriesInfo(): Result<Unit, GeneralError> {
         return try {
-            if (!connectionSource.isNetworkAvailable()) return Result.Unsuccessful(GeneralFailure.NetworkConnection)
-            val countriesCallCodeResult = countryInfoRemoteSource.getCountriesCallCode()
-            if (countriesCallCodeResult is Result.Unsuccessful) return countriesCallCodeResult
-            val countriesCallCode = countriesCallCodeResult.asSuccessful().data
-            countryInfoLocalSource.saveCountriesInfo(countriesCallCode)
-            Result.Successful(Unit)
+            if (!connectionSource.isNetworkAvailable()) return GeneralError.NetworkError.toUnsuccessful()
+            when (val countriesCallCodeResult = countryInfoRemoteSource.getCountriesCallCode()) {
+                is Result.Successful<List<CountryInfo>> -> countryInfoLocalSource.saveCountriesInfo(
+                    countriesCallCodeResult.data
+                )
+                is Result.Unsuccessful<GeneralError> -> countriesCallCodeResult
+            }
         } catch (exception: Exception) {
             logger.logE(TAG, exception)
-            Result.Unsuccessful(GeneralFailure.Unknown)
+            GeneralError.Unknown.toUnsuccessful()
         }
     }
 }

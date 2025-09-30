@@ -1,9 +1,7 @@
 package com.asm.taken.di.modules
 
 import com.asm.data.repositories.CountryInfoRepositoryImpl
-import com.asm.data.repositories.GameRepositoryImpl
 import com.asm.data.repositories.GamerRepositoryImpl
-import com.asm.data.repositories.LevelRepositoryImpl
 import com.asm.data.repositories.MultimediaRepositoryImpl
 import com.asm.data.repositories.SessionRepositoryImpl
 import com.asm.domain.repositories.CountryInfoRepository
@@ -24,14 +22,6 @@ abstract class RepositoryModule {
     @ViewModelScoped
     @Binds
     abstract fun getGamerRepository(gamerRepository: GamerRepositoryImpl): GamerRepository
-
-    @ViewModelScoped
-    @Binds
-    abstract fun getLevelRepository(levelRepository: LevelRepositoryImpl): LevelRepository
-
-    @ViewModelScoped
-    @Binds
-    abstract fun getGameRepository(gameRepository: GameRepositoryImpl): GameRepository
 
     @ViewModelScoped
     @Binds

@@ -5,6 +5,9 @@ import com.asm.data.sources.local.TakenDB
 import com.asm.data.sources.local.interfaces.CountryInfoLocalSource
 import com.asm.data.sources.local.mappers.CountryInfoMapper
 import com.asm.domain.entities.CountryInfo
+import com.asm.domain.entities.Result
+import com.asm.domain.errors.GeneralError
+import com.asm.domain.errors.toUnsuccessful
 import javax.inject.Inject
 
 class CountryInfoRoomSource @Inject constructor(
@@ -15,26 +18,28 @@ class CountryInfoRoomSource @Inject constructor(
         const val TAG = "CountryInfoRoomSource"
     }
 
-    override suspend fun getCountriesInfoSortedByName(ascending: Boolean): List<CountryInfo> {
-        try {
-            return when {
+    override suspend fun getCountriesInfoSortedByName(ascending: Boolean): Result<List<CountryInfo>, GeneralError> {
+        return try {
+            val countries = when {
                 ascending -> takenDB.getCountryInfoDao().getCountriesInfoSortedByNameAsc()
                 else -> takenDB.getCountryInfoDao().getCountriesInfoSortedByNameDesc()
             }.map(countryInfoMapper::getCountryInfo)
+            Result.Successful(countries)
         } catch (exception: Exception) {
-            Log.e(TAG, exception.stackTraceToString())
-            throw Exception("Error to getCountriesCallCode local source")
+            Log.e(TAG, exception.message, exception)
+            GeneralError.Unknown.toUnsuccessful()
         }
     }
 
-    override suspend fun saveCountriesInfo(countriesInfo: List<CountryInfo>) {
-        try {
+    override suspend fun saveCountriesInfo(countriesInfo: List<CountryInfo>): Result<Unit, GeneralError> {
+        return try {
             val countriesInfoRoom = countriesInfo.map(countryInfoMapper::getCountryInfoRoom)
             val sorted = countriesInfoRoom.sortedBy { it.phoneCode }
             takenDB.getCountryInfoDao().saveCountriesInfo(sorted)
+            Result.Successful(Unit)
         } catch (exception: Exception) {
             Log.e(TAG, exception.stackTraceToString())
-            throw Exception("Error to saveCountriesCallCode local source")
+            GeneralError.Unknown.toUnsuccessful()
         }
     }
 }
