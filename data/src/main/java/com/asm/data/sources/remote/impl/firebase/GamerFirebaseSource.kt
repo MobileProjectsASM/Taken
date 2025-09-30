@@ -110,12 +110,12 @@ class GamerFirebaseSource @Inject constructor(
     }
 
     private fun handleFirebaseFunctionException(firebaseFunctionsException: FirebaseFunctionsException): GeneralError {
-        return when (firebaseFunctionsException.code) {
-            FirebaseFunctionsException.Code.INVALID_ARGUMENT, FirebaseFunctionsException.Code.NOT_FOUND, FirebaseFunctionsException.Code.ALREADY_EXISTS, FirebaseFunctionsException.Code.UNAUTHENTICATED -> GeneralError.ClientError(
-                context.getString(R.string.err_client_request)
+        return when (val code = firebaseFunctionsException.code) {
+            FirebaseFunctionsException.Code.INVALID_ARGUMENT, FirebaseFunctionsException.Code.NOT_FOUND, FirebaseFunctionsException.Code.UNAUTHENTICATED, FirebaseFunctionsException.Code.PERMISSION_DENIED, FirebaseFunctionsException.Code.CANCELLED -> GeneralError.ClientError(
+                code.name
             )
 
-            else -> GeneralError.ServerError(context.getString(R.string.err_server_process))
+            else -> GeneralError.ServerError(code.name)
         }
     }
 }

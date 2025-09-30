@@ -30,7 +30,11 @@ class CountryInfoRestServiceSource @Inject constructor(
                 val message = response.message() ?: "No message"
                 Log.e(TAG, "${response.code()}: $message")
                 Log.e(TAG, "details: $errorBody")
-                return GeneralError.ServerError("${response.code()}: $message").toUnsuccessful()
+                val errorMessage = "${response.code()}: $message"
+                return when (response.code()) {
+                    in 400..< 499 -> GeneralError.ClientError(errorMessage)
+                    else -> GeneralError.ServerError(errorMessage)
+                }.toUnsuccessful()
             }
             val countries = response.body() ?: return GeneralError.ServerError(context.getString(R.string.err_server_response)).toUnsuccessful()
             val countriesInfo = countries.map(countryInfoMapper::getCountryInfo)
