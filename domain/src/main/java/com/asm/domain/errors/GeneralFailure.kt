@@ -6,7 +6,7 @@ sealed class GeneralError {
     data object NetworkError: GeneralError()
     data object Unknown: GeneralError()
     data class ServerError(val message: String): GeneralError()
-    data class ClientError(val code: String): GeneralError()
+    data class ClientError(val message: String): GeneralError()
 }
 
 fun GeneralError.toUnsuccessful() = Result.Unsuccessful(this)
