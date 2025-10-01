@@ -15,6 +15,8 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import com.asm.domain.errors.GeneralError
+import com.asm.taken.R
 import com.asm.taken.model.InitRouteUiState
 import com.asm.taken.ui.navigation.MainNavigation
 import com.asm.taken.ui.navigation.Route
@@ -48,7 +50,13 @@ class MainActivity : ComponentActivity() {
             when (initRouteState) {
                 is InitRouteUiState.Fail -> {
                     keepSplashScreen = true
-                    Snackbar.make(window.decorView, messageResolver.getErrorSession(initRouteState.error), Snackbar.LENGTH_SHORT).show()
+                    val message = when (val error = initRouteState.error) {
+                        is GeneralError.ClientError -> error.message
+                        GeneralError.NetworkError -> messageResolver.getMessage(R.string.err_network_connection)
+                        is GeneralError.ServerError -> error.message
+                        GeneralError.Unknown -> messageResolver.getMessage(R.string.err_unknown)
+                    }
+                    Snackbar.make(window.decorView, message, Snackbar.LENGTH_SHORT).show()
                 }
                 InitRouteUiState.Loading -> keepSplashScreen = true
                 is InitRouteUiState.Success -> {

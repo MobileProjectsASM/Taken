@@ -2,6 +2,7 @@ package com.asm.taken.utils
 
 import android.content.Context
 import androidx.annotation.StringRes
+import com.asm.domain.errors.GeneralError
 import com.asm.domain.errors.GeneralErrorType
 import com.asm.domain.errors.GeneralFailure
 import com.asm.taken.R
@@ -111,12 +112,6 @@ class MessageResolver @Inject constructor(
     fun getErrorImage(error: InputImageError): String = when (error) {
         IMAGE_IS_VERY_WEIGHT -> context.getString(R.string.err_image_is_very_weight)
         UNKNOWN_ERROR -> context.getString(R.string.err_unknown)
-    }
-
-    fun getErrorSession(error: SessionError) = when (error) {
-        SessionError.SERVER_ERROR -> context.getString(R.string.err_server)
-        SessionError.NETWORK_CONNECTION -> context.getString(R.string.err_network_connection)
-        SessionError.UNKNOWN -> context.getString(R.string.err_unknown)
     }
 
     fun getMessage(@StringRes resId: Int) = context.getString(resId)
