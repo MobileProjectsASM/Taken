@@ -10,6 +10,10 @@ class LoggerSourceMobile @Inject constructor(): Logger {
     }
 
     override fun logE(location: String, throwable: Throwable) {
-        Log.e(location, throwable.stackTraceToString())
+        Log.e(location, throwable.message, throwable)
+    }
+
+    override fun logE(location: String, message: String) {
+        Log.e(location, message)
     }
 }
