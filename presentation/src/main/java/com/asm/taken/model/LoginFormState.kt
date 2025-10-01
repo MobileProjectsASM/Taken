@@ -2,7 +2,6 @@ package com.asm.taken.model
 
 import android.net.Uri
 import com.asm.domain.errors.GeneralError
-import com.asm.domain.errors.GeneralFailure
 import com.asm.taken.utils.UserData
 
 data class LoginFormUiState(
@@ -26,7 +25,7 @@ sealed class InputState<out InputError> {
 sealed class CountriesUiState {
     data object Loading: CountriesUiState()
     data class Successful(val countriesInfo: List<CountryUiState>) : CountriesUiState()
-    data class Failure(val generalFailure: GeneralFailure) : CountriesUiState()
+    data class Failure(val generalFailure: GeneralError) : CountriesUiState()
 }
 
 data class CountryUiState(
