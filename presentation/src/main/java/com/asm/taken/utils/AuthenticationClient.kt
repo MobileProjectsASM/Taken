@@ -12,7 +12,8 @@ import androidx.credentials.GetCredentialResponse
 import androidx.credentials.exceptions.GetCredentialException
 import androidx.credentials.exceptions.NoCredentialException
 import com.asm.domain.entities.Result
-import com.asm.domain.errors.GeneralFailure
+import com.asm.domain.errors.GeneralError
+import com.asm.domain.errors.toUnsuccessful
 import com.asm.taken.R
 import com.asm.taken.model.AuthError
 import com.asm.taken.model.SendOtpError
@@ -275,14 +276,14 @@ class AuthenticationClient @Inject constructor(
         }
     }
 
-    suspend fun signOut(): Result<Unit, GeneralFailure> {
+    suspend fun signOut(): Result<Unit, GeneralError> {
         try {
             auth.signOut()
             credentialManager.clearCredentialState(ClearCredentialStateRequest())
             return Result.Successful(Unit)
         } catch (exception: Exception) {
             Log.e(TAG, exception.stackTraceToString())
-            return Result.Unsuccessful(GeneralFailure.Unknown)
+            return GeneralError.Unknown.toUnsuccessful()
         }
     }
 
