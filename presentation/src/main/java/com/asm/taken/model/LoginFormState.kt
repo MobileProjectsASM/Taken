@@ -1,6 +1,7 @@
 package com.asm.taken.model
 
 import android.net.Uri
+import com.asm.domain.errors.GeneralError
 import com.asm.domain.errors.GeneralFailure
 import com.asm.taken.utils.UserData
 
@@ -154,7 +155,7 @@ sealed class LoginFailure {
     data class SendOtpFailure(val sendOtpError: SendOtpError): LoginFailure()
     data class AuthFailure(val authError: AuthError): LoginFailure()
     data class SignUpFailure(val signUpError: SignUpError): LoginFailure()
-    data class RegisterFailure(val generalFailure: GeneralFailure): LoginFailure()
+    data class RegisterFailure(val generalFailure: GeneralError): LoginFailure()
     data object LogoutFailure: LoginFailure()
 }
 //endregion

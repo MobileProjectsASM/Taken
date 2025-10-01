@@ -1,12 +1,13 @@
 package com.asm.taken.model
 
+import com.asm.domain.errors.GeneralError
 import com.asm.taken.ui.navigation.Route
 import com.asm.taken.utils.UserData
 
 sealed class InitRouteUiState {
     data object Loading: InitRouteUiState()
     data class Success(val initRoute: Route): InitRouteUiState()
-    data class Fail(val error: SessionError): InitRouteUiState()
+    data class Fail(val error: GeneralError): InitRouteUiState()
 }
 
 sealed class CloseSessionUiState {

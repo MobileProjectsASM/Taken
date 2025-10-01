@@ -3,23 +3,14 @@ package com.asm.taken.vm
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.asm.domain.entities.Gamer
 import com.asm.domain.entities.Result
 import com.asm.domain.entities.Session
-import com.asm.domain.errors.GamerFailure
-import com.asm.domain.errors.GeneralFailure
-import com.asm.domain.use_cases.CloseSessionUC
+import com.asm.domain.errors.GeneralError
 import com.asm.domain.use_cases.GamerExistsUC
 import com.asm.domain.use_cases.GetCountriesInfoUC
-import com.asm.domain.use_cases.GetGamerUC
-import com.asm.domain.use_cases.GetSessionUC
 import com.asm.domain.use_cases.SaveSessionUC
 import com.asm.taken.mappers.CountryMapper
 import com.asm.taken.model.CountriesUiState
-import com.asm.taken.model.ImageSelected
-import com.asm.taken.model.InputAgeError
-import com.asm.taken.model.InputAliasError
-import com.asm.taken.model.InputCountryError
 import com.asm.taken.model.InputEmailError
 import com.asm.taken.model.InputOtpError
 import com.asm.taken.model.InputPasswordError
@@ -28,7 +19,6 @@ import com.asm.taken.model.InputPhoneNumberError
 import com.asm.taken.model.InputRepeatValueError
 import com.asm.taken.model.InputState
 import com.asm.taken.model.InputUiState
-import com.asm.taken.model.LoginCreateGamerFormUiState
 import com.asm.taken.model.LoginFailure
 import com.asm.taken.model.LoginFormCreateAccountUiState
 import com.asm.taken.model.LoginFormPhoneUiState
@@ -250,10 +240,10 @@ class LoginVM @Inject constructor(
                         true -> LoginUiState.RegisteredUser(userData.userId)
                         false -> LoginUiState.UnregisteredUser(userData)
                     }
-                    is Result.Unsuccessful<GeneralFailure> -> LoginUiState.Failure(LoginFailure.RegisterFailure(saveSessionResult.failure))
+                    is Result.Unsuccessful<GeneralError> -> LoginUiState.Failure(LoginFailure.RegisterFailure(saveSessionResult.failure))
                 }
             }
-            is Result.Unsuccessful<GeneralFailure> ->  LoginUiState.Failure(LoginFailure.RegisterFailure(gamerExistsResult.failure))
+            is Result.Unsuccessful<GeneralError> ->  LoginUiState.Failure(LoginFailure.RegisterFailure(gamerExistsResult.failure))
         }
     }
     //endregion

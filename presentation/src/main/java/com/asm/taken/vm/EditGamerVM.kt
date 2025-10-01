@@ -7,7 +7,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.asm.domain.entities.Result
 import com.asm.domain.entities.Session
-import com.asm.domain.errors.GeneralFailure
+import com.asm.domain.errors.GeneralError
 import com.asm.domain.use_cases.CloseSessionUC
 import com.asm.domain.use_cases.CreateGamerUC
 import com.asm.domain.use_cases.GetCountriesInfoUC
@@ -41,39 +41,54 @@ class EditGamerVM @Inject constructor(
     private val saveSessionUC: SaveSessionUC,
     private val countryMapper: CountryMapper,
     private val application: Application
-): ViewModel() {
+) : ViewModel() {
 
     companion object {
         const val TAG = "EditGamerVM"
     }
 
-    private val _countriesUiState: MutableStateFlow<CountriesUiState> = MutableStateFlow(CountriesUiState.Loading)
-    private val _loginCreateGamerFormUiState: MutableStateFlow<LoginCreateGamerFormUiState> = MutableStateFlow(
-        LoginCreateGamerFormUiState(imageSelected = InputUiState(ImageSelected.Default), aliasUiState = InputUiState(""), ageUiState = InputUiState(""), countryUiState = InputUiState(""))
-    )
+    private val _countriesUiState: MutableStateFlow<CountriesUiState> =
+        MutableStateFlow(CountriesUiState.Loading)
+    private val _loginCreateGamerFormUiState: MutableStateFlow<LoginCreateGamerFormUiState> =
+        MutableStateFlow(
+            LoginCreateGamerFormUiState(
+                imageSelected = InputUiState(ImageSelected.Default),
+                aliasUiState = InputUiState(""),
+                ageUiState = InputUiState(""),
+                countryUiState = InputUiState("")
+            )
+        )
     private val _navigationState: MutableStateFlow<NavigationState?> = MutableStateFlow(null)
 
     val countriesUiState: StateFlow<CountriesUiState> = _countriesUiState
-    val loginCreateGamerFormState: StateFlow<LoginCreateGamerFormUiState> = _loginCreateGamerFormUiState
+    val loginCreateGamerFormState: StateFlow<LoginCreateGamerFormUiState> =
+        _loginCreateGamerFormUiState
     val navigationState: StateFlow<NavigationState?> = _navigationState
 
     fun getCountriesInfo() {
         viewModelScope.launch {
             _countriesUiState.update { CountriesUiState.Loading }
-            val countriesState: CountriesUiState = when (val countriesResult = getCountriesInfoUC.execute(Unit)) {
-                is Result.Unsuccessful -> CountriesUiState.Failure(countriesResult.failure)
-                is Result.Successful -> {
-                    val countries = countriesResult.data.map(countryMapper::toCountryUiState)
-                    CountriesUiState.Successful(countries)
+            val countriesState: CountriesUiState =
+                when (val countriesResult = getCountriesInfoUC.execute(Unit)) {
+                    is Result.Unsuccessful -> CountriesUiState.Failure(countriesResult.failure)
+                    is Result.Successful -> {
+                        val countries = countriesResult.data.map(countryMapper::toCountryUiState)
+                        CountriesUiState.Successful(countries)
+                    }
                 }
-            }
             _countriesUiState.update { countriesState }
         }
     }
 
     //region createGamer
 
-    fun createGamer(id: String, alias: String, age: Int, country: String, imageSelected: ImageSelected) {
+    fun createGamer(
+        id: String,
+        alias: String,
+        age: Int,
+        country: String,
+        imageSelected: ImageSelected
+    ) {
         viewModelScope.launch {
             _navigationState.update { NavigationState.Loading }
             try {
@@ -83,12 +98,15 @@ class EditGamerVM @Inject constructor(
                         val bytes = getByteArrayFromUri(imageSelected.uri)
                         val mimeType = application.contentResolver.getType(imageSelected.uri)
                         if (bytes == null || mimeType == null) {
-                            _navigationState.update { NavigationState.Failure(GeneralFailure.Unknown) }
+                            _navigationState.update { NavigationState.Failure(GeneralError.Unknown) }
                             return@launch
                         }
                         CreateGamerUC.ProfileImage.InfoImage(mimeType, bytes)
                     }
-                    is ImageSelected.SocialNetwork -> CreateGamerUC.ProfileImage.UrlImage(imageSelected.urlImage)
+
+                    is ImageSelected.SocialNetwork -> CreateGamerUC.ProfileImage.UrlImage(
+                        imageSelected.urlImage
+                    )
                 }
                 val params = CreateGamerUC.GamerParams(
                     gamerId = id,
@@ -98,16 +116,22 @@ class EditGamerVM @Inject constructor(
                     image = image
                 )
                 val navigationState = when (val createGamerResult = createGamerUC.execute(params)) {
-                    is Result.Successful<String> -> when (val saveSessionResult = saveSessionUC.execute(Session.UserRegister(gamerId = createGamerResult.data))) {
+                    is Result.Successful<String> -> when (val saveSessionResult =
+                        saveSessionUC.execute(Session.UserRegister(gamerId = createGamerResult.data))) {
                         is Result.Successful<Unit> -> NavigationState.GamerCreated(createGamerResult.data)
-                        is Result.Unsuccessful<GeneralFailure> -> NavigationState.Failure(saveSessionResult.failure)
+                        is Result.Unsuccessful<GeneralError> -> NavigationState.Failure(
+                            saveSessionResult.failure
+                        )
                     }
-                    is Result.Unsuccessful<GeneralFailure> -> NavigationState.Failure(createGamerResult.failure)
+
+                    is Result.Unsuccessful<GeneralError> -> NavigationState.Failure(
+                        createGamerResult.failure
+                    )
                 }
                 _navigationState.update { navigationState }
             } catch (exception: Exception) {
                 Log.e(TAG, exception.stackTraceToString())
-                _navigationState.update { NavigationState.Failure(GeneralFailure.Unknown) }
+                _navigationState.update { NavigationState.Failure(GeneralError.Unknown) }
             }
         }
     }
@@ -123,7 +147,7 @@ class EditGamerVM @Inject constructor(
                 byteArrayOutputStream.write(buffer, 0, length)
             }
             byteArrayOutputStream.toByteArray()
-        } catch(exception: FileNotFoundException) {
+        } catch (exception: FileNotFoundException) {
             Log.e(TAG, exception.stackTraceToString())
             null
         } finally {
@@ -135,7 +159,12 @@ class EditGamerVM @Inject constructor(
         }
     }
 
-    fun validateCreateGamerForm(alias: String, age: String, country: String, imageSelected: ImageSelected) {
+    fun validateCreateGamerForm(
+        alias: String,
+        age: String,
+        country: String,
+        imageSelected: ImageSelected
+    ) {
         val aliasErrors = validateAlias(alias)
         val ageErrors = validateAge(age)
         val countryErrors = validateCountry(country)
@@ -187,21 +216,17 @@ class EditGamerVM @Inject constructor(
 
     //region close session
 
-    fun closeSession(signOut: suspend () -> Result<Unit, GeneralFailure>) {
+    fun closeSession(signOut: suspend () -> Result<Unit, GeneralError>) {
         viewModelScope.launch {
             _navigationState.update { NavigationState.Loading }
             when (val closeSessionResult = closeSessionUC.execute(signOut)) {
                 is Result.Successful<Unit> -> _navigationState.update { NavigationState.SessionClosed }
-                is Result.Unsuccessful<GeneralFailure> -> _navigationState.update {
+                is Result.Unsuccessful<GeneralError> -> _navigationState.update {
                     NavigationState.Failure(closeSessionResult.failure)
                 }
             }
         }
     }
-
-    /*fun resetSession() {
-        _closeSessionState.update { null }
-    }*/
 
     //endregion
 }
