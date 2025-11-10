@@ -55,6 +55,7 @@ class MainActivity : ComponentActivity() {
                         GeneralError.NetworkError -> messageResolver.getMessage(R.string.err_network_connection)
                         is GeneralError.ServerError -> error.message
                         GeneralError.Unknown -> messageResolver.getMessage(R.string.err_unknown)
+                        GeneralError.ConnectionError -> TODO()
                     }
                     Snackbar.make(window.decorView, message, Snackbar.LENGTH_SHORT).show()
                 }

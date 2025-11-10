@@ -3,24 +3,21 @@ package com.asm.taken.utils
 import android.content.Context
 import androidx.annotation.StringRes
 import com.asm.domain.errors.GeneralError
-import com.asm.domain.errors.GeneralErrorType
-import com.asm.domain.errors.GeneralFailure
 import com.asm.taken.R
 import com.asm.taken.model.AuthError
 import com.asm.taken.model.InputAgeError
 import com.asm.taken.model.InputAliasError
 import com.asm.taken.model.InputCountryError
+import com.asm.taken.model.InputEmailError
+import com.asm.taken.model.InputImageError
+import com.asm.taken.model.InputImageError.*
 import com.asm.taken.model.InputOtpError
 import com.asm.taken.model.InputPasswordError
 import com.asm.taken.model.InputPhoneCodeError
 import com.asm.taken.model.InputPhoneNumberError
-import com.asm.taken.model.InputEmailError
-import com.asm.taken.model.InputImageError
-import com.asm.taken.model.InputImageError.*
 import com.asm.taken.model.InputRepeatValueError
 import com.asm.taken.model.LoginFailure
 import com.asm.taken.model.SendOtpError
-import com.asm.taken.model.SessionError
 import com.asm.taken.model.SignUpError
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
@@ -68,9 +65,11 @@ class MessageResolver @Inject constructor(
             AuthError.UNKNOWN_ERROR -> context.getString(R.string.err_unknown)
         }
         is LoginFailure.RegisterFailure -> when (val generalFailure = error.generalFailure) {
-            is GeneralFailure.ServerError -> "${generalFailure.code}: ${generalFailure.description}"
-            GeneralFailure.NetworkConnection -> context.getString(R.string.err_network_connection)
-            GeneralFailure.Unknown -> context.getString(R.string.err_process_gamer)
+            is GeneralError.ClientError -> TODO()
+            GeneralError.NetworkError -> TODO()
+            is GeneralError.ServerError -> TODO()
+            GeneralError.Unknown -> TODO()
+            GeneralError.ConnectionError -> TODO()
         }
         is LoginFailure.SendOtpFailure -> when (error.sendOtpError) {
             SendOtpError.PHONE_NUMBER_INVALID_ERROR -> context.getString(R.string.err_phone_number_invalid)

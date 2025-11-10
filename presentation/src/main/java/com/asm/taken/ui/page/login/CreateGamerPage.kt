@@ -117,7 +117,7 @@ fun SessionSection(
     when (closeSessionUiState) {
         CloseSessionUiState.Loading -> CircularProgressDialog()
         is CloseSessionUiState.Fail -> LaunchedEffect(true) {
-            val message = messageResolver.getErrorSession(closeSessionUiState.error)
+            val message = ""//messageResolver.getErrorSession(closeSessionUiState.error)
             val snackBarResult = snackBarHostState.showSnackbar(message, withDismissAction = true)
             //if (snackBarResult == SnackbarResult.Dismissed) sessionVM.
         }

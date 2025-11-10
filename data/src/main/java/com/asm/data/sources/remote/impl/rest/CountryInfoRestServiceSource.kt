@@ -10,10 +10,12 @@ import com.asm.domain.entities.CountryInfo
 import com.asm.domain.entities.Result
 import com.asm.domain.errors.GeneralError
 import com.asm.domain.errors.toUnsuccessful
+import dagger.hilt.android.qualifiers.ApplicationContext
+import java.net.SocketTimeoutException
 import javax.inject.Inject
 
 class CountryInfoRestServiceSource @Inject constructor(
-    private val context: Context,
+    @ApplicationContext private val context: Context,
     private val countryInfoClient: CountryInfoClient,
     private val countryInfoMapper: CountryInfoMapper
 ): CountryInfoRemoteSource {
@@ -41,7 +43,9 @@ class CountryInfoRestServiceSource @Inject constructor(
             Result.Successful(countriesInfo)
         } catch(exception: Exception) {
             Log.e(TAG, exception.message, exception)
-            GeneralError.Unknown.toUnsuccessful()
+            if (exception is SocketTimeoutException) {
+                GeneralError.ConnectionError.toUnsuccessful()
+            } else GeneralError.Unknown.toUnsuccessful()
         }
     }
 }

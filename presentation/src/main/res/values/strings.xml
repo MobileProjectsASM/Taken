@@ -9,6 +9,9 @@
     <string name="txt_ttl_form_create_gamer">Create Gamer!</string>
     <string name="txt_ttl_choose_country">Choose country</string>
     <string name="txt_ttl_choose_option">Choose option</string>
+    <string name="txt_ttl_client_error">Request Error</string>
+    <string name="txt_ttl_service_error">Service Error</string>
+    <string name="txt_ttl_unexpected_error">Unexpected Error</string>
     <string name="txt_label_default_image">Default Image</string>
     <string name="txt_label_social_network_image">Social Network</string>
     <string name="txt_label_gallery">Gallery</string>
@@ -69,8 +72,10 @@
     <string name="err_age_less_than_8">Age is less than 8</string>
     <string name="err_image_is_very_weight">Image is very weight</string>
     <string name="err_sign_up">SignUp error</string>
-    <string name="err_server">Server error</string>
     <string name="err_logout">Logout Error</string>
+    <string name="err_client">An error occurred while processing your request.\nPlease verify that your information is correct.</string>
+    <string name="err_server">There has been an error with the service.\nPlease try again later.</string>
+    <string name="err_server_connection">There was an error connecting to the service.\nPlease check your internet connection.</string>
 
     <string name="session_file" translatable="false">session_info</string>
     <string name="default_web_client_id" translatable="false">537568996262-c7nrhuvi4s9jaukcg9uh0hvm98l9ubls.apps.googleusercontent.com</string>

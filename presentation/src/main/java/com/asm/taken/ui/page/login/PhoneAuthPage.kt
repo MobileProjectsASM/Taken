@@ -1,6 +1,8 @@
 package com.asm.taken.ui.page.login
 
 import androidx.activity.compose.BackHandler
+import androidx.annotation.DrawableRes
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -38,17 +40,20 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.asm.domain.errors.GeneralFailure
+import com.asm.domain.errors.GeneralError
 import com.asm.taken.R
 import com.asm.taken.model.CountriesUiState
 import com.asm.taken.model.CountryUiState
@@ -58,6 +63,7 @@ import com.asm.taken.ui.CircularProgressDialog
 import com.asm.taken.ui.DefaultButton
 import com.asm.taken.ui.DefaultOutlinedTextFieldLI
 import com.asm.taken.ui.DefaultText
+import com.asm.taken.ui.ImageDialog
 import com.asm.taken.ui.OtpMultiple
 import com.asm.taken.ui.PuzzleGeneralTitle
 import com.asm.taken.ui.puzzleFontFamily
@@ -116,12 +122,13 @@ fun AuthWithPhone(
 ) {
     when (countriesUiState) {
         is CountriesUiState.Failure -> ErrorCountries(
-            generalFailure = countriesUiState.generalFailure,
+            generalError = countriesUiState.generalFailure,
             snackBarHostState = snackBarHostState,
             loginVM = loginVM,
             messageResolver = messageResolver,
             onSentPhone = onSentPhone
         )
+
         CountriesUiState.Loading -> CircularProgressDialog()
         is CountriesUiState.Successful -> PanelAuthPhone(
             countriesUiState = countriesUiState.countriesInfo,
@@ -134,30 +141,45 @@ fun AuthWithPhone(
 
 @Composable
 fun ErrorCountries(
-    generalFailure: GeneralFailure,
+    generalError: GeneralError,
     snackBarHostState: SnackbarHostState,
     loginVM: LoginVM,
     messageResolver: MessageResolver,
     onSentPhone: (String, String) -> Unit
 ) {
-    LaunchedEffect(true) {
-        when (generalFailure) {
-            is GeneralFailure.ServerError -> {
-                snackBarHostState.showSnackbar("${generalFailure.code}: ${generalFailure.description}", withDismissAction = true)
-            }
+    when (generalError) {
+        is GeneralError.ClientError -> DialogError(
+            title = stringResource(R.string.txt_ttl_client_error),
+            image = painterResource(R.drawable.ic_warning),
+            message = stringResource(R.string.err_client)
+        )
 
-            GeneralFailure.NetworkConnection -> {
-                val actionPerformed = snackBarHostState.showSnackbar(
-                    message = messageResolver.getMessage(R.string.err_network_connection),
-                    actionLabel = messageResolver.getMessage(R.string.txt_label_retry),
-                    duration = SnackbarDuration.Long
-                )
-                if (actionPerformed == SnackbarResult.ActionPerformed) loginVM.getCountriesInfo()
-            }
-            GeneralFailure.Unknown -> {
-                snackBarHostState.showSnackbar(messageResolver.getMessage(R.string.err_get_countries), withDismissAction = true)
-            }
-        }
+        GeneralError.NetworkError -> SnackbarError(
+            snackBarHostState = snackBarHostState,
+            actionLabel = stringResource(R.string.txt_label_retry),
+            duration = SnackbarDuration.Long,
+            message = stringResource(R.string.err_network_connection),
+            onActionPerformed = loginVM::getCountriesInfo
+        )
+
+        is GeneralError.ServerError -> DialogError(
+            title = stringResource(R.string.txt_ttl_service_error),
+            image = painterResource(R.drawable.ic_error),
+            message = stringResource(R.string.err_server)
+        )
+
+        GeneralError.Unknown -> SnackbarError(
+            snackBarHostState = snackBarHostState,
+            message = stringResource(R.string.err_get_countries),
+            withDismissAction = true
+        )
+
+        GeneralError.ConnectionError -> DialogError(
+            title = stringResource(R.string.txt_ttl_unexpected_error),
+            image = painterResource(R.drawable.ic_warning),
+            message = stringResource(R.string.err_server_connection),
+            onClickAction = loginVM::getCountriesInfo
+        )
     }
     PanelAuthPhone(
         countriesUiState = null,
@@ -165,6 +187,44 @@ fun ErrorCountries(
         messageResolver = messageResolver,
         onSentPhone = onSentPhone
     )
+}
+
+@Composable
+fun SnackbarError(
+    snackBarHostState: SnackbarHostState,
+    message: String,
+    actionLabel: String? = null,
+    withDismissAction: Boolean = false,
+    duration: SnackbarDuration = if (actionLabel == null) SnackbarDuration.Short else SnackbarDuration.Indefinite,
+    onActionPerformed: (() -> Unit)? = null
+) = LaunchedEffect(true) {
+    val snackbarResult = snackBarHostState.showSnackbar(
+        message,
+        actionLabel = actionLabel,
+        withDismissAction = withDismissAction,
+        duration = duration
+    )
+    if (snackbarResult == SnackbarResult.ActionPerformed && onActionPerformed != null) onActionPerformed()
+}
+
+@Composable
+fun DialogError(title: String, image: Painter, message: String, onClickAction: (() -> Unit)? = null) {
+    var showErrorDialog by rememberSaveable { mutableStateOf(true) }
+    if (showErrorDialog) {
+        ImageDialog(
+            title = title,
+            image = image,
+            message = message,
+            onCloseDialog =  {
+                showErrorDialog = false
+            },
+        ) {
+            if (onClickAction != null) {
+                onClickAction()
+                showErrorDialog = false
+            }
+        }
+    }
 }
 
 @Composable
@@ -214,14 +274,26 @@ fun FormPhoneNumber(
     onSentPhone: (String, String) -> Unit
 ) {
     val loginPhoneFormState by loginVM.loginFormPhoneUiState.collectAsStateWithLifecycle()
-    val phoneCodeErrors: List<String> = when (val phoneCodeUiState = loginPhoneFormState.phoneCodeUiState.state) {
-        is InputState.Error -> phoneCodeUiState.errors.map { messageResolver.getErrorPhoneCode(it) }
-        InputState.Init, InputState.Success -> listOf()
-    }
-    val phoneNumberErrors: List<String> = when (val phoneNumberUiState = loginPhoneFormState.phoneNumberUiState.state) {
-        is InputState.Error -> phoneNumberUiState.errors.map { messageResolver.getErrorPhoneNumber(it) }
-        InputState.Init, InputState.Success -> listOf()
-    }
+    val phoneCodeErrors: List<String> =
+        when (val phoneCodeUiState = loginPhoneFormState.phoneCodeUiState.state) {
+            is InputState.Error -> phoneCodeUiState.errors.map {
+                messageResolver.getErrorPhoneCode(
+                    it
+                )
+            }
+
+            InputState.Init, InputState.Success -> listOf()
+        }
+    val phoneNumberErrors: List<String> =
+        when (val phoneNumberUiState = loginPhoneFormState.phoneNumberUiState.state) {
+            is InputState.Error -> phoneNumberUiState.errors.map {
+                messageResolver.getErrorPhoneNumber(
+                    it
+                )
+            }
+
+            InputState.Init, InputState.Success -> listOf()
+        }
     Column {
         PhoneCodeInput(
             modifier = Modifier
@@ -238,10 +310,10 @@ fun FormPhoneNumber(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 10.dp),
-            value = loginPhoneFormState.phoneNumberUiState.value, 
+            value = loginPhoneFormState.phoneNumberUiState.value,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            label = R.string.txt_label_pn, 
-            leadingIcon = Icons.Default.Phone, 
+            label = R.string.txt_label_pn,
+            leadingIcon = Icons.Default.Phone,
             cdLeadingIcon = null,
             errors = phoneNumberErrors
         ) {
@@ -268,7 +340,7 @@ fun FormPhoneNumber(
 @Composable
 fun PhoneCodeInput(
     modifier: Modifier = Modifier,
-    countriesUiState: List<CountryUiState>?, 
+    countriesUiState: List<CountryUiState>?,
     codeValue: String,
     phoneNumberValue: String,
     phoneCodeErrors: List<String>,
@@ -394,16 +466,20 @@ fun SessionSection(
         is LoginUiState.RegisteredUser -> LaunchedEffect(true) {
             onNavigateToMainPage(loginUiState.gamerId)
         }
+
         is LoginUiState.UnregisteredUser -> LaunchedEffect(true) {
             onNavigateToCreateGamer(loginUiState.userData)
         }
+
         is LoginUiState.Failure -> {
             val message = messageResolver.getErrorLogin(loginUiState.loginFailure)
             LaunchedEffect(true) {
-                val snackBarResult = snackBarHostState.showSnackbar(message, withDismissAction = true)
+                val snackBarResult =
+                    snackBarHostState.showSnackbar(message, withDismissAction = true)
                 if (snackBarResult == SnackbarResult.Dismissed) loginVM.resetLoginUiState()
             }
         }
+
         is LoginUiState.SentOtp -> OtpDialog(
             loginVM = loginVM,
             phoneNumber = loginUiState.phoneNumber,
@@ -415,6 +491,7 @@ fun SessionSection(
                 loginVM.updateLoginUiState(authResult)
             }
         }
+
         else -> return
     }
 }
@@ -479,7 +556,11 @@ fun OtpDialog(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp),
-                    text = "${stringResource(id = R.string.txt_inf_enter_otp)} ${phoneNumber.takeLast(4)}",
+                    text = "${stringResource(id = R.string.txt_inf_enter_otp)} ${
+                        phoneNumber.takeLast(
+                            4
+                        )
+                    }",
                     textAlign = TextAlign.Center
                 )
                 Spacer(modifier = Modifier.height(20.dp))

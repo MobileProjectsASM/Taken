@@ -7,6 +7,7 @@ import androidx.annotation.StringRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
@@ -30,6 +31,7 @@ import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.outlined.Cancel
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.Icon
@@ -53,6 +55,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.dimensionResource
@@ -66,12 +69,14 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.asm.taken.R
+import com.asm.taken.model.InputState
 import com.asm.taken.ui.theme.Purple80
 
 @Composable
@@ -502,6 +507,88 @@ fun ProgressDialog(progressContent: @Composable () -> Unit) {
             contentAlignment = Alignment.Center
         ) {
             progressContent()
+        }
+    }
+}
+
+@Composable
+fun ImageDialog(
+    title: String,
+    image: Painter,
+    message: String,
+    onCloseDialog: () -> Unit,
+    onClickAction: (() -> Unit)? = null
+) {
+    Dialog(onDismissRequest = {}) {
+        Card(modifier = Modifier.fillMaxWidth()) {
+            Column {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 10.dp, end = 10.dp),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    Image(
+                        modifier = Modifier
+                            .size(24.dp)
+                            .fillMaxWidth()
+                            .clickable(onClick = onCloseDialog),
+                        painter = painterResource(R.drawable.ic_cancelar),
+                        contentDescription = null
+                    )
+                }
+                Column(
+                    modifier = Modifier.padding(horizontal = 10.dp)
+                ) {
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Text(
+                        modifier = Modifier.fillMaxWidth(),
+                        fontSize = dimensionResource(
+                            id = R.dimen.title_text_size
+                        ).value.sp,
+                        text = title,
+                        fontFamily = puzzleFontFamily,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center
+                    )
+                    Spacer(modifier = Modifier.height(50.dp))
+                    Image(
+                        modifier = Modifier
+                            .size(100.dp)
+                            .fillMaxWidth()
+                            .align(Alignment.CenterHorizontally),
+                        alignment = Alignment.Center,
+                        painter = image,
+                        contentDescription = null
+                    )
+                    Spacer(modifier = Modifier.height(30.dp))
+                    Text(
+                        modifier = Modifier
+                            .fillMaxWidth(),
+                        textAlign = TextAlign.Center,
+                        fontSize = dimensionResource(
+                            id = R.dimen.default_text_size
+                        ).value.sp,
+                        text = message,
+                        fontFamily = puzzleFontFamily
+                    )
+                    if (onClickAction != null) {
+                        Spacer(modifier = Modifier.height(20.dp))
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            DefaultButton(
+                                text = stringResource(id = R.string.txt_label_retry),
+                                onClickButton = onClickAction
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
+            }
         }
     }
 }
