@@ -106,7 +106,11 @@ fun AuthenticationSection(
         )
         PanelSocialMedia(
             signInWithGoogle = {
-                loginVM.loginWithGoogle(context, authenticationClient::signInWithGoogle)
+                coroutineScope.launch {
+                    loginVM.updateLoginState(LoginUiState.Loading)
+                    val authResult = authenticationClient.signInWithGoogle(context)
+                    loginVM.updateLoginState(authResult)
+                }
             },
             signInWithPhoneNumber = onNavigateToAuthWithPhone,
             signInWithFacebook = {
@@ -155,10 +159,9 @@ fun PanelLogin(
                 resourceResolver = resourceResolver
             ) { email, password ->
                 coroutineScope.launch {
-                    loginVM.updateLoginUiState(AuthResult.Loading)
-                    val authResult =
-                        authenticationClient.signInWithEmailAndPassword(email, password)
-                    loginVM.updateLoginUiState(authResult)
+                    loginVM.updateLoginState(LoginUiState.Loading)
+                    val authResult = authenticationClient.signInWithEmailAndPassword(email, password)
+                    loginVM.updateLoginState(authResult)
                 }
             }
         }

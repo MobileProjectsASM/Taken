@@ -1,6 +1,5 @@
 package com.asm.taken.vm
 
-import android.content.Context
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -26,17 +25,13 @@ import com.asm.taken.model.LoginFormCreateAccountUiState
 import com.asm.taken.model.LoginFormPhoneUiState
 import com.asm.taken.model.LoginFormUiState
 import com.asm.taken.model.LoginUiState
-import com.asm.taken.utils.AuthResult
-import com.asm.taken.utils.SendOtpResult
 import com.asm.taken.utils.SignUpResult
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ActivityContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-import kotlin.reflect.KSuspendFunction1
 
 @HiltViewModel
 class LoginVM @Inject constructor(
@@ -134,34 +129,6 @@ class LoginVM @Inject constructor(
         }
     }
 
-    fun updateLoginUiState(sendOtpResult: SendOtpResult) {
-        val loginUiState = when (sendOtpResult) {
-            is SendOtpResult.Failure -> LoginUiState.Failure(
-                LoginFailure.SendOtpFailure(
-                    sendOtpResult.phonesSendOtpError
-                )
-            )
-
-            SendOtpResult.Loading -> LoginUiState.Loading
-            is SendOtpResult.SentOtp -> LoginUiState.SentOtp(
-                sendOtpResult.verificationId,
-                sendOtpResult.phoneNumber
-            )
-        }
-        _loginUiState.update { loginUiState }
-    }
-
-    fun updateLoginUiState(authResult: AuthResult) {
-        viewModelScope.launch {
-            val loginWithPhoneUiState = when (authResult) {
-                is AuthResult.Successful -> updateSession(authResult.userData)
-                is AuthResult.Failure -> LoginUiState.Failure(LoginFailure.AuthFailure(authResult.authError))
-                AuthResult.Loading -> LoginUiState.Loading
-            }
-            _loginUiState.update { loginWithPhoneUiState }
-        }
-    }
-
     fun updateLoginState(authResult: Result<AuthUser, GeneralError>) {
         viewModelScope.launch {
             val loginState = when (authResult) {
@@ -174,20 +141,6 @@ class LoginVM @Inject constructor(
 
     fun updateLoginState(loginUiState: LoginUiState) {
         _loginUiState.update { loginUiState }
-    }
-
-    fun loginWithGoogle(
-        @ActivityContext context: Context,
-        authWithGoogle: KSuspendFunction1<Context, Result<AuthUser, GeneralError>>
-    ) {
-        viewModelScope.launch {
-            _loginUiState.update { LoginUiState.Loading }
-            val loginUiState = when (val resultAuthentication = authWithGoogle(context)) {
-                is Result.Successful<AuthUser> -> updateSession(resultAuthentication.data)
-                is Result.Unsuccessful<GeneralError> -> LoginUiState.Failure(LoginFailure.AuthFailure(resultAuthentication.failure))
-            }
-            _loginUiState.update { loginUiState }
-        }
     }
 
     fun updateLoginUiState(signUpResult: SignUpResult) {

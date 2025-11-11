@@ -88,43 +88,23 @@ class AuthenticationClient @Inject constructor(
         }
     }
 
-    suspend fun signInWithEmailAndPassword(email: String, password: String): AuthResult {
+    suspend fun signInWithEmailAndPassword(email: String, password: String): Result<AuthUser, GeneralError> {
         return try {
-            val firebaseUser = auth.signInWithEmailAndPassword(email, password).await().user
+            val authResult = auth.signInWithEmailAndPassword(email, password).await()
+            val firebaseUser = authResult.user
             if (firebaseUser == null) {
                 Log.e(TAG, "FirebaseUser is null")
-                return AuthResult.Failure(AuthError.UNKNOWN_ERROR)
+                return GeneralError.ServerError().toUnsuccessful()
             }
-            AuthResult.Successful(
-                userData = UserData(
-                    userId = firebaseUser.uid,
-                    profilePictureUrl = firebaseUser.photoUrl?.toString()
-                )
-            )
+            Result.Successful(AuthUser(firebaseUser.uid, firebaseUser.photoUrl?.toString()))
         } catch (exception: Exception) {
-            Log.e(TAG, exception.stackTraceToString())
-            when {
-                exception is FirebaseException -> {
-                    val authError: AuthError = when {
-                        exception is FirebaseNetworkException -> AuthError.NETWORK_CONNECTION
-                        exception is FirebaseAuthException -> when (exception.errorCode) {
-                            "ERROR_INVALID_EMAIL" -> AuthError.ERROR_INVALID_EMAIL
-                            "ERROR_INVALID_CREDENTIAL" -> AuthError.ERROR_WRONG_PASSWORD
-                            "ERROR_USER_NOT_FOUND" -> AuthError.ERROR_USER_NOT_FOUND
-                            "ERROR_INVALID_LOGIN_CREDENTIALS" -> AuthError.ERROR_INVALID_LOGIN_CREDENTIALS
-                            "ERROR_USER_DISABLED" -> AuthError.ERROR_USER_DISABLED
-                            "ERROR_TOO_MANY_REQUESTS" -> AuthError.ERROR_TOO_MANY_REQUESTS
-                            "ERROR_NETWORK_REQUEST_FAILED" -> AuthError.NETWORK_CONNECTION
-                            else -> AuthError.UNKNOWN_ERROR
-                        }
-
-                        else -> AuthError.UNKNOWN_ERROR
-                    }
-                    return AuthResult.Failure(authError)
-                }
-
-                else -> AuthResult.Failure(AuthError.UNKNOWN_ERROR)
-            }
+            Log.e(TAG, "Unexpected Exception", exception)
+            when (exception) {
+                is FirebaseAuthInvalidUserException -> GeneralError.ClientError("")
+                is FirebaseAuthInvalidCredentialsException -> GeneralError.ClientError("")
+                is FirebaseException -> GeneralError.ClientError("")
+                else -> GeneralError.Unknown
+            }.toUnsuccessful()
         }
     }
 
