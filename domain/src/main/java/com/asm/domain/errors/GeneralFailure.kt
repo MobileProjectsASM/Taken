@@ -6,8 +6,8 @@ sealed class GeneralError {
     data object NetworkError: GeneralError()
     data object ConnectionError: GeneralError()
     data object Unknown: GeneralError()
-    data class ServerError(val message: String): GeneralError()
-    data class ClientError(val message: String): GeneralError()
+    data class ServerError(val message: String? = null): GeneralError()
+    data class ClientError(val message: String? = null): GeneralError()
 }
 
 fun GeneralError.toUnsuccessful() = Result.Unsuccessful(this)

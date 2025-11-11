@@ -65,12 +65,12 @@ class GamerFirebaseSource @Inject constructor(
                 functions.getHttpsCallableFromUrl(URL(context.getString(R.string.create_gamer_cloud_function_url)))
                     .call(map).await()
             val data = httpCallableResult.data?.let { it as Map<*, *> }
-                ?: return GeneralError.ServerError(context.getString(R.string.err_server_response)).toUnsuccessful().also {
+                ?: return GeneralError.ServerError().toUnsuccessful().also {
                     Log.e(TAG, "data response is null")
                 }
             data[GamerKeys.GAMER_ID]?.let {
                 Result.Successful(it as String)
-            } ?: GeneralError.ServerError(context.getString(R.string.err_server_response)).toUnsuccessful().also {
+            } ?: GeneralError.ServerError().toUnsuccessful().also {
                 Log.e(TAG, "gamerId response is invalid")
             }
         } catch (exception: Exception) {

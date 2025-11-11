@@ -28,7 +28,7 @@ class MultimediaStorageSource @Inject constructor(
             val imageUri = imageReference.downloadUrl.await()
             imageUri?.path?.let {
                 Result.Successful(it)
-            } ?: GeneralError.ServerError(context.getString(R.string.err_server_response)).toUnsuccessful().also {
+            } ?: GeneralError.ServerError().toUnsuccessful().also {
                 Log.e(TAG, "path is null")
             }
         } catch (exception: Exception) {

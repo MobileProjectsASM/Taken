@@ -38,7 +38,7 @@ class CountryInfoRestServiceSource @Inject constructor(
                     else -> GeneralError.ServerError(errorMessage)
                 }.toUnsuccessful()
             }
-            val countries = response.body() ?: return GeneralError.ServerError(context.getString(R.string.err_server_response)).toUnsuccessful()
+            val countries = response.body() ?: return GeneralError.ServerError().toUnsuccessful()
             val countriesInfo = countries.map(countryInfoMapper::getCountryInfo)
             Result.Successful(countriesInfo)
         } catch(exception: Exception) {
