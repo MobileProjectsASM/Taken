@@ -1,8 +1,6 @@
 package com.asm.taken.ui.page.login
 
 import androidx.activity.compose.BackHandler
-import androidx.annotation.DrawableRes
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -47,7 +45,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -69,7 +66,7 @@ import com.asm.taken.ui.PuzzleGeneralTitle
 import com.asm.taken.ui.puzzleFontFamily
 import com.asm.taken.utils.AuthResult
 import com.asm.taken.utils.AuthenticationClient
-import com.asm.taken.utils.MessageResolver
+import com.asm.taken.utils.ResourceResolver
 import com.asm.taken.utils.UserData
 import com.asm.taken.vm.LoginVM
 import kotlinx.coroutines.launch
@@ -78,7 +75,7 @@ import kotlinx.coroutines.launch
 fun PhoneAuthPage(
     loginVM: LoginVM,
     authenticationClient: AuthenticationClient,
-    messageResolver: MessageResolver,
+    resourceResolver: ResourceResolver,
     snackBarHostState: SnackbarHostState,
     onSentPhone: (String, String) -> Unit,
     popBackStack: () -> Unit,
@@ -94,7 +91,7 @@ fun PhoneAuthPage(
     }
     AuthWithPhone(
         loginVM = loginVM,
-        messageResolver = messageResolver,
+        resourceResolver = resourceResolver,
         countriesUiState = countriesUiState,
         snackBarHostState = snackBarHostState,
         onSentPhone = onSentPhone
@@ -102,7 +99,7 @@ fun PhoneAuthPage(
     SessionSection(
         loginVM = loginVM,
         authenticationClient = authenticationClient,
-        messageResolver = messageResolver,
+        resourceResolver = resourceResolver,
         loginUiState = loginUiState,
         snackBarHostState = snackBarHostState,
         onNavigateToMainPage = onNavigateToMainPage,
@@ -115,7 +112,7 @@ fun PhoneAuthPage(
 @Composable
 fun AuthWithPhone(
     loginVM: LoginVM,
-    messageResolver: MessageResolver,
+    resourceResolver: ResourceResolver,
     countriesUiState: CountriesUiState,
     snackBarHostState: SnackbarHostState,
     onSentPhone: (String, String) -> Unit
@@ -125,7 +122,7 @@ fun AuthWithPhone(
             generalError = countriesUiState.generalFailure,
             snackBarHostState = snackBarHostState,
             loginVM = loginVM,
-            messageResolver = messageResolver,
+            resourceResolver = resourceResolver,
             onSentPhone = onSentPhone
         )
 
@@ -133,7 +130,7 @@ fun AuthWithPhone(
         is CountriesUiState.Successful -> PanelAuthPhone(
             countriesUiState = countriesUiState.countriesInfo,
             loginVM = loginVM,
-            messageResolver = messageResolver,
+            resourceResolver = resourceResolver,
             onSentPhone = onSentPhone
         )
     }
@@ -144,7 +141,7 @@ fun ErrorCountries(
     generalError: GeneralError,
     snackBarHostState: SnackbarHostState,
     loginVM: LoginVM,
-    messageResolver: MessageResolver,
+    resourceResolver: ResourceResolver,
     onSentPhone: (String, String) -> Unit
 ) {
     when (generalError) {
@@ -184,7 +181,7 @@ fun ErrorCountries(
     PanelAuthPhone(
         countriesUiState = null,
         loginVM = loginVM,
-        messageResolver = messageResolver,
+        resourceResolver = resourceResolver,
         onSentPhone = onSentPhone
     )
 }
@@ -231,7 +228,7 @@ fun DialogError(title: String, image: Painter, message: String, onClickAction: (
 fun PanelAuthPhone(
     countriesUiState: List<CountryUiState>?,
     loginVM: LoginVM,
-    messageResolver: MessageResolver,
+    resourceResolver: ResourceResolver,
     onSentPhone: (String, String) -> Unit
 ) {
     Column(
@@ -257,7 +254,7 @@ fun PanelAuthPhone(
                 FormPhoneNumber(
                     countriesUiState = countriesUiState,
                     loginVM = loginVM,
-                    messageResolver = messageResolver,
+                    resourceResolver = resourceResolver,
                     onSentPhone = onSentPhone
                 )
             }
@@ -270,14 +267,14 @@ fun PanelAuthPhone(
 fun FormPhoneNumber(
     countriesUiState: List<CountryUiState>?,
     loginVM: LoginVM,
-    messageResolver: MessageResolver,
+    resourceResolver: ResourceResolver,
     onSentPhone: (String, String) -> Unit
 ) {
     val loginPhoneFormState by loginVM.loginFormPhoneUiState.collectAsStateWithLifecycle()
     val phoneCodeErrors: List<String> =
         when (val phoneCodeUiState = loginPhoneFormState.phoneCodeUiState.state) {
             is InputState.Error -> phoneCodeUiState.errors.map {
-                messageResolver.getErrorPhoneCode(
+                resourceResolver.getErrorPhoneCode(
                     it
                 )
             }
@@ -287,7 +284,7 @@ fun FormPhoneNumber(
     val phoneNumberErrors: List<String> =
         when (val phoneNumberUiState = loginPhoneFormState.phoneNumberUiState.state) {
             is InputState.Error -> phoneNumberUiState.errors.map {
-                messageResolver.getErrorPhoneNumber(
+                resourceResolver.getErrorPhoneNumber(
                     it
                 )
             }
@@ -454,7 +451,7 @@ fun ItemCountry(countryUiState: CountryUiState, onClick: (CountryUiState) -> Uni
 fun SessionSection(
     loginVM: LoginVM,
     authenticationClient: AuthenticationClient,
-    messageResolver: MessageResolver,
+    resourceResolver: ResourceResolver,
     loginUiState: LoginUiState,
     snackBarHostState: SnackbarHostState,
     onNavigateToMainPage: (String) -> Unit,
@@ -468,11 +465,11 @@ fun SessionSection(
         }
 
         is LoginUiState.UnregisteredUser -> LaunchedEffect(true) {
-            onNavigateToCreateGamer(loginUiState.userData)
+            onNavigateToCreateGamer(loginUiState.authUser)
         }
 
         is LoginUiState.Failure -> {
-            val message = messageResolver.getErrorLogin(loginUiState.loginFailure)
+            val message = resourceResolver.getErrorLogin(loginUiState.loginFailure)
             LaunchedEffect(true) {
                 val snackBarResult =
                     snackBarHostState.showSnackbar(message, withDismissAction = true)
@@ -483,7 +480,7 @@ fun SessionSection(
         is LoginUiState.SentOtp -> OtpDialog(
             loginVM = loginVM,
             phoneNumber = loginUiState.phoneNumber,
-            messageResolver = messageResolver,
+            resourceResolver = resourceResolver,
         ) { otp ->
             scope.launch {
                 loginVM.updateLoginUiState(AuthResult.Loading)
@@ -499,13 +496,13 @@ fun SessionSection(
 @Composable
 fun OtpDialog(
     loginVM: LoginVM,
-    messageResolver: MessageResolver,
+    resourceResolver: ResourceResolver,
     phoneNumber: String,
     onVerifyOtp: (String) -> Unit
 ) {
     val otpFormUiState by loginVM.otpFormUiState.collectAsStateWithLifecycle()
     val otpErrors: List<String> = when (val otpFormState = otpFormUiState.state) {
-        is InputState.Error -> otpFormState.errors.map { messageResolver.getErrorVerifyOtp(it) }
+        is InputState.Error -> otpFormState.errors.map { resourceResolver.getErrorVerifyOtp(it) }
         InputState.Init, InputState.Success -> listOf()
     }
 

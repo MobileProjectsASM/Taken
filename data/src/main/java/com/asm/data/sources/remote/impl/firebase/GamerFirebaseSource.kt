@@ -10,7 +10,9 @@ import com.asm.domain.entities.Gamer
 import com.asm.domain.entities.Result
 import com.asm.domain.errors.GeneralError
 import com.asm.domain.errors.toUnsuccessful
+import com.google.firebase.FirebaseException
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.FirebaseFirestoreException
 import com.google.firebase.functions.FirebaseFunctions
 import com.google.firebase.functions.FirebaseFunctionsException
 import com.google.gson.Gson
@@ -91,7 +93,10 @@ class GamerFirebaseSource @Inject constructor(
             Result.Successful(snapshot.exists())
         } catch (exception: Exception) {
             Log.e(TAG, exception.message, exception)
-            GeneralError.Unknown.toUnsuccessful()
+            when {
+                exception is FirebaseFirestoreException -> GeneralError.ClientError().toUnsuccessful()
+                else -> GeneralError.Unknown.toUnsuccessful()
+            }
         }
     }
 

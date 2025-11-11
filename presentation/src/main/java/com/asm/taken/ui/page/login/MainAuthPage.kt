@@ -17,7 +17,6 @@ import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Mail
 import androidx.compose.material3.Card
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.SnackbarResult
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -30,8 +29,10 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.asm.domain.entities.AuthUser
 import com.asm.taken.R
 import com.asm.taken.model.InputState
+import com.asm.taken.model.LoginFailure
 import com.asm.taken.model.LoginFormUiState
 import com.asm.taken.model.LoginUiState
 import com.asm.taken.ui.CircularProgressDialog
@@ -44,7 +45,7 @@ import com.asm.taken.ui.PasswordOutlinedTextField
 import com.asm.taken.ui.PuzzleGeneralTitle
 import com.asm.taken.utils.AuthResult
 import com.asm.taken.utils.AuthenticationClient
-import com.asm.taken.utils.MessageResolver
+import com.asm.taken.utils.ResourceResolver
 import com.asm.taken.utils.UserData
 import com.asm.taken.vm.LoginVM
 import kotlinx.coroutines.CoroutineScope
@@ -54,7 +55,7 @@ import kotlinx.coroutines.launch
 fun MainAuthPage(
     loginVM: LoginVM,
     authenticationClient: AuthenticationClient,
-    messageResolver: MessageResolver,
+    resourceResolver: ResourceResolver,
     snackBarHostState: SnackbarHostState,
     onNavigateToCreateAccount: () -> Unit,
     onNavigateToAuthWithPhone: () -> Unit,
@@ -65,7 +66,7 @@ fun MainAuthPage(
 
     AuthenticationSection(
         loginVM = loginVM,
-        messageResolver = messageResolver,
+        resourceResolver = resourceResolver,
         coroutineScope = coroutineScope,
         authenticationClient = authenticationClient,
         onNavigateToCreateAccount = onNavigateToCreateAccount,
@@ -73,7 +74,7 @@ fun MainAuthPage(
     )
     SessionSection(
         loginVM = loginVM,
-        messageResolver = messageResolver,
+        resourceResolver = resourceResolver,
         snackBarHostState = snackBarHostState,
         onNavigateToMainPage = onNavigateToMainPage,
         onNavigateToCreateGamer = {
@@ -85,7 +86,7 @@ fun MainAuthPage(
 @Composable
 fun AuthenticationSection(
     loginVM: LoginVM,
-    messageResolver: MessageResolver,
+    resourceResolver: ResourceResolver,
     coroutineScope: CoroutineScope,
     authenticationClient: AuthenticationClient,
     onNavigateToCreateAccount: () -> Unit,
@@ -102,15 +103,11 @@ fun AuthenticationSection(
             loginVM = loginVM,
             authenticationClient = authenticationClient,
             coroutineScope = coroutineScope,
-            messageResolver = messageResolver
+            resourceResolver = resourceResolver
         )
         PanelSocialMedia(
             signInWithGoogle = {
-                coroutineScope.launch {
-                    loginVM.updateLoginUiState(AuthResult.Loading)
-                    val authResult = authenticationClient.signInWithGoogle()
-                    loginVM.updateLoginUiState(authResult)
-                }
+                loginVM.loginWithGoogle(context, authenticationClient::signInWithGoogle)
             },
             signInWithPhoneNumber = onNavigateToAuthWithPhone,
             signInWithFacebook = {
@@ -131,7 +128,7 @@ fun PanelLogin(
     loginVM: LoginVM,
     authenticationClient: AuthenticationClient,
     coroutineScope: CoroutineScope,
-    messageResolver: MessageResolver
+    resourceResolver: ResourceResolver
 ) {
     Card(
         modifier = Modifier
@@ -155,11 +152,12 @@ fun PanelLogin(
             Spacer(modifier = Modifier.height(50.dp))
             FormLogin(
                 loginVM = loginVM,
-                messageResolver = messageResolver
+                resourceResolver = resourceResolver
             ) { email, password ->
                 coroutineScope.launch {
                     loginVM.updateLoginUiState(AuthResult.Loading)
-                    val authResult = authenticationClient.signInWithEmailAndPassword(email, password)
+                    val authResult =
+                        authenticationClient.signInWithEmailAndPassword(email, password)
                     loginVM.updateLoginUiState(authResult)
                 }
             }
@@ -170,27 +168,34 @@ fun PanelLogin(
 @Composable
 fun SessionSection(
     loginVM: LoginVM,
-    messageResolver: MessageResolver,
+    resourceResolver: ResourceResolver,
     snackBarHostState: SnackbarHostState,
     onNavigateToMainPage: (gamerId: String) -> Unit,
-    onNavigateToCreateGamer: (UserData) -> Unit
+    onNavigateToCreateGamer: (AuthUser) -> Unit
 ) {
     val loginUiState: LoginUiState by loginVM.loginUiState.collectAsStateWithLifecycle()
     when (val state = loginUiState) {
-        is LoginUiState.Failure -> {
-            val message = messageResolver.getErrorLogin((loginUiState as LoginUiState.Failure).loginFailure)
-            LaunchedEffect(true) {
-                val snackBarResult = snackBarHostState.showSnackbar(message, withDismissAction = true)
-                if (snackBarResult == SnackbarResult.Dismissed) loginVM.resetLoginUiState()
-            }
+        is LoginUiState.Failure -> when (val loginFailure = state.loginFailure) {
+            is LoginFailure.AuthFailure -> TODO()
+            LoginFailure.LogoutFailure -> TODO()
+            is LoginFailure.RegisterFailure -> TODO()
+            is LoginFailure.SendOtpFailure -> TODO()
+            is LoginFailure.SignUpFailure -> TODO()
         }
+        /*val message = messageResolver.getErrorLogin(state.loginFailure)
+        LaunchedEffect(true) {
+            val snackBarResult = snackBarHostState.showSnackbar(message, withDismissAction = true)
+            if (snackBarResult == SnackbarResult.Dismissed) loginVM.resetLoginUiState()
+        }*/
         is LoginUiState.Loading -> CircularProgressDialog()
         is LoginUiState.RegisteredUser -> LaunchedEffect(true) {
             onNavigateToMainPage(state.gamerId)
         }
+
         is LoginUiState.UnregisteredUser -> LaunchedEffect(true) {
-           onNavigateToCreateGamer(state.userData)
+            onNavigateToCreateGamer(state.authUser)
         }
+
         else -> return
     }
 }
@@ -198,20 +203,21 @@ fun SessionSection(
 @Composable
 fun FormLogin(
     loginVM: LoginVM,
-    messageResolver: MessageResolver,
+    resourceResolver: ResourceResolver,
     signInWithEmailAndPassword: (String, String) -> Unit,
 ) {
     val loginFormState: LoginFormUiState by loginVM.loginFormUiState.collectAsStateWithLifecycle()
     val emailErrors: List<String> = when (val emailUiState = loginFormState.emailUiState.state) {
-        is InputState.Error -> emailUiState.errors.map { messageResolver.getErrorEmail(it) }
+        is InputState.Error -> emailUiState.errors.map { resourceResolver.getErrorEmail(it) }
         InputState.Init -> listOf()
         InputState.Success -> listOf()
     }
-    val passwordErrors: List<String> = when (val passwordUiState = loginFormState.passwordUiState.state) {
-        is InputState.Error -> passwordUiState.errors.map { messageResolver.getErrorPassword(it) }
-        InputState.Init -> listOf()
-        InputState.Success -> listOf()
-    }
+    val passwordErrors: List<String> =
+        when (val passwordUiState = loginFormState.passwordUiState.state) {
+            is InputState.Error -> passwordUiState.errors.map { resourceResolver.getErrorPassword(it) }
+            InputState.Init -> listOf()
+            InputState.Success -> listOf()
+        }
     Column {
         DefaultOutlinedTextFieldLI(
             modifier = Modifier
@@ -247,7 +253,10 @@ fun FormLogin(
                 text = stringResource(id = R.string.txt_btn_login),
                 enable = loginFormState.emailUiState.state is InputState.Success && loginFormState.passwordUiState.state is InputState.Success,
                 onClickButton = {
-                    signInWithEmailAndPassword(loginFormState.emailUiState.value, loginFormState.passwordUiState.value)
+                    signInWithEmailAndPassword(
+                        loginFormState.emailUiState.value,
+                        loginFormState.passwordUiState.value
+                    )
                 }
             )
         }

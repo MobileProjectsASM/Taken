@@ -28,7 +28,7 @@ import com.asm.taken.ui.page.login.CreateGamerPage
 import com.asm.taken.ui.page.login.MainAuthPage
 import com.asm.taken.ui.page.login.PhoneAuthPage
 import com.asm.taken.utils.AuthenticationClient
-import com.asm.taken.utils.MessageResolver
+import com.asm.taken.utils.ResourceResolver
 import com.asm.taken.vm.EditGamerVM
 import com.asm.taken.vm.LoginVM
 
@@ -38,7 +38,7 @@ fun MainNavigation(
     innerPadding: PaddingValues,
     snackBarHostState: SnackbarHostState,
     authenticationClient: AuthenticationClient,
-    messageResolver: MessageResolver
+    resourceResolver: ResourceResolver
 ) {
     val navigationController = rememberNavController()
 
@@ -51,7 +51,7 @@ fun MainNavigation(
             navController = navigationController,
             snackBarHostState = snackBarHostState,
             authenticationClient = authenticationClient,
-            messageResolver = messageResolver
+            resourceResolver = resourceResolver
         )
         composable<CreateGamer> { navBackStackEntry ->
             val createGamer: CreateGamer = navBackStackEntry.toRoute()
@@ -61,7 +61,7 @@ fun MainNavigation(
                     createGamerInfo = createGamer,
                     editGamerVM = editGamerVM,
                     authenticationClient = authenticationClient,
-                    messageResolver = messageResolver,
+                    resourceResolver = resourceResolver,
                     snackBarHostState = snackBarHostState,
                     onNavigateToAuthentication = {
                         navigationController.navigate(Login) {
@@ -88,7 +88,7 @@ fun NavGraphBuilder.navigationLogin(
     navController: NavHostController,
     snackBarHostState: SnackbarHostState,
     authenticationClient: AuthenticationClient,
-    messageResolver: MessageResolver
+    resourceResolver: ResourceResolver
 ) {
     navigation<Login>(startDestination = Authentication) {
         composable<Authentication> { navBackStackEntry ->
@@ -101,7 +101,7 @@ fun NavGraphBuilder.navigationLogin(
                     loginVM = loginVM,
                     authenticationClient = authenticationClient,
                     snackBarHostState = snackBarHostState,
-                    messageResolver = messageResolver,
+                    resourceResolver = resourceResolver,
                     onNavigateToCreateAccount = {
                         navController.navigate(CreateAccount)
                     },
@@ -142,7 +142,7 @@ fun NavGraphBuilder.navigationLogin(
                 PhoneAuthPage(
                     loginVM = loginVM,
                     authenticationClient = authenticationClient,
-                    messageResolver = messageResolver,
+                    resourceResolver = resourceResolver,
                     snackBarHostState = snackBarHostState,
                     onSentPhone = { code, phoneNumber ->
                         authenticationClient.authWithPhoneNumber(
@@ -183,7 +183,7 @@ fun NavGraphBuilder.navigationLogin(
                 CreateAccountPage(
                     loginVM = loginVM,
                     authenticationClient = authenticationClient,
-                    messageResolver = messageResolver,
+                    resourceResolver = resourceResolver,
                     snackBarHostState = snackBarHostState,
                     popBackStack = navController::popBackStack
                 )

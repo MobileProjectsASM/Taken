@@ -7,3 +7,8 @@ data class Gamer(
     val gamerCountry: String,
     val gamerImage: String
 )
+
+data class AuthUser(
+    val userId: String,
+    val profilePictureUrl: String?
+)

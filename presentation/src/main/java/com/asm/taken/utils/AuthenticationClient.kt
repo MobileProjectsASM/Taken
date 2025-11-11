@@ -10,7 +10,7 @@ import androidx.credentials.CustomCredential
 import androidx.credentials.GetCredentialRequest
 import androidx.credentials.GetCredentialResponse
 import androidx.credentials.exceptions.GetCredentialException
-import androidx.credentials.exceptions.NoCredentialException
+import com.asm.domain.entities.AuthUser
 import com.asm.domain.entities.Result
 import com.asm.domain.errors.GeneralError
 import com.asm.domain.errors.toUnsuccessful
@@ -26,7 +26,6 @@ import com.facebook.login.LoginManager
 import com.facebook.login.LoginResult
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
-import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
 import com.google.firebase.FirebaseException
 import com.google.firebase.FirebaseNetworkException
 import com.google.firebase.FirebaseTooManyRequestsException
@@ -35,13 +34,13 @@ import com.google.firebase.auth.FacebookAuthProvider
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthException
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
+import com.google.firebase.auth.FirebaseAuthInvalidUserException
 import com.google.firebase.auth.FirebaseAuthMissingActivityForRecaptchaException
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.PhoneAuthCredential
 import com.google.firebase.auth.PhoneAuthOptions
 import com.google.firebase.auth.PhoneAuthProvider
 import com.google.firebase.auth.PhoneAuthProvider.OnVerificationStateChangedCallbacks
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
@@ -51,9 +50,9 @@ import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 class AuthenticationClient @Inject constructor(
-    @ApplicationContext val context: Context,
     private val auth: FirebaseAuth,
-    private val credentialManager: CredentialManager
+    private val credentialManager: CredentialManager,
+    private val resourceResolver: ResourceResolver,
 ) {
     companion object {
         const val TAG: String = "AuthenticationUiClient"
@@ -79,6 +78,7 @@ class AuthenticationClient @Inject constructor(
                         "ERROR_NETWORK_REQUEST_FAILED", "network-request-failed" -> SignUpError.NETWORK_CONNECTION
                         else -> SignUpError.UNKNOWN_ERROR
                     }
+
                     else -> SignUpError.UNKNOWN_ERROR
                 }
                 return SignUpResult.Failure(signUpError)
@@ -117,10 +117,12 @@ class AuthenticationClient @Inject constructor(
                             "ERROR_NETWORK_REQUEST_FAILED" -> AuthError.NETWORK_CONNECTION
                             else -> AuthError.UNKNOWN_ERROR
                         }
+
                         else -> AuthError.UNKNOWN_ERROR
                     }
                     return AuthResult.Failure(authError)
                 }
+
                 else -> AuthResult.Failure(AuthError.UNKNOWN_ERROR)
             }
         }
@@ -132,26 +134,27 @@ class AuthenticationClient @Inject constructor(
         onAuthResult: (AuthResult) -> Unit
     ) {
         val callbackManager = CallbackManager.Factory.create()
-        LoginManager.getInstance().registerCallback(callbackManager, object: FacebookCallback<LoginResult> {
-            override fun onCancel() {
+        LoginManager.getInstance()
+            .registerCallback(callbackManager, object : FacebookCallback<LoginResult> {
+                override fun onCancel() {
 
-            }
-
-            override fun onError(error: FacebookException) {
-                Log.e(TAG, error.stackTraceToString())
-                onAuthResult(AuthResult.Failure(AuthError.UNKNOWN_ERROR))
-            }
-
-            override fun onSuccess(result: LoginResult) {
-                coroutineScope.launch {
-                    onAuthResult(AuthResult.Loading)
-                    val accessToken = result.accessToken.token
-                    val credential = FacebookAuthProvider.getCredential(accessToken)
-                    val authResult = signInWithCredential(credential)
-                    onAuthResult(authResult)
                 }
-            }
-        })
+
+                override fun onError(error: FacebookException) {
+                    Log.e(TAG, error.stackTraceToString())
+                    onAuthResult(AuthResult.Failure(AuthError.UNKNOWN_ERROR))
+                }
+
+                override fun onSuccess(result: LoginResult) {
+                    coroutineScope.launch {
+                        onAuthResult(AuthResult.Loading)
+                        val accessToken = result.accessToken.token
+                        val credential = FacebookAuthProvider.getCredential(accessToken)
+                        val authResult = signInWithFirebase(credential)
+                        onAuthResult(authResult)
+                    }
+                }
+            })
         LoginManager.getInstance().logInWithReadPermissions(
             activityResultRegistryOwner,
             callbackManager,
@@ -159,25 +162,8 @@ class AuthenticationClient @Inject constructor(
         )
     }
 
-    suspend fun signInWithGoogle(): AuthResult {
-        return try {
-            signInWithCredential(true)
-        } catch (exception: GetCredentialException) {
-            if (exception !is NoCredentialException) {
-                Log.e(TAG, exception.stackTraceToString())
-                return AuthResult.Failure(AuthError.UNKNOWN_ERROR)
-            }
-            try {
-                signInWithCredential()
-            } catch (exception: Exception) {
-                Log.e(TAG, exception.stackTraceToString())
-                AuthResult.Failure(AuthError.UNKNOWN_ERROR)
-            }
-        } catch (exception: Exception) {
-            Log.e(TAG, exception.stackTraceToString())
-            AuthResult.Failure(AuthError.UNKNOWN_ERROR)
-        }
-    }
+    suspend fun signInWithGoogle(context: Context): Result<AuthUser, GeneralError> =
+        signInWithCredentialManager(context, true)
 
     fun authWithPhoneNumber(
         activity: Activity,
@@ -193,7 +179,7 @@ class AuthenticationClient @Inject constructor(
                 override fun onVerificationCompleted(phoneAuthCredential: PhoneAuthCredential) {
                     Log.d(TAG, "onVerificationCompleted")
                     coroutineScope.launch {
-                        val authResult = signInWithCredential(phoneAuthCredential)
+                        val authResult = signInWithFirebase(phoneAuthCredential)
                         onAuthResult(authResult)
                     }
                 }
@@ -210,7 +196,10 @@ class AuthenticationClient @Inject constructor(
                     onOtpSend(sendOtpResult)
                 }
 
-                override fun onCodeSent(verificationId: String, token: PhoneAuthProvider.ForceResendingToken) {
+                override fun onCodeSent(
+                    verificationId: String,
+                    token: PhoneAuthProvider.ForceResendingToken
+                ) {
                     Log.d(TAG, "onCodeSent:$verificationId")
                     val sendOtpResult = SendOtpResult.SentOtp(verificationId, phoneNumber)
                     onOtpSend(sendOtpResult)
@@ -227,52 +216,53 @@ class AuthenticationClient @Inject constructor(
 
     suspend fun verifyOtp(verificationId: String, otp: String): AuthResult {
         val phoneAuthCredential = PhoneAuthProvider.getCredential(verificationId, otp)
-        return signInWithCredential(phoneAuthCredential)
+        return signInWithFirebase(phoneAuthCredential)
     }
 
-    private suspend fun signInWithCredential(authorizedAccounts: Boolean = false): AuthResult {
-        val credentialRequest = buildCredentialRequest(authorizedAccounts)
-        val credentialResponse = credentialManager.getCredential(context, credentialRequest)
-        val authCredential = handleCredentialResponse(credentialResponse)
-        return signInWithCredential(authCredential)
-    }
-
-    private suspend fun signInWithCredential(authCredential: AuthCredential): AuthResult {
+    private suspend fun signInWithCredentialManager(
+        context: Context,
+        authorizedAccounts: Boolean
+    ): Result<AuthUser, GeneralError> {
         return try {
-            val firebaseUser = auth.signInWithCredential(authCredential).await().user
+            val credentialRequest = buildCredentialRequest(authorizedAccounts)
+            val credentialResponse = credentialManager.getCredential(context, credentialRequest)
+            try {
+                val authCredential = handleCredentialResponse(credentialResponse)
+                signInWithFirebase(authCredential)
+            } catch (exception: Exception) {
+                Log.e(TAG, "Unexpected exception", exception)
+                GeneralError.ClientError().toUnsuccessful()
+            }
+        } catch (exception: GetCredentialException) {
+            Log.e(TAG, "Unexpected exception", exception)
+            if (authorizedAccounts) signInWithCredentialManager(context, false)
+            else GeneralError.ClientError().toUnsuccessful()
+        } catch (exception: Exception) {
+            Log.e(TAG, "Unexpected exception", exception)
+            GeneralError.Unknown.toUnsuccessful()
+        }
+    }
+
+    private suspend fun signInWithFirebase(authCredential: AuthCredential): Result<AuthUser, GeneralError> {
+        return try {
+            val authResult = auth.signInWithCredential(authCredential).await()
+            val firebaseUser = authResult.user
             if (firebaseUser == null) {
                 Log.e(TAG, "FirebaseUser is null")
-                return AuthResult.Failure(AuthError.UNKNOWN_ERROR)
+                return GeneralError.ServerError().toUnsuccessful()
             }
             val photoUrl = firebaseUser.photoUrl?.toString()?.let { baseUrl ->
                 AccessToken.getCurrentAccessToken()?.token?.let { "$baseUrl?access_token=$it" }
             }
-            AuthResult.Successful(
-                UserData(
-                    firebaseUser.uid,
-                    photoUrl
-                )
-            )
+            Result.Successful(AuthUser(firebaseUser.uid, photoUrl))
         } catch (exception: Exception) {
-            Log.e(TAG, exception.stackTraceToString())
-            if (exception is FirebaseException) {
-                if (exception is FirebaseNetworkException) {
-                    AuthResult.Failure(AuthError.NETWORK_CONNECTION)
-                } else {
-                    AuthResult.Failure(AuthError.UNKNOWN_ERROR)
-                }
-            } else {
-                AuthResult.Failure(AuthError.UNKNOWN_ERROR)
-            }
-        }
-    }
-
-    fun getCurrentUserSignedIn(): UserData? {
-        return auth.currentUser?.let {
-            UserData(
-                userId = auth.currentUser!!.uid,
-                profilePictureUrl = auth.currentUser?.photoUrl.toString()
-            )
+            Log.e(TAG, "Unexpected Error", exception)
+            when (exception) {
+                is FirebaseAuthInvalidUserException -> GeneralError.ClientError("")
+                is FirebaseAuthInvalidCredentialsException -> GeneralError.ClientError("")
+                is FirebaseException -> GeneralError.ClientError("")
+                else -> GeneralError.Unknown
+            }.toUnsuccessful()
         }
     }
 
@@ -295,7 +285,7 @@ class AuthenticationClient @Inject constructor(
         val hashedNonce = digest.fold("") { str, it -> "$str${"%02x".format(it)}" }
         val googleIdOption = GetGoogleIdOption.Builder()
             .setFilterByAuthorizedAccounts(authorizedAccounts)
-            .setServerClientId(context.getString(R.string.default_web_client_id))
+            .setServerClientId(resourceResolver.getString(R.string.default_web_client_id))
             .setAutoSelectEnabled(true)
             .setNonce(hashedNonce)
             .build()
@@ -322,40 +312,33 @@ class AuthenticationClient @Inject constructor(
             is CustomCredential -> {
                 val credentialType = credential.type
                 if (credentialType == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
-                    try {
-                        val googleIdTokenCredential = GoogleIdTokenCredential.createFrom(credential.data)
-                        return GoogleAuthProvider.getCredential(googleIdTokenCredential.idToken, null)
-                    } catch (exception: GoogleIdTokenParsingException) {
-                        Log.e(TAG, "Receive an invalid google id token response", exception)
-                        throw exception
-                    }
+                    val googleIdTokenCredential =
+                        GoogleIdTokenCredential.createFrom(credential.data)
+                    return GoogleAuthProvider.getCredential(googleIdTokenCredential.idToken, null)
                 } else {
-                    Log.e(TAG, "Unexpected type of credential")
-                    throw CredentialException("Unexpected type of credential")
+                    throw Exception("Unexpected type of credential")
                 }
             }
+
             else -> {
-                Log.e(TAG, "Unexpected type of credential")
-                throw CredentialException("Unexpected type of credential")
+                throw Exception("Unexpected type of credential")
             }
         }
     }
 }
 
-class CredentialException(message: String): Exception(message)
-
 //region Authentication
 
 sealed class SendOtpResult {
-    data object Loading: SendOtpResult()
-    data class SentOtp(val verificationId: String, val phoneNumber: String): SendOtpResult()
-    data class Failure(val phonesSendOtpError: SendOtpError): SendOtpResult()
+    data object Loading : SendOtpResult()
+    data class SentOtp(val verificationId: String, val phoneNumber: String) : SendOtpResult()
+    data class Failure(val phonesSendOtpError: SendOtpError) : SendOtpResult()
 }
 
 sealed class AuthResult {
-    data object Loading: AuthResult()
-    data class Successful(val userData: UserData): AuthResult()
-    data class Failure(val authError: AuthError): AuthResult()
+    data object Loading : AuthResult()
+    data class Successful(val userData: UserData) : AuthResult()
+    data class Failure(val authError: AuthError) : AuthResult()
 }
 
 enum class LogoutResult {
@@ -364,9 +347,9 @@ enum class LogoutResult {
 }
 
 sealed class SignUpResult {
-    data object Loading: SignUpResult()
-    data object Successful: SignUpResult()
-    data class Failure(val signUpError: SignUpError): SignUpResult()
+    data object Loading : SignUpResult()
+    data object Successful : SignUpResult()
+    data class Failure(val signUpError: SignUpError) : SignUpResult()
 }
 
 data class UserData(

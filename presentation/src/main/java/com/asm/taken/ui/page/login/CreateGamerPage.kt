@@ -75,7 +75,7 @@ import com.asm.taken.ui.PuzzleGeneralTitle
 import com.asm.taken.ui.navigation.CreateGamer
 import com.asm.taken.ui.puzzleFontFamily
 import com.asm.taken.utils.AuthenticationClient
-import com.asm.taken.utils.MessageResolver
+import com.asm.taken.utils.ResourceResolver
 import com.asm.taken.vm.EditGamerVM
 
 @Composable
@@ -83,7 +83,7 @@ fun CreateGamerPage(
     createGamerInfo: CreateGamer,
     editGamerVM: EditGamerVM,
     authenticationClient: AuthenticationClient,
-    messageResolver: MessageResolver,
+    resourceResolver: ResourceResolver,
     snackBarHostState: SnackbarHostState,
     onNavigateToAuthentication: () -> Unit,
     onNavigateToHome: (String) -> Unit
@@ -98,7 +98,7 @@ fun CreateGamerPage(
         editGamerVM = editGamerVM,
         snackBarHostState = snackBarHostState,
         countriesUiState = countriesUiState,
-        messageResolver = messageResolver,
+        resourceResolver = resourceResolver,
         onNavigateToHome = onNavigateToHome,
         onNavigateToAuthentication = onNavigateToAuthentication
     )
@@ -110,7 +110,7 @@ fun SessionSection(
     authenticationClient: AuthenticationClient,
     closeSessionUiState: CloseSessionUiState?,
     snackBarHostState: SnackbarHostState,
-    messageResolver: MessageResolver,
+    resourceResolver: ResourceResolver,
     onNavigateToAuthentication: () -> Unit,
     onNavigateToHome: (String) -> Unit
 ) {
@@ -135,7 +135,7 @@ fun CreateGamerSection(
     editGamerVM: EditGamerVM,
     snackBarHostState: SnackbarHostState,
     countriesUiState: CountriesUiState,
-    messageResolver: MessageResolver,
+    resourceResolver: ResourceResolver,
     onNavigateToHome: (String) -> Unit,
     onNavigateToAuthentication: () -> Unit
 ) {
@@ -145,7 +145,7 @@ fun CreateGamerSection(
             authenticationClient = authenticationClient,
             editGamerVM = editGamerVM,
             snackBarHostState = snackBarHostState,
-            messageResolver = messageResolver,
+            resourceResolver = resourceResolver,
             onNavigateToHome = onNavigateToHome,
             onNavigateToAuthentication = onNavigateToAuthentication
         )
@@ -157,7 +157,7 @@ fun CreateGamerSection(
             authenticationClient = authenticationClient,
             editGamerVM = editGamerVM,
             countriesUiState = countriesUiState.countriesInfo,
-            messageResolver = messageResolver,
+            resourceResolver = resourceResolver,
             onNavigateToHome = onNavigateToHome,
             onNavigateToAuthentication = onNavigateToAuthentication
         )
@@ -170,19 +170,19 @@ fun ErrorCountries(
     authenticationClient: AuthenticationClient,
     editGamerVM: EditGamerVM,
     snackBarHostState: SnackbarHostState,
-    messageResolver: MessageResolver,
+    resourceResolver: ResourceResolver,
     onNavigateToHome: (String) -> Unit,
     onNavigateToAuthentication: () -> Unit
 ) {
     LaunchedEffect(true) {
-        snackBarHostState.showSnackbar(messageResolver.getMessage(R.string.err_get_countries))
+        snackBarHostState.showSnackbar(resourceResolver.getString(R.string.err_get_countries))
     }
     PanelCreateGamer(
         createGamerInfo = createGamerInfo,
         authenticationClient = authenticationClient,
         editGamerVM = editGamerVM,
         countriesUiState = null,
-        messageResolver = messageResolver,
+        resourceResolver = resourceResolver,
         onNavigateToHome = onNavigateToHome,
         onNavigateToAuthentication = onNavigateToAuthentication
     )
@@ -194,7 +194,7 @@ fun PanelCreateGamer(
     authenticationClient: AuthenticationClient,
     editGamerVM: EditGamerVM,
     countriesUiState: List<CountryUiState>?,
-    messageResolver: MessageResolver,
+    resourceResolver: ResourceResolver,
     onNavigateToHome: (String) -> Unit,
     onNavigateToAuthentication: () -> Unit
 ) {
@@ -203,11 +203,11 @@ fun PanelCreateGamer(
         authenticationClient = authenticationClient,
         editGamerVM = editGamerVM,
         countriesUiState = countriesUiState,
-        messageResolver = messageResolver
+        resourceResolver = resourceResolver
     )
     NavigationSection(
         editGamerVM = editGamerVM,
-        messageResolver = messageResolver,
+        resourceResolver = resourceResolver,
         onNavigateToHome = onNavigateToHome,
         onNavigateToAuthentication = onNavigateToAuthentication,
     )
@@ -216,7 +216,7 @@ fun PanelCreateGamer(
 @Composable
 fun NavigationSection(
     editGamerVM: EditGamerVM,
-    messageResolver: MessageResolver,
+    resourceResolver: ResourceResolver,
     onNavigateToHome: (String) -> Unit,
     onNavigateToAuthentication: () -> Unit
 ) {
@@ -242,7 +242,7 @@ fun MainCreateGamer(
     authenticationClient: AuthenticationClient,
     editGamerVM: EditGamerVM,
     countriesUiState: List<CountryUiState>?,
-    messageResolver: MessageResolver
+    resourceResolver: ResourceResolver
 ) {
     Column(
         modifier = Modifier
@@ -293,7 +293,7 @@ fun MainCreateGamer(
                     createGamerInfo = createGamerInfo,
                     editGamerVM = editGamerVM,
                     countriesUiState = countriesUiState,
-                    messageResolver = messageResolver,
+                    resourceResolver = resourceResolver,
                 )
             }
         }
@@ -306,24 +306,24 @@ fun FormCreateGamer(
     createGamerInfo: CreateGamer,
     editGamerVM: EditGamerVM,
     countriesUiState: List<CountryUiState>?,
-    messageResolver: MessageResolver
+    resourceResolver: ResourceResolver
 ) {
     val loginCreateGamerFormState: LoginCreateGamerFormUiState by editGamerVM.loginCreateGamerFormState.collectAsStateWithLifecycle()
     var showChangeProfileImageDialog: Boolean by rememberSaveable { mutableStateOf(false) }
     val aliasErrors: List<String> = when (val aliasUiState = loginCreateGamerFormState.aliasUiState.state) {
-        is InputState.Error<InputAliasError> -> aliasUiState.errors.map { messageResolver.getErrorAlias(it) }
+        is InputState.Error<InputAliasError> -> aliasUiState.errors.map { resourceResolver.getErrorAlias(it) }
         InputState.Init, InputState.Success -> listOf()
     }
     val ageErrors: List<String> = when (val ageUiState = loginCreateGamerFormState.ageUiState.state) {
-        is InputState.Error<InputAgeError> -> ageUiState.errors.map { messageResolver.getErrorAge(it) }
+        is InputState.Error<InputAgeError> -> ageUiState.errors.map { resourceResolver.getErrorAge(it) }
         InputState.Init, InputState.Success -> listOf()
     }
     val countryErrors: List<String> = when (val countryState = loginCreateGamerFormState.countryUiState.state) {
-        is InputState.Error<InputCountryError> -> countryState.errors.map { messageResolver.getErrorCountry(it) }
+        is InputState.Error<InputCountryError> -> countryState.errors.map { resourceResolver.getErrorCountry(it) }
         InputState.Init, InputState.Success -> listOf()
     }
     val imageErrors: List<String> = when (val imageSelectedState = loginCreateGamerFormState.imageSelected.state) {
-        is InputState.Error<InputImageError> -> imageSelectedState.errors.map { messageResolver.getErrorImage(it) }
+        is InputState.Error<InputImageError> -> imageSelectedState.errors.map { resourceResolver.getErrorImage(it) }
         InputState.Init, InputState.Success -> listOf()
     }
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
@@ -339,7 +339,7 @@ fun FormCreateGamer(
     if (showChangeProfileImageDialog) {
         ChangeProfileImageDialog(
             createGamerInfo = createGamerInfo,
-            messageResolver = messageResolver
+            resourceResolver = resourceResolver
         ) { optionChosen ->
             showChangeProfileImageDialog = false
             when (optionChosen) {
@@ -567,7 +567,7 @@ fun InputSelectImage(
 @Composable
 fun ChangeProfileImageDialog(
     createGamerInfo: CreateGamer,
-    messageResolver: MessageResolver,
+    resourceResolver: ResourceResolver,
     onOptionSelected: (OptionChosen) -> Unit
 ) {
     Dialog(
@@ -586,7 +586,7 @@ fun ChangeProfileImageDialog(
                     fontSize = dimensionResource(
                         id = R.dimen.title_text_size
                     ).value.sp,
-                    text = messageResolver.getMessage(R.string.txt_ttl_choose_option)
+                    text = resourceResolver.getString(R.string.txt_ttl_choose_option)
                 )
                 Spacer(modifier = Modifier.height(30.dp))
                 OptionItem(
@@ -594,7 +594,7 @@ fun ChangeProfileImageDialog(
                     onClick = { onOptionSelected(OptionChosen.Default) }
                 ) {
                     DefaultText(
-                        text = messageResolver.getMessage(R.string.txt_label_default_image)
+                        text = resourceResolver.getString(R.string.txt_label_default_image)
                     )
                 }
                 OptionItem(
@@ -602,7 +602,7 @@ fun ChangeProfileImageDialog(
                     onClick = { onOptionSelected(OptionChosen.Gallery) }
                 ) {
                     DefaultText(
-                        text = messageResolver.getMessage(R.string.txt_label_gallery)
+                        text = resourceResolver.getString(R.string.txt_label_gallery)
                     )
                 }
                 if (createGamerInfo.image != null) {
@@ -611,7 +611,7 @@ fun ChangeProfileImageDialog(
                         onClick = { onOptionSelected(OptionChosen.SocialNetwork(createGamerInfo.image)) }
                     ) {
                         DefaultText(
-                            text = messageResolver.getMessage(R.string.txt_label_social_network_image)
+                            text = resourceResolver.getString(R.string.txt_label_social_network_image)
                         )
                     }
                 }

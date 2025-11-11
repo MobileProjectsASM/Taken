@@ -36,7 +36,7 @@ import com.asm.taken.ui.DefaultOutlinedTextFieldLI
 import com.asm.taken.ui.PasswordOutlinedTextField
 import com.asm.taken.ui.PuzzleGeneralTitle
 import com.asm.taken.utils.AuthenticationClient
-import com.asm.taken.utils.MessageResolver
+import com.asm.taken.utils.ResourceResolver
 import com.asm.taken.utils.SignUpResult
 import com.asm.taken.vm.LoginVM
 import kotlinx.coroutines.CoroutineScope
@@ -46,7 +46,7 @@ import kotlinx.coroutines.launch
 fun CreateAccountPage(
     loginVM: LoginVM,
     authenticationClient: AuthenticationClient,
-    messageResolver: MessageResolver,
+    resourceResolver: ResourceResolver,
     snackBarHostState: SnackbarHostState,
     popBackStack: () -> Unit
 ) {
@@ -59,12 +59,12 @@ fun CreateAccountPage(
     PanelCreateAccount(
         loginVM = loginVM,
         authenticationClient = authenticationClient,
-        messageResolver = messageResolver,
+        resourceResolver = resourceResolver,
         coroutineScope = coroutineScope
     )
     SessionSection(
         loginVM = loginVM,
-        messageResolver = messageResolver,
+        resourceResolver = resourceResolver,
         snackBarHostState = snackBarHostState,
         popBackStack = popBackStack
     )
@@ -73,7 +73,7 @@ fun CreateAccountPage(
 @Composable
 fun SessionSection(
     loginVM: LoginVM,
-    messageResolver: MessageResolver,
+    resourceResolver: ResourceResolver,
     snackBarHostState: SnackbarHostState,
     popBackStack: () -> Unit
 ) {
@@ -85,7 +85,7 @@ fun SessionSection(
             loginVM.resetLoginUiState()
         }
         is LoginUiState.Failure -> {
-            val message = messageResolver.getErrorLogin((loginUiState as LoginUiState.Failure).loginFailure)
+            val message = resourceResolver.getErrorLogin((loginUiState as LoginUiState.Failure).loginFailure)
             LaunchedEffect(true) {
                 val snackBarResult = snackBarHostState.showSnackbar(message, withDismissAction = true)
                 if (snackBarResult == SnackbarResult.Dismissed) loginVM.resetLoginUiState()
@@ -100,7 +100,7 @@ fun SessionSection(
 fun PanelCreateAccount(
     loginVM: LoginVM,
     authenticationClient: AuthenticationClient,
-    messageResolver: MessageResolver,
+    resourceResolver: ResourceResolver,
     coroutineScope: CoroutineScope
 ) {
     Column(
@@ -125,7 +125,7 @@ fun PanelCreateAccount(
                 Spacer(modifier = Modifier.height(50.dp))
                 FormCreateAccount(
                     loginVM = loginVM,
-                    messageResolver = messageResolver
+                    resourceResolver = resourceResolver
                 ) { email, password ->
                     coroutineScope.launch {
                         loginVM.updateLoginUiState(SignUpResult.Loading)
@@ -142,20 +142,20 @@ fun PanelCreateAccount(
 @Composable
 fun FormCreateAccount(
     loginVM: LoginVM,
-    messageResolver: MessageResolver,
+    resourceResolver: ResourceResolver,
     createAccount: (String, String) -> Unit
 ) {
     val loginFormCreateAccountState: LoginFormCreateAccountUiState by loginVM.loginFormCreateAccountState.collectAsStateWithLifecycle()
     val emailErrors: List<String> = when (val emailUiState = loginFormCreateAccountState.emailUiState.state) {
-        is InputState.Error -> emailUiState.errors.map { messageResolver.getErrorEmail(it) }
+        is InputState.Error -> emailUiState.errors.map { resourceResolver.getErrorEmail(it) }
         InputState.Init, InputState.Success -> listOf()
     }
     val passwordErrors: List<String> = when (val passwordUiState = loginFormCreateAccountState.passwordUiState.state) {
-        is InputState.Error -> passwordUiState.errors.map { messageResolver.getErrorPassword(it) }
+        is InputState.Error -> passwordUiState.errors.map { resourceResolver.getErrorPassword(it) }
         InputState.Init, InputState.Success -> listOf()
     }
     val passwordRepeatErrors: List<String> = when (val passwordRepeatUiState = loginFormCreateAccountState.passwordRepeatUiState.state) {
-        is InputState.Error -> passwordRepeatUiState.errors.map { messageResolver.getErrorPasswordRepeat(it) }
+        is InputState.Error -> passwordRepeatUiState.errors.map { resourceResolver.getErrorPasswordRepeat(it) }
         InputState.Init, InputState.Success -> listOf()
     }
     Column {

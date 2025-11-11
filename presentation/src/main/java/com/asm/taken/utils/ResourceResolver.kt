@@ -22,7 +22,7 @@ import com.asm.taken.model.SignUpError
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 
-class MessageResolver @Inject constructor(
+class ResourceResolver @Inject constructor(
     @ApplicationContext val context: Context
 ) {
     fun getErrorEmail(error: InputEmailError): String = when (error) {
@@ -54,7 +54,7 @@ class MessageResolver @Inject constructor(
     }
 
     fun getErrorLogin(error: LoginFailure): String = when (error) {
-        is LoginFailure.AuthFailure -> when (error.authError) {
+        is LoginFailure.AuthFailure -> when (error.generalError) {
             AuthError.ERROR_INVALID_EMAIL -> context.getString(R.string.err_email_invalid)
             AuthError.ERROR_WRONG_PASSWORD -> context.getString(R.string.err_incorrect_email_or_password)
             AuthError.ERROR_USER_NOT_FOUND -> context.getString(R.string.err_user_not_found)
@@ -68,7 +68,7 @@ class MessageResolver @Inject constructor(
             is GeneralError.ClientError -> TODO()
             GeneralError.NetworkError -> TODO()
             is GeneralError.ServerError -> TODO()
-            GeneralError.Unknown -> TODO()
+            GeneralError.Unknown -> context.getString(R.string.err_unknown)
             GeneralError.ConnectionError -> TODO()
         }
         is LoginFailure.SendOtpFailure -> when (error.sendOtpError) {
@@ -113,5 +113,5 @@ class MessageResolver @Inject constructor(
         UNKNOWN_ERROR -> context.getString(R.string.err_unknown)
     }
 
-    fun getMessage(@StringRes resId: Int) = context.getString(resId)
+    fun getString(@StringRes resId: Int) = context.getString(resId)
 }

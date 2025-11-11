@@ -1,8 +1,8 @@
 package com.asm.taken.model
 
 import android.net.Uri
+import com.asm.domain.entities.AuthUser
 import com.asm.domain.errors.GeneralError
-import com.asm.taken.utils.UserData
 
 data class LoginFormUiState(
     val emailUiState: InputUiState<String, InputEmailError>,
@@ -43,7 +43,7 @@ sealed class LoginUiState {
     data object Loading: LoginUiState()
     data class SentOtp(val verificationId: String, val phoneNumber: String): LoginUiState()
     data class RegisteredUser(val gamerId: String): LoginUiState()
-    data class UnregisteredUser(val userData: UserData): LoginUiState()
+    data class UnregisteredUser(val authUser: AuthUser): LoginUiState()
     data object AccountCreated: LoginUiState()
     data object Logout: LoginUiState()
     data class Failure(val loginFailure: LoginFailure): LoginUiState()
@@ -152,7 +152,7 @@ enum class InputImageError {
 
 sealed class LoginFailure {
     data class SendOtpFailure(val sendOtpError: SendOtpError): LoginFailure()
-    data class AuthFailure(val authError: AuthError): LoginFailure()
+    data class AuthFailure(val generalError: GeneralError): LoginFailure()
     data class SignUpFailure(val signUpError: SignUpError): LoginFailure()
     data class RegisterFailure(val generalFailure: GeneralError): LoginFailure()
     data object LogoutFailure: LoginFailure()

@@ -22,7 +22,7 @@ import com.asm.taken.ui.navigation.MainNavigation
 import com.asm.taken.ui.navigation.Route
 import com.asm.taken.ui.theme.TakenTheme
 import com.asm.taken.utils.AuthenticationClient
-import com.asm.taken.utils.MessageResolver
+import com.asm.taken.utils.ResourceResolver
 import com.asm.taken.vm.SessionVM
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
@@ -37,7 +37,7 @@ class MainActivity : ComponentActivity() {
     lateinit var authenticationClient: AuthenticationClient
 
     @Inject
-    lateinit var messageResolver: MessageResolver
+    lateinit var resourceResolver: ResourceResolver
 
     private val sessionVM: SessionVM by viewModels()
 
@@ -51,11 +51,11 @@ class MainActivity : ComponentActivity() {
                 is InitRouteUiState.Fail -> {
                     keepSplashScreen = true
                     val message = when (val error = initRouteState.error) {
-                        is GeneralError.ClientError -> error.message ?: messageResolver.getMessage(R.string.err_client)
-                        GeneralError.NetworkError -> messageResolver.getMessage(R.string.err_network_connection)
-                        is GeneralError.ServerError -> error.message ?: messageResolver.getMessage(R.string.err_server)
-                        GeneralError.Unknown -> messageResolver.getMessage(R.string.err_unknown)
-                        GeneralError.ConnectionError -> messageResolver.getMessage(R.string.err_server_connection)
+                        is GeneralError.ClientError -> error.message ?: resourceResolver.getString(R.string.err_client)
+                        GeneralError.NetworkError -> resourceResolver.getString(R.string.err_network_connection)
+                        is GeneralError.ServerError -> error.message ?: resourceResolver.getString(R.string.err_server)
+                        GeneralError.Unknown -> resourceResolver.getString(R.string.err_unknown)
+                        GeneralError.ConnectionError -> resourceResolver.getString(R.string.err_server_connection)
                     }
                     Snackbar.make(window.decorView, message, Snackbar.LENGTH_SHORT).show()
                 }
@@ -68,7 +68,7 @@ class MainActivity : ComponentActivity() {
                                 PuzzleScaffold(
                                     initRoute = initRouteState.initRoute,
                                     authenticationClient = authenticationClient,
-                                    messageResolver = messageResolver
+                                    resourceResolver = resourceResolver
                                 )
                             }
                         }
@@ -85,7 +85,7 @@ class MainActivity : ComponentActivity() {
 fun PuzzleScaffold(
     initRoute: Route,
     authenticationClient: AuthenticationClient,
-    messageResolver: MessageResolver
+    resourceResolver: ResourceResolver
 ) {
     val snackBarHostState = remember { SnackbarHostState() }
 
@@ -97,7 +97,7 @@ fun PuzzleScaffold(
             innerPadding = innerPadding,
             snackBarHostState = snackBarHostState,
             authenticationClient = authenticationClient,
-            messageResolver = messageResolver
+            resourceResolver = resourceResolver
         )
     }
 }
