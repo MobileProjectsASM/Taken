@@ -131,7 +131,8 @@ class AuthenticationClient @Inject constructor(
     fun signInWithFacebook(
         activityResultRegistryOwner: ActivityResultRegistryOwner,
         coroutineScope: CoroutineScope,
-        onAuthResult: (AuthResult) -> Unit
+        onFacebookLoginLoading: () -> Unit,
+        onAuthResult: (Result<AuthUser, GeneralError>) -> Unit
     ) {
         val callbackManager = CallbackManager.Factory.create()
         LoginManager.getInstance()
@@ -141,13 +142,13 @@ class AuthenticationClient @Inject constructor(
                 }
 
                 override fun onError(error: FacebookException) {
-                    Log.e(TAG, error.stackTraceToString())
-                    onAuthResult(AuthResult.Failure(AuthError.UNKNOWN_ERROR))
+                    Log.e(TAG, "Unexpected Exception", error)
+                    onAuthResult(GeneralError.ServerError().toUnsuccessful())
                 }
 
                 override fun onSuccess(result: LoginResult) {
                     coroutineScope.launch {
-                        onAuthResult(AuthResult.Loading)
+                        onFacebookLoginLoading()
                         val accessToken = result.accessToken.token
                         val credential = FacebookAuthProvider.getCredential(accessToken)
                         val authResult = signInWithFirebase(credential)
@@ -169,8 +170,9 @@ class AuthenticationClient @Inject constructor(
         activity: Activity,
         coroutineScope: CoroutineScope,
         phoneNumber: String,
-        onOtpSend: (SendOtpResult) -> Unit,
-        onAuthResult: (AuthResult) -> Unit
+        onPhoneLoginLoading: () -> Unit,
+        onOtpSend: (verificationId: String, token: PhoneAuthProvider.ForceResendingToken) -> Unit,
+        onAuthResult: (Result<AuthUser, GeneralError>) -> Unit
     ) {
         val phoneAuthOptions = getPhoneAuthOptions(
             activity,
@@ -185,24 +187,21 @@ class AuthenticationClient @Inject constructor(
                 }
 
                 override fun onVerificationFailed(firebaseException: FirebaseException) {
-                    Log.e(TAG, firebaseException.stackTraceToString())
+                    Log.e(TAG, "Unexpected Exception", firebaseException)
                     val phonesSendOtpError = when (firebaseException) {
-                        is FirebaseAuthInvalidCredentialsException -> SendOtpError.PHONE_NUMBER_INVALID_ERROR
-                        is FirebaseNetworkException -> SendOtpError.NETWORK_CONNECTION
-                        is FirebaseTooManyRequestsException, is FirebaseAuthMissingActivityForRecaptchaException -> SendOtpError.SERVER_ERROR
-                        else -> SendOtpError.UNKNOWN_ERROR
+                        is FirebaseAuthInvalidCredentialsException, is FirebaseTooManyRequestsException, is FirebaseAuthMissingActivityForRecaptchaException -> GeneralError.ClientError().toUnsuccessful()
+                        is FirebaseNetworkException -> GeneralError.NetworkError.toUnsuccessful()
+                        else -> GeneralError.Unknown.toUnsuccessful()
                     }
-                    val sendOtpResult = SendOtpResult.Failure(phonesSendOtpError)
-                    onOtpSend(sendOtpResult)
+                    onAuthResult(phonesSendOtpError)
                 }
 
                 override fun onCodeSent(
                     verificationId: String,
                     token: PhoneAuthProvider.ForceResendingToken
                 ) {
-                    Log.d(TAG, "onCodeSent:$verificationId")
-                    val sendOtpResult = SendOtpResult.SentOtp(verificationId, phoneNumber)
-                    onOtpSend(sendOtpResult)
+                    Log.d(TAG, "onCodeSent")
+                    onOtpSend(verificationId, token)
                 }
 
                 override fun onCodeAutoRetrievalTimeOut(p0: String) {
@@ -210,11 +209,11 @@ class AuthenticationClient @Inject constructor(
                 }
             }
         )
-        onOtpSend(SendOtpResult.Loading)
+        onPhoneLoginLoading()
         PhoneAuthProvider.verifyPhoneNumber(phoneAuthOptions)
     }
 
-    suspend fun verifyOtp(verificationId: String, otp: String): AuthResult {
+    suspend fun verifyOtp(verificationId: String, otp: String): Result<AuthUser, GeneralError> {
         val phoneAuthCredential = PhoneAuthProvider.getCredential(verificationId, otp)
         return signInWithFirebase(phoneAuthCredential)
     }
@@ -339,11 +338,6 @@ sealed class AuthResult {
     data object Loading : AuthResult()
     data class Successful(val userData: UserData) : AuthResult()
     data class Failure(val authError: AuthError) : AuthResult()
-}
-
-enum class LogoutResult {
-    SUCCESSFUL,
-    FAILURE
 }
 
 sealed class SignUpResult {

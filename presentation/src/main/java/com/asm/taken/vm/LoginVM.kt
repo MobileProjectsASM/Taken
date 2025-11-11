@@ -162,6 +162,20 @@ class LoginVM @Inject constructor(
         }
     }
 
+    fun updateLoginState(authResult: Result<AuthUser, GeneralError>) {
+        viewModelScope.launch {
+            val loginState = when (authResult) {
+                is Result.Successful<AuthUser> -> updateSession(authResult.data)
+                is Result.Unsuccessful<GeneralError> -> LoginUiState.Failure(LoginFailure.AuthFailure(authResult.failure))
+            }
+            _loginUiState.update { loginState }
+        }
+    }
+
+    fun updateLoginState(loginUiState: LoginUiState) {
+        _loginUiState.update { loginUiState }
+    }
+
     fun loginWithGoogle(
         @ActivityContext context: Context,
         authWithGoogle: KSuspendFunction1<Context, Result<AuthUser, GeneralError>>

@@ -22,6 +22,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navigation
 import androidx.navigation.toRoute
+import com.asm.taken.model.LoginUiState
 import com.asm.taken.ui.page.login.BackgroundLogin
 import com.asm.taken.ui.page.login.CreateAccountPage
 import com.asm.taken.ui.page.login.CreateGamerPage
@@ -116,10 +117,12 @@ fun NavGraphBuilder.navigationLogin(
                         }
                     },
                     onNavigateToCreateGamer = { userId, imageUrl ->
-                        navController.navigate(CreateGamer(
-                            id = userId,
-                            image = imageUrl
-                        )) {
+                        navController.navigate(
+                            CreateGamer(
+                                id = userId,
+                                image = imageUrl
+                            )
+                        ) {
                             popUpTo(Login::class) {
                                 inclusive = true
                             }
@@ -149,15 +152,22 @@ fun NavGraphBuilder.navigationLogin(
                             context as Activity,
                             coroutineScope = coroutineScope,
                             phoneNumber = "+$code$phoneNumber",
-                            onOtpSend = loginVM::updateLoginUiState,
-                            onAuthResult = loginVM::updateLoginUiState
+                            onPhoneLoginLoading = { loginVM.updateLoginState(LoginUiState.Loading) },
+                            onOtpSend = { verificationId, _ ->
+                                loginVM.updateLoginState(
+                                    LoginUiState.SentOtp(verificationId, phoneNumber)
+                                )
+                            },
+                            onAuthResult = loginVM::updateLoginState
                         )
                     },
                     onNavigateToCreateGamer = { userId, imageUrl ->
-                        navController.navigate(CreateGamer(
-                            id = userId,
-                            image = imageUrl
-                        )) {
+                        navController.navigate(
+                            CreateGamer(
+                                id = userId,
+                                image = imageUrl
+                            )
+                        ) {
                             popUpTo(Login::class) {
                                 inclusive = true
                             }

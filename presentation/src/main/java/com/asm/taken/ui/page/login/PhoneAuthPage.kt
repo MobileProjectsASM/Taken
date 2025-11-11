@@ -50,6 +50,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.asm.domain.entities.AuthUser
 import com.asm.domain.errors.GeneralError
 import com.asm.taken.R
 import com.asm.taken.model.CountriesUiState
@@ -103,8 +104,8 @@ fun PhoneAuthPage(
         loginUiState = loginUiState,
         snackBarHostState = snackBarHostState,
         onNavigateToMainPage = onNavigateToMainPage,
-        onNavigateToCreateGamer = { userData ->
-            onNavigateToCreateGamer(userData.userId, userData.profilePictureUrl)
+        onNavigateToCreateGamer = { authUser ->
+            onNavigateToCreateGamer(authUser.userId, authUser.profilePictureUrl)
         }
     )
 }
@@ -455,7 +456,7 @@ fun SessionSection(
     loginUiState: LoginUiState,
     snackBarHostState: SnackbarHostState,
     onNavigateToMainPage: (String) -> Unit,
-    onNavigateToCreateGamer: (UserData) -> Unit
+    onNavigateToCreateGamer: (AuthUser) -> Unit
 ) {
     val scope = rememberCoroutineScope()
     when (loginUiState) {
@@ -483,9 +484,9 @@ fun SessionSection(
             resourceResolver = resourceResolver,
         ) { otp ->
             scope.launch {
-                loginVM.updateLoginUiState(AuthResult.Loading)
+                loginVM.updateLoginState(LoginUiState.Loading)
                 val authResult = authenticationClient.verifyOtp(loginUiState.verificationId, otp)
-                loginVM.updateLoginUiState(authResult)
+                loginVM.updateLoginState(authResult)
             }
         }
 

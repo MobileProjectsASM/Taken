@@ -46,7 +46,6 @@ import com.asm.taken.ui.PuzzleGeneralTitle
 import com.asm.taken.utils.AuthResult
 import com.asm.taken.utils.AuthenticationClient
 import com.asm.taken.utils.ResourceResolver
-import com.asm.taken.utils.UserData
 import com.asm.taken.vm.LoginVM
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -112,9 +111,10 @@ fun AuthenticationSection(
             signInWithPhoneNumber = onNavigateToAuthWithPhone,
             signInWithFacebook = {
                 authenticationClient.signInWithFacebook(
-                    context as ComponentActivity,
-                    coroutineScope,
-                    loginVM::updateLoginUiState
+                    activityResultRegistryOwner = context as ComponentActivity,
+                    coroutineScope = coroutineScope,
+                    onFacebookLoginLoading = { loginVM.updateLoginState(LoginUiState.Loading) },
+                    onAuthResult = loginVM::updateLoginState
                 )
             },
             createAccount = onNavigateToCreateAccount
