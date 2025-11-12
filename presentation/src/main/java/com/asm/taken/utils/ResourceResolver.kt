@@ -2,9 +2,7 @@ package com.asm.taken.utils
 
 import android.content.Context
 import androidx.annotation.StringRes
-import com.asm.domain.errors.GeneralError
 import com.asm.taken.R
-import com.asm.taken.model.AuthError
 import com.asm.taken.model.InputAgeError
 import com.asm.taken.model.InputAliasError
 import com.asm.taken.model.InputCountryError
@@ -16,9 +14,6 @@ import com.asm.taken.model.InputPasswordError
 import com.asm.taken.model.InputPhoneCodeError
 import com.asm.taken.model.InputPhoneNumberError
 import com.asm.taken.model.InputRepeatValueError
-import com.asm.taken.model.LoginFailure
-import com.asm.taken.model.SendOtpError
-import com.asm.taken.model.SignUpError
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 
@@ -51,40 +46,6 @@ class ResourceResolver @Inject constructor(
     fun getErrorPhoneNumber(error: InputPhoneNumberError): String = when (error) {
         InputPhoneNumberError.EMPTY -> context.getString(R.string.err_empty_field)
         InputPhoneNumberError.ONLY_INT_NUMBERS -> context.getString(R.string.err_only_int_numbers)
-    }
-
-    fun getErrorLogin(error: LoginFailure): String = when (error) {
-        is LoginFailure.AuthFailure -> when (error.generalError) {
-            AuthError.ERROR_INVALID_EMAIL -> context.getString(R.string.err_email_invalid)
-            AuthError.ERROR_WRONG_PASSWORD -> context.getString(R.string.err_incorrect_email_or_password)
-            AuthError.ERROR_USER_NOT_FOUND -> context.getString(R.string.err_user_not_found)
-            AuthError.ERROR_INVALID_LOGIN_CREDENTIALS -> context.getString(R.string.err_invalid_login_credentials)
-            AuthError.ERROR_USER_DISABLED -> context.getString(R.string.err_user_disabled)
-            AuthError.ERROR_TOO_MANY_REQUESTS -> context.getString(R.string.err_too_many_request)
-            AuthError.NETWORK_CONNECTION -> context.getString(R.string.err_network_connection)
-            AuthError.UNKNOWN_ERROR -> context.getString(R.string.err_unknown)
-        }
-        is LoginFailure.RegisterFailure -> when (val generalFailure = error.generalFailure) {
-            is GeneralError.ClientError -> TODO()
-            GeneralError.NetworkError -> TODO()
-            is GeneralError.ServerError -> TODO()
-            GeneralError.Unknown -> context.getString(R.string.err_unknown)
-            GeneralError.ConnectionError -> TODO()
-        }
-        is LoginFailure.SendOtpFailure -> when (error.sendOtpError) {
-            SendOtpError.PHONE_NUMBER_INVALID_ERROR -> context.getString(R.string.err_phone_number_invalid)
-            SendOtpError.NETWORK_CONNECTION -> context.getString(R.string.err_network_connection)
-            SendOtpError.SERVER_ERROR, SendOtpError.UNKNOWN_ERROR -> context.getString(R.string.err_send_otp)
-        }
-        is LoginFailure.SignUpFailure -> when (error.signUpError) {
-            SignUpError.NETWORK_CONNECTION -> context.getString(R.string.err_network_connection)
-            SignUpError.EMAIL_ALREADY_IN_USE -> context.getString(R.string.err_email_already_in_use)
-            SignUpError.INVALID_EMAIL -> context.getString(R.string.err_email_invalid)
-            SignUpError.WEAK_PASSWORD -> context.getString(R.string.err_weak_password)
-            SignUpError.UNKNOWN_ERROR -> context.getString(R.string.err_sign_up)
-        }
-
-        LoginFailure.LogoutFailure -> context.getString(R.string.err_logout)
     }
 
     fun getErrorVerifyOtp(error: InputOtpError): String = when (error) {

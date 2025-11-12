@@ -46,7 +46,7 @@ sealed class LoginUiState {
     data class UnregisteredUser(val authUser: AuthUser): LoginUiState()
     data object AccountCreated: LoginUiState()
     data object Logout: LoginUiState()
-    data class Failure(val loginFailure: LoginFailure): LoginUiState()
+    data class Error(val generalError: GeneralError): LoginUiState()
 }
 
 data class LoginFormCreateAccountUiState(

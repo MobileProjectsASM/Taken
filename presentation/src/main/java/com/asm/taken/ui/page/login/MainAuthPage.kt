@@ -16,6 +16,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Mail
 import androidx.compose.material3.Card
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -24,15 +25,16 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.asm.domain.entities.AuthUser
+import com.asm.domain.errors.GeneralError
 import com.asm.taken.R
 import com.asm.taken.model.InputState
-import com.asm.taken.model.LoginFailure
 import com.asm.taken.model.LoginFormUiState
 import com.asm.taken.model.LoginUiState
 import com.asm.taken.ui.CircularProgressDialog
@@ -43,7 +45,6 @@ import com.asm.taken.ui.DefaultText
 import com.asm.taken.ui.DefaultTextButton
 import com.asm.taken.ui.PasswordOutlinedTextField
 import com.asm.taken.ui.PuzzleGeneralTitle
-import com.asm.taken.utils.AuthResult
 import com.asm.taken.utils.AuthenticationClient
 import com.asm.taken.utils.ResourceResolver
 import com.asm.taken.vm.LoginVM
@@ -73,7 +74,6 @@ fun MainAuthPage(
     )
     SessionSection(
         loginVM = loginVM,
-        resourceResolver = resourceResolver,
         snackBarHostState = snackBarHostState,
         onNavigateToMainPage = onNavigateToMainPage,
         onNavigateToCreateGamer = {
@@ -171,25 +171,40 @@ fun PanelLogin(
 @Composable
 fun SessionSection(
     loginVM: LoginVM,
-    resourceResolver: ResourceResolver,
     snackBarHostState: SnackbarHostState,
     onNavigateToMainPage: (gamerId: String) -> Unit,
     onNavigateToCreateGamer: (AuthUser) -> Unit
 ) {
     val loginUiState: LoginUiState by loginVM.loginUiState.collectAsStateWithLifecycle()
     when (val state = loginUiState) {
-        is LoginUiState.Failure -> when (val loginFailure = state.loginFailure) {
-            is LoginFailure.AuthFailure -> TODO()
-            LoginFailure.LogoutFailure -> TODO()
-            is LoginFailure.RegisterFailure -> TODO()
-            is LoginFailure.SendOtpFailure -> TODO()
-            is LoginFailure.SignUpFailure -> TODO()
+        is LoginUiState.Error -> when (state.generalError) {
+            is GeneralError.ClientError -> DialogError(
+                title = stringResource(R.string.txt_ttl_client_error),
+                image = painterResource(R.drawable.ic_warning),
+                message = stringResource(R.string.err_client)
+            )
+            GeneralError.ConnectionError -> DialogError(
+                title = stringResource(R.string.txt_ttl_unexpected_error),
+                image = painterResource(R.drawable.ic_warning),
+                message = stringResource(R.string.err_server_connection),
+            )
+            GeneralError.NetworkError -> SnackbarError(
+                snackBarHostState = snackBarHostState,
+                actionLabel = stringResource(R.string.txt_label_retry),
+                duration = SnackbarDuration.Long,
+                message = stringResource(R.string.err_network_connection)
+            )
+            is GeneralError.ServerError -> DialogError(
+                title = stringResource(R.string.txt_ttl_service_error),
+                image = painterResource(R.drawable.ic_error),
+                message = stringResource(R.string.err_server)
+            )
+            GeneralError.Unknown -> SnackbarError(
+                snackBarHostState = snackBarHostState,
+                message = stringResource(R.string.err_auth),
+                withDismissAction = true
+            )
         }
-        /*val message = messageResolver.getErrorLogin(state.loginFailure)
-        LaunchedEffect(true) {
-            val snackBarResult = snackBarHostState.showSnackbar(message, withDismissAction = true)
-            if (snackBarResult == SnackbarResult.Dismissed) loginVM.resetLoginUiState()
-        }*/
         is LoginUiState.Loading -> CircularProgressDialog()
         is LoginUiState.RegisteredUser -> LaunchedEffect(true) {
             onNavigateToMainPage(state.gamerId)

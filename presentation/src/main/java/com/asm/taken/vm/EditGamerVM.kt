@@ -70,7 +70,7 @@ class EditGamerVM @Inject constructor(
             _countriesUiState.update { CountriesUiState.Loading }
             val countriesState: CountriesUiState =
                 when (val countriesResult = getCountriesInfoUC.execute(Unit)) {
-                    is Result.Unsuccessful -> CountriesUiState.Failure(countriesResult.failure)
+                    is Result.Unsuccessful -> CountriesUiState.Failure(countriesResult.error)
                     is Result.Successful -> {
                         val countries = countriesResult.data.map(countryMapper::toCountryUiState)
                         CountriesUiState.Successful(countries)
@@ -120,12 +120,12 @@ class EditGamerVM @Inject constructor(
                         saveSessionUC.execute(Session.UserRegister(gamerId = createGamerResult.data))) {
                         is Result.Successful<Unit> -> NavigationState.GamerCreated(createGamerResult.data)
                         is Result.Unsuccessful<GeneralError> -> NavigationState.Failure(
-                            saveSessionResult.failure
+                            saveSessionResult.error
                         )
                     }
 
                     is Result.Unsuccessful<GeneralError> -> NavigationState.Failure(
-                        createGamerResult.failure
+                        createGamerResult.error
                     )
                 }
                 _navigationState.update { navigationState }
@@ -222,7 +222,7 @@ class EditGamerVM @Inject constructor(
             when (val closeSessionResult = closeSessionUC.execute(signOut)) {
                 is Result.Successful<Unit> -> _navigationState.update { NavigationState.SessionClosed }
                 is Result.Unsuccessful<GeneralError> -> _navigationState.update {
-                    NavigationState.Failure(closeSessionResult.failure)
+                    NavigationState.Failure(closeSessionResult.error)
                 }
             }
         }

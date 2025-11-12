@@ -65,10 +65,8 @@ import com.asm.taken.ui.ImageDialog
 import com.asm.taken.ui.OtpMultiple
 import com.asm.taken.ui.PuzzleGeneralTitle
 import com.asm.taken.ui.puzzleFontFamily
-import com.asm.taken.utils.AuthResult
 import com.asm.taken.utils.AuthenticationClient
 import com.asm.taken.utils.ResourceResolver
-import com.asm.taken.utils.UserData
 import com.asm.taken.vm.LoginVM
 import kotlinx.coroutines.launch
 
@@ -206,14 +204,19 @@ fun SnackbarError(
 }
 
 @Composable
-fun DialogError(title: String, image: Painter, message: String, onClickAction: (() -> Unit)? = null) {
+fun DialogError(
+    title: String,
+    image: Painter,
+    message: String,
+    onClickAction: (() -> Unit)? = null
+) {
     var showErrorDialog by rememberSaveable { mutableStateOf(true) }
     if (showErrorDialog) {
         ImageDialog(
             title = title,
             image = image,
             message = message,
-            onCloseDialog =  {
+            onCloseDialog = {
                 showErrorDialog = false
             },
         ) {
@@ -469,13 +472,33 @@ fun SessionSection(
             onNavigateToCreateGamer(loginUiState.authUser)
         }
 
-        is LoginUiState.Failure -> {
-            val message = resourceResolver.getErrorLogin(loginUiState.loginFailure)
-            LaunchedEffect(true) {
-                val snackBarResult =
-                    snackBarHostState.showSnackbar(message, withDismissAction = true)
-                if (snackBarResult == SnackbarResult.Dismissed) loginVM.resetLoginUiState()
-            }
+        is LoginUiState.Error -> when (loginUiState.generalError) {
+            is GeneralError.ClientError -> DialogError(
+                title = stringResource(R.string.txt_ttl_client_error),
+                image = painterResource(R.drawable.ic_warning),
+                message = stringResource(R.string.err_client)
+            )
+            GeneralError.ConnectionError -> DialogError(
+                title = stringResource(R.string.txt_ttl_unexpected_error),
+                image = painterResource(R.drawable.ic_warning),
+                message = stringResource(R.string.err_server_connection),
+            )
+            GeneralError.NetworkError -> SnackbarError(
+                snackBarHostState = snackBarHostState,
+                actionLabel = stringResource(R.string.txt_label_retry),
+                duration = SnackbarDuration.Long,
+                message = stringResource(R.string.err_network_connection)
+            )
+            is GeneralError.ServerError -> DialogError(
+                title = stringResource(R.string.txt_ttl_service_error),
+                image = painterResource(R.drawable.ic_error),
+                message = stringResource(R.string.err_server)
+            )
+            GeneralError.Unknown -> SnackbarError(
+                snackBarHostState = snackBarHostState,
+                message = stringResource(R.string.err_auth),
+                withDismissAction = true
+            )
         }
 
         is LoginUiState.SentOtp -> OtpDialog(

@@ -2,7 +2,6 @@ package com.asm.taken.model
 
 import com.asm.domain.errors.GeneralError
 import com.asm.taken.ui.navigation.Route
-import com.asm.taken.utils.UserData
 
 sealed class InitRouteUiState {
     data object Loading: InitRouteUiState()

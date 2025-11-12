@@ -15,8 +15,6 @@ import com.asm.domain.entities.Result
 import com.asm.domain.errors.GeneralError
 import com.asm.domain.errors.toUnsuccessful
 import com.asm.taken.R
-import com.asm.taken.model.AuthError
-import com.asm.taken.model.SendOtpError
 import com.asm.taken.model.SignUpError
 import com.facebook.AccessToken
 import com.facebook.CallbackManager
@@ -58,33 +56,22 @@ class AuthenticationClient @Inject constructor(
         const val TAG: String = "AuthenticationUiClient"
     }
 
-    suspend fun createAccount(email: String, password: String): SignUpResult {
+    suspend fun createAccount(email: String, password: String): Result<Unit, GeneralError> {
         return try {
-            val firebaseUser = auth.createUserWithEmailAndPassword(email, password).await().user
+            val createAccountResult = auth.createUserWithEmailAndPassword(email, password).await()
+            val firebaseUser = createAccountResult.user
             if (firebaseUser == null) {
                 Log.e(TAG, "FirebaseUser is null")
-                return SignUpResult.Failure(SignUpError.UNKNOWN_ERROR)
+                return GeneralError.ServerError().toUnsuccessful()
             }
-            SignUpResult.Successful
+            Result.Successful(Unit)
         } catch (exception: Exception) {
-            Log.e(TAG, exception.stackTraceToString())
-            if (exception is FirebaseException) {
-                val signUpError: SignUpError = when {
-                    exception is FirebaseNetworkException -> SignUpError.NETWORK_CONNECTION
-                    exception is FirebaseAuthException -> when (exception.errorCode) {
-                        "ERROR_EMAIL_ALREADY_IN_USE", "email-already-in-use" -> SignUpError.EMAIL_ALREADY_IN_USE
-                        "ERROR_INVALID_EMAIL", "invalid-email" -> SignUpError.INVALID_EMAIL
-                        "ERROR_WEAK_PASSWORD", "weak-password" -> SignUpError.WEAK_PASSWORD
-                        "ERROR_NETWORK_REQUEST_FAILED", "network-request-failed" -> SignUpError.NETWORK_CONNECTION
-                        else -> SignUpError.UNKNOWN_ERROR
-                    }
-
-                    else -> SignUpError.UNKNOWN_ERROR
-                }
-                return SignUpResult.Failure(signUpError)
-            } else {
-                SignUpResult.Failure(SignUpError.UNKNOWN_ERROR)
-            }
+            Log.e(TAG, "Unexpected exception", exception)
+            when (exception) {
+                is FirebaseAuthException -> GeneralError.ClientError("")
+                is FirebaseException -> GeneralError.ClientError("")
+                else -> GeneralError.Unknown
+            }.toUnsuccessful()
         }
     }
 
@@ -308,27 +295,10 @@ class AuthenticationClient @Inject constructor(
 
 //region Authentication
 
-sealed class SendOtpResult {
-    data object Loading : SendOtpResult()
-    data class SentOtp(val verificationId: String, val phoneNumber: String) : SendOtpResult()
-    data class Failure(val phonesSendOtpError: SendOtpError) : SendOtpResult()
-}
-
-sealed class AuthResult {
-    data object Loading : AuthResult()
-    data class Successful(val userData: UserData) : AuthResult()
-    data class Failure(val authError: AuthError) : AuthResult()
-}
-
 sealed class SignUpResult {
     data object Loading : SignUpResult()
     data object Successful : SignUpResult()
     data class Failure(val signUpError: SignUpError) : SignUpResult()
 }
-
-data class UserData(
-    val userId: String,
-    val profilePictureUrl: String?
-)
 
 //endregion

@@ -25,7 +25,6 @@ import com.asm.taken.model.LoginFormCreateAccountUiState
 import com.asm.taken.model.LoginFormPhoneUiState
 import com.asm.taken.model.LoginFormUiState
 import com.asm.taken.model.LoginUiState
-import com.asm.taken.utils.SignUpResult
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -119,7 +118,7 @@ class LoginVM @Inject constructor(
             _countriesUiState.update { CountriesUiState.Loading }
             val countriesState: CountriesUiState =
                 when (val countriesResult = getCountriesInfoUC.execute(Unit)) {
-                    is Result.Unsuccessful -> CountriesUiState.Failure(countriesResult.failure)
+                    is Result.Unsuccessful -> CountriesUiState.Failure(countriesResult.error)
                     is Result.Successful -> {
                         val phoneCodes = countriesResult.data.map(countryMapper::toCountryUiState)
                         CountriesUiState.Successful(phoneCodes)
@@ -133,7 +132,7 @@ class LoginVM @Inject constructor(
         viewModelScope.launch {
             val loginState = when (authResult) {
                 is Result.Successful<AuthUser> -> updateSession(authResult.data)
-                is Result.Unsuccessful<GeneralError> -> LoginUiState.Failure(LoginFailure.AuthFailure(authResult.failure))
+                is Result.Unsuccessful<GeneralError> -> LoginUiState.Error(authResult.error)
             }
             _loginUiState.update { loginState }
         }
@@ -141,22 +140,6 @@ class LoginVM @Inject constructor(
 
     fun updateLoginState(loginUiState: LoginUiState) {
         _loginUiState.update { loginUiState }
-    }
-
-    fun updateLoginUiState(signUpResult: SignUpResult) {
-        viewModelScope.launch {
-            val loginState = when (signUpResult) {
-                is SignUpResult.Failure -> LoginUiState.Failure(
-                    LoginFailure.SignUpFailure(
-                        signUpResult.signUpError
-                    )
-                )
-
-                SignUpResult.Loading -> LoginUiState.Loading
-                SignUpResult.Successful -> LoginUiState.AccountCreated
-            }
-            _loginUiState.update { loginState }
-        }
     }
 
     fun resetLoginUiState() {
@@ -258,19 +241,11 @@ class LoginVM @Inject constructor(
                         false -> LoginUiState.UnregisteredUser(authUser)
                     }
 
-                    is Result.Unsuccessful<GeneralError> -> LoginUiState.Failure(
-                        LoginFailure.RegisterFailure(
-                            saveSessionResult.failure
-                        )
-                    )
+                    is Result.Unsuccessful<GeneralError> -> LoginUiState.Error(saveSessionResult.error)
                 }
             }
 
-            is Result.Unsuccessful<GeneralError> -> LoginUiState.Failure(
-                LoginFailure.RegisterFailure(
-                    gamerExistsResult.failure
-                )
-            )
+            is Result.Unsuccessful<GeneralError> -> LoginUiState.Error(gamerExistsResult.error)
         }
     }
     //endregion

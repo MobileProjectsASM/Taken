@@ -14,18 +14,20 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Mail
 import androidx.compose.material3.Card
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.SnackbarResult
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.asm.domain.errors.GeneralError
 import com.asm.taken.R
 import com.asm.taken.model.InputState
 import com.asm.taken.model.LoginFormCreateAccountUiState
@@ -37,7 +39,6 @@ import com.asm.taken.ui.PasswordOutlinedTextField
 import com.asm.taken.ui.PuzzleGeneralTitle
 import com.asm.taken.utils.AuthenticationClient
 import com.asm.taken.utils.ResourceResolver
-import com.asm.taken.utils.SignUpResult
 import com.asm.taken.vm.LoginVM
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -64,7 +65,6 @@ fun CreateAccountPage(
     )
     SessionSection(
         loginVM = loginVM,
-        resourceResolver = resourceResolver,
         snackBarHostState = snackBarHostState,
         popBackStack = popBackStack
     )
@@ -73,23 +73,43 @@ fun CreateAccountPage(
 @Composable
 fun SessionSection(
     loginVM: LoginVM,
-    resourceResolver: ResourceResolver,
     snackBarHostState: SnackbarHostState,
     popBackStack: () -> Unit
 ) {
     val loginUiState: LoginUiState by loginVM.loginUiState.collectAsStateWithLifecycle()
-    when (loginUiState) {
+    when (val state = loginUiState) {
         LoginUiState.AccountCreated -> LaunchedEffect(true) {
             popBackStack()
             loginVM.cleanLoginFormCreateAccount()
             loginVM.resetLoginUiState()
         }
-        is LoginUiState.Failure -> {
-            val message = resourceResolver.getErrorLogin((loginUiState as LoginUiState.Failure).loginFailure)
-            LaunchedEffect(true) {
-                val snackBarResult = snackBarHostState.showSnackbar(message, withDismissAction = true)
-                if (snackBarResult == SnackbarResult.Dismissed) loginVM.resetLoginUiState()
-            }
+        is LoginUiState.Error -> when (state.generalError) {
+            is GeneralError.ClientError -> DialogError(
+                title = stringResource(R.string.txt_ttl_client_error),
+                image = painterResource(R.drawable.ic_warning),
+                message = stringResource(R.string.err_client)
+            )
+            GeneralError.ConnectionError -> DialogError(
+                title = stringResource(R.string.txt_ttl_unexpected_error),
+                image = painterResource(R.drawable.ic_warning),
+                message = stringResource(R.string.err_server_connection),
+            )
+            GeneralError.NetworkError -> SnackbarError(
+                snackBarHostState = snackBarHostState,
+                actionLabel = stringResource(R.string.txt_label_retry),
+                duration = SnackbarDuration.Long,
+                message = stringResource(R.string.err_network_connection)
+            )
+            is GeneralError.ServerError -> DialogError(
+                title = stringResource(R.string.txt_ttl_service_error),
+                image = painterResource(R.drawable.ic_error),
+                message = stringResource(R.string.err_server)
+            )
+            GeneralError.Unknown -> SnackbarError(
+                snackBarHostState = snackBarHostState,
+                message = stringResource(R.string.err_auth),
+                withDismissAction = true
+            )
         }
         LoginUiState.Loading -> CircularProgressDialog()
         else -> return
@@ -128,9 +148,9 @@ fun PanelCreateAccount(
                     resourceResolver = resourceResolver
                 ) { email, password ->
                     coroutineScope.launch {
-                        loginVM.updateLoginUiState(SignUpResult.Loading)
-                        val signUpResult = authenticationClient.createAccount(email, password)
-                        loginVM.updateLoginUiState(signUpResult)
+                        loginVM.updateLoginState(LoginUiState.Loading)
+                        authenticationClient.createAccount(email, password)
+                        loginVM.updateLoginState(LoginUiState.AccountCreated)
                     }
                 }
             }

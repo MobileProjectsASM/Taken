@@ -43,7 +43,7 @@ class SessionVM @Inject constructor(
                     null -> InitRouteUiState.Success(Login)
                 }
 
-                is Result.Unsuccessful<GeneralError> -> InitRouteUiState.Fail(resultSession.failure)
+                is Result.Unsuccessful<GeneralError> -> InitRouteUiState.Fail(resultSession.error)
             }
             _initRouteState.update {
                 initRouteState
