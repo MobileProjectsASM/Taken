@@ -35,6 +35,7 @@ import com.asm.taken.model.LoginUiState
 import com.asm.taken.ui.CircularProgressDialog
 import com.asm.taken.ui.DefaultButton
 import com.asm.taken.ui.DefaultOutlinedTextFieldLI
+import com.asm.taken.ui.DialogError
 import com.asm.taken.ui.PasswordOutlinedTextField
 import com.asm.taken.ui.PuzzleGeneralTitle
 import com.asm.taken.utils.AuthenticationClient
@@ -88,13 +89,13 @@ fun SessionSection(
                 title = stringResource(R.string.txt_ttl_client_error),
                 image = painterResource(R.drawable.ic_warning),
                 message = stringResource(R.string.err_client),
-                onDismissDialog = { }
+                onDismissDialog = { loginVM.resetLoginUiState() }
             )
             GeneralError.ConnectionError -> DialogError(
                 title = stringResource(R.string.txt_ttl_unexpected_error),
                 image = painterResource(R.drawable.ic_warning),
                 message = stringResource(R.string.err_server_connection),
-                onDismissDialog = { }
+                onDismissDialog = { loginVM.resetLoginUiState() }
             )
             GeneralError.NetworkError -> SnackbarError(
                 snackBarHostState = snackBarHostState,
@@ -106,7 +107,7 @@ fun SessionSection(
                 title = stringResource(R.string.txt_ttl_service_error),
                 image = painterResource(R.drawable.ic_error),
                 message = stringResource(R.string.err_server),
-                onDismissDialog = { }
+                onDismissDialog = { loginVM.resetLoginUiState() }
             )
             GeneralError.Unknown -> SnackbarError(
                 snackBarHostState = snackBarHostState,
