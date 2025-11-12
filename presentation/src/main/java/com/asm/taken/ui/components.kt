@@ -594,6 +594,39 @@ fun ImageDialog(
     }
 }
 
+@Composable
+fun DialogError(
+    title: String,
+    image: Painter,
+    message: String,
+    onDismissDialog: () -> Unit,
+    onClickAction: (() -> Unit)? = null
+) {
+    var showErrorDialog by rememberSaveable { mutableStateOf(true) }
+    if (showErrorDialog) {
+        ImageDialog(
+            title = title,
+            image = image,
+            message = message,
+            onDismissRequest = {
+                showErrorDialog = false
+                onDismissDialog()
+            },
+            onCloseDialog = {
+                showErrorDialog = false
+                onDismissDialog()
+            },
+            onClickAction = onClickAction?.let {
+                {
+                    onClickAction()
+                    showErrorDialog = false
+                    onDismissDialog()
+                }
+            }
+        )
+    }
+}
+
 fun String.toDefaultText(
     modifier: Modifier = Modifier,
     textAlign: TextAlign = TextAlign.Start

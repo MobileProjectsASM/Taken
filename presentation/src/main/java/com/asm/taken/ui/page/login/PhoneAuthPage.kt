@@ -61,6 +61,7 @@ import com.asm.taken.ui.CircularProgressDialog
 import com.asm.taken.ui.DefaultButton
 import com.asm.taken.ui.DefaultOutlinedTextFieldLI
 import com.asm.taken.ui.DefaultText
+import com.asm.taken.ui.DialogError
 import com.asm.taken.ui.ImageDialog
 import com.asm.taken.ui.OtpMultiple
 import com.asm.taken.ui.PuzzleGeneralTitle
@@ -148,7 +149,7 @@ fun ErrorCountries(
             title = stringResource(R.string.txt_ttl_client_error),
             image = painterResource(R.drawable.ic_warning),
             message = stringResource(R.string.err_client),
-            onDismissDialog = { }
+            onDismissDialog = { loginVM.resetLoginUiState() }
         )
 
         GeneralError.NetworkError -> SnackbarError(
@@ -163,7 +164,7 @@ fun ErrorCountries(
             title = stringResource(R.string.txt_ttl_service_error),
             image = painterResource(R.drawable.ic_error),
             message = stringResource(R.string.err_server),
-            onDismissDialog = { }
+            onDismissDialog = { loginVM.resetLoginUiState() }
         )
 
         GeneralError.Unknown -> SnackbarError(
@@ -176,7 +177,7 @@ fun ErrorCountries(
             title = stringResource(R.string.txt_ttl_unexpected_error),
             image = painterResource(R.drawable.ic_warning),
             message = stringResource(R.string.err_server_connection),
-            onDismissDialog = { },
+            onDismissDialog = { loginVM.resetLoginUiState() },
             onClickAction = loginVM::getCountriesInfo
         )
     }
@@ -204,37 +205,6 @@ fun SnackbarError(
         duration = duration
     )
     if (snackbarResult == SnackbarResult.ActionPerformed && onActionPerformed != null) onActionPerformed()
-}
-
-@Composable
-fun DialogError(
-    title: String,
-    image: Painter,
-    message: String,
-    onDismissDialog: () -> Unit,
-    onClickAction: (() -> Unit)? = null
-) {
-    var showErrorDialog by rememberSaveable { mutableStateOf(true) }
-    if (showErrorDialog) {
-        ImageDialog(
-            title = title,
-            image = image,
-            message = message,
-            onDismissRequest = {
-                showErrorDialog = false
-                onDismissDialog()
-            },
-            onCloseDialog = {
-                showErrorDialog = false
-                onDismissDialog()
-            },
-        ) {
-            if (onClickAction != null) {
-                onClickAction()
-                showErrorDialog = false
-            }
-        }
-    }
 }
 
 @Composable
@@ -486,26 +456,30 @@ fun SessionSection(
                 title = stringResource(R.string.txt_ttl_client_error),
                 image = painterResource(R.drawable.ic_warning),
                 message = stringResource(R.string.err_client),
-                onDismissDialog = { }
+                onDismissDialog = { loginVM.resetLoginUiState() }
             )
+
             GeneralError.ConnectionError -> DialogError(
                 title = stringResource(R.string.txt_ttl_unexpected_error),
                 image = painterResource(R.drawable.ic_warning),
                 message = stringResource(R.string.err_server_connection),
-                onDismissDialog = { }
+                onDismissDialog = { loginVM.resetLoginUiState() }
             )
+
             GeneralError.NetworkError -> SnackbarError(
                 snackBarHostState = snackBarHostState,
                 actionLabel = stringResource(R.string.txt_label_retry),
                 duration = SnackbarDuration.Long,
                 message = stringResource(R.string.err_network_connection)
             )
+
             is GeneralError.ServerError -> DialogError(
                 title = stringResource(R.string.txt_ttl_service_error),
                 image = painterResource(R.drawable.ic_error),
                 message = stringResource(R.string.err_server),
-                onDismissDialog = { }
+                onDismissDialog = { loginVM.resetLoginUiState() }
             )
+
             GeneralError.Unknown -> SnackbarError(
                 snackBarHostState = snackBarHostState,
                 message = stringResource(R.string.err_auth),

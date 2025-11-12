@@ -15,7 +15,6 @@ import com.asm.domain.entities.Result
 import com.asm.domain.errors.GeneralError
 import com.asm.domain.errors.toUnsuccessful
 import com.asm.taken.R
-import com.asm.taken.model.SignUpError
 import com.facebook.AccessToken
 import com.facebook.CallbackManager
 import com.facebook.FacebookCallback
@@ -66,7 +65,7 @@ class AuthenticationClient @Inject constructor(
             }
             Result.Successful(Unit)
         } catch (exception: Exception) {
-            Log.e(TAG, "Unexpected exception", exception)
+            Log.e(TAG, "Unexpected exception to create account", exception)
             when (exception) {
                 is FirebaseAuthException -> GeneralError.ClientError("")
                 is FirebaseException -> GeneralError.ClientError("")
@@ -85,7 +84,7 @@ class AuthenticationClient @Inject constructor(
             }
             Result.Successful(AuthUser(firebaseUser.uid, firebaseUser.photoUrl?.toString()))
         } catch (exception: Exception) {
-            Log.e(TAG, "Unexpected Exception", exception)
+            Log.e(TAG, "Unexpected Exception to sign in with email and password", exception)
             when (exception) {
                 is FirebaseAuthInvalidUserException -> GeneralError.ClientError("")
                 is FirebaseAuthInvalidCredentialsException -> GeneralError.ClientError("")
@@ -105,11 +104,12 @@ class AuthenticationClient @Inject constructor(
         LoginManager.getInstance()
             .registerCallback(callbackManager, object : FacebookCallback<LoginResult> {
                 override fun onCancel() {
-
+                    Log.e(TAG, "Unexpected Error cancel process")
+                    onAuthResult(GeneralError.ClientError().toUnsuccessful())
                 }
 
                 override fun onError(error: FacebookException) {
-                    Log.e(TAG, "Unexpected Exception", error)
+                    Log.e(TAG, "Unexpected Exception to sign in with facebook", error)
                     onAuthResult(GeneralError.ServerError().toUnsuccessful())
                 }
 
@@ -154,7 +154,7 @@ class AuthenticationClient @Inject constructor(
                 }
 
                 override fun onVerificationFailed(firebaseException: FirebaseException) {
-                    Log.e(TAG, "Unexpected Exception", firebaseException)
+                    Log.e(TAG, "Unexpected Exception to auth with phone number", firebaseException)
                     val phonesSendOtpError = when (firebaseException) {
                         is FirebaseAuthInvalidCredentialsException, is FirebaseTooManyRequestsException, is FirebaseAuthMissingActivityForRecaptchaException -> GeneralError.ClientError().toUnsuccessful()
                         is FirebaseNetworkException -> GeneralError.NetworkError.toUnsuccessful()
@@ -196,15 +196,15 @@ class AuthenticationClient @Inject constructor(
                 val authCredential = handleCredentialResponse(credentialResponse)
                 signInWithFirebase(authCredential)
             } catch (exception: Exception) {
-                Log.e(TAG, "Unexpected exception", exception)
+                Log.e(TAG, "Unexpected exception to handle credentials", exception)
                 GeneralError.ClientError().toUnsuccessful()
             }
         } catch (exception: GetCredentialException) {
-            Log.e(TAG, "Unexpected exception", exception)
+            Log.e(TAG, "Unexpected exception to get credentials", exception)
             if (authorizedAccounts) signInWithCredentialManager(context, false)
             else GeneralError.ClientError().toUnsuccessful()
         } catch (exception: Exception) {
-            Log.e(TAG, "Unexpected exception", exception)
+            Log.e(TAG, "Unexpected exception to get credentials", exception)
             GeneralError.Unknown.toUnsuccessful()
         }
     }
@@ -222,7 +222,7 @@ class AuthenticationClient @Inject constructor(
             }
             Result.Successful(AuthUser(firebaseUser.uid, photoUrl))
         } catch (exception: Exception) {
-            Log.e(TAG, "Unexpected Error", exception)
+            Log.e(TAG, "Unexpected exception to sign in with firebase", exception)
             when (exception) {
                 is FirebaseAuthInvalidUserException -> GeneralError.ClientError("")
                 is FirebaseAuthInvalidCredentialsException -> GeneralError.ClientError("")
@@ -292,13 +292,3 @@ class AuthenticationClient @Inject constructor(
         }
     }
 }
-
-//region Authentication
-
-sealed class SignUpResult {
-    data object Loading : SignUpResult()
-    data object Successful : SignUpResult()
-    data class Failure(val signUpError: SignUpError) : SignUpResult()
-}
-
-//endregion
