@@ -80,6 +80,10 @@ class EditGamerVM @Inject constructor(
         }
     }
 
+    fun resetNavigationState() {
+        _navigationState.update { null }
+    }
+
     //region createGamer
 
     fun createGamer(

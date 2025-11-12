@@ -32,6 +32,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -46,6 +47,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -55,6 +57,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
+import com.asm.domain.errors.GeneralError
 import com.asm.taken.R
 import com.asm.taken.model.CountriesUiState
 import com.asm.taken.model.CountryUiState
@@ -66,11 +69,11 @@ import com.asm.taken.model.InputCountryError
 import com.asm.taken.model.InputImageError
 import com.asm.taken.model.InputState
 import com.asm.taken.model.LoginCreateGamerFormUiState
-import com.asm.taken.model.CloseSessionUiState
 import com.asm.taken.ui.CircularProgressDialog
 import com.asm.taken.ui.DefaultButton
 import com.asm.taken.ui.DefaultOutlinedTextFieldLI
 import com.asm.taken.ui.DefaultText
+import com.asm.taken.ui.DialogError
 import com.asm.taken.ui.PuzzleGeneralTitle
 import com.asm.taken.ui.navigation.CreateGamer
 import com.asm.taken.ui.puzzleFontFamily
@@ -105,30 +108,6 @@ fun CreateGamerPage(
 }
 
 @Composable
-fun SessionSection(
-    editGamerVM: EditGamerVM,
-    authenticationClient: AuthenticationClient,
-    closeSessionUiState: CloseSessionUiState?,
-    snackBarHostState: SnackbarHostState,
-    resourceResolver: ResourceResolver,
-    onNavigateToAuthentication: () -> Unit,
-    onNavigateToHome: (String) -> Unit
-) {
-    when (closeSessionUiState) {
-        CloseSessionUiState.Loading -> CircularProgressDialog()
-        is CloseSessionUiState.Fail -> LaunchedEffect(true) {
-            val message = ""//messageResolver.getErrorSession(closeSessionUiState.error)
-            val snackBarResult = snackBarHostState.showSnackbar(message, withDismissAction = true)
-            //if (snackBarResult == SnackbarResult.Dismissed) sessionVM.
-        }
-        CloseSessionUiState.Logout -> LaunchedEffect(true) {
-            onNavigateToAuthentication()
-        }
-        null -> return
-    }
-}
-
-@Composable
 fun CreateGamerSection(
     createGamerInfo: CreateGamer,
     authenticationClient: AuthenticationClient,
@@ -153,6 +132,7 @@ fun CreateGamerSection(
         CountriesUiState.Loading -> CircularProgressDialog()
 
         is CountriesUiState.Successful -> PanelCreateGamer(
+            snackBarHostState = snackBarHostState,
             createGamerInfo = createGamerInfo,
             authenticationClient = authenticationClient,
             editGamerVM = editGamerVM,
@@ -178,6 +158,7 @@ fun ErrorCountries(
         snackBarHostState.showSnackbar(resourceResolver.getString(R.string.err_get_countries))
     }
     PanelCreateGamer(
+        snackBarHostState = snackBarHostState,
         createGamerInfo = createGamerInfo,
         authenticationClient = authenticationClient,
         editGamerVM = editGamerVM,
@@ -190,6 +171,7 @@ fun ErrorCountries(
 
 @Composable
 fun PanelCreateGamer(
+    snackBarHostState: SnackbarHostState,
     createGamerInfo: CreateGamer,
     authenticationClient: AuthenticationClient,
     editGamerVM: EditGamerVM,
@@ -206,8 +188,8 @@ fun PanelCreateGamer(
         resourceResolver = resourceResolver
     )
     NavigationSection(
+        snackBarHostState = snackBarHostState,
         editGamerVM = editGamerVM,
-        resourceResolver = resourceResolver,
         onNavigateToHome = onNavigateToHome,
         onNavigateToAuthentication = onNavigateToAuthentication,
     )
@@ -215,15 +197,45 @@ fun PanelCreateGamer(
 
 @Composable
 fun NavigationSection(
+    snackBarHostState: SnackbarHostState,
     editGamerVM: EditGamerVM,
-    resourceResolver: ResourceResolver,
     onNavigateToHome: (String) -> Unit,
     onNavigateToAuthentication: () -> Unit
 ) {
     val navigationState: NavigationState? by editGamerVM.navigationState.collectAsStateWithLifecycle()
     when (val state = navigationState) {
-        is NavigationState.Failure -> LaunchedEffect(true) {
-
+        is NavigationState.Failure -> when (state.error) {
+            is GeneralError.ClientError -> DialogError(
+                title = stringResource(R.string.txt_ttl_client_error),
+                image = painterResource(R.drawable.ic_warning),
+                message = stringResource(R.string.err_client),
+                onDismissDialog = editGamerVM::resetNavigationState
+            )
+            GeneralError.ConnectionError -> DialogError(
+                title = stringResource(R.string.txt_ttl_unexpected_error),
+                image = painterResource(R.drawable.ic_warning),
+                message = stringResource(R.string.err_server_connection),
+                onDismissDialog = editGamerVM::resetNavigationState
+            )
+            GeneralError.NetworkError -> SnackbarError(
+                snackBarHostState = snackBarHostState,
+                actionLabel = stringResource(R.string.txt_label_retry),
+                duration = SnackbarDuration.Long,
+                message = stringResource(R.string.err_network_connection),
+                onDismiss = editGamerVM::resetNavigationState
+            )
+            is GeneralError.ServerError -> DialogError(
+                title = stringResource(R.string.txt_ttl_service_error),
+                image = painterResource(R.drawable.ic_error),
+                message = stringResource(R.string.err_server),
+                onDismissDialog = editGamerVM::resetNavigationState
+            )
+            GeneralError.Unknown -> SnackbarError(
+                snackBarHostState = snackBarHostState,
+                message = stringResource(R.string.err_auth),
+                withDismissAction = true,
+                onDismiss = editGamerVM::resetNavigationState
+            )
         }
         is NavigationState.GamerCreated -> LaunchedEffect(true) {
             onNavigateToHome(state.gamerId)
@@ -322,7 +334,7 @@ fun FormCreateGamer(
         is InputState.Error<InputCountryError> -> countryState.errors.map { resourceResolver.getErrorCountry(it) }
         InputState.Init, InputState.Success -> listOf()
     }
-    val imageErrors: List<String> = when (val imageSelectedState = loginCreateGamerFormState.imageSelected.state) {
+    when (val imageSelectedState = loginCreateGamerFormState.imageSelected.state) {
         is InputState.Error<InputImageError> -> imageSelectedState.errors.map { resourceResolver.getErrorImage(it) }
         InputState.Init, InputState.Success -> listOf()
     }
