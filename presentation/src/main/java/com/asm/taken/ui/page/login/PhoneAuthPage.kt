@@ -149,7 +149,7 @@ fun ErrorCountries(
             title = stringResource(R.string.txt_ttl_client_error),
             image = painterResource(R.drawable.ic_warning),
             message = stringResource(R.string.err_client),
-            onDismissDialog = { loginVM.resetLoginUiState() }
+            onDismissDialog = loginVM::resetLoginUiState
         )
 
         GeneralError.NetworkError -> SnackbarError(
@@ -157,6 +157,7 @@ fun ErrorCountries(
             actionLabel = stringResource(R.string.txt_label_retry),
             duration = SnackbarDuration.Long,
             message = stringResource(R.string.err_network_connection),
+            onDismiss = loginVM::resetLoginUiState,
             onActionPerformed = loginVM::getCountriesInfo
         )
 
@@ -164,20 +165,21 @@ fun ErrorCountries(
             title = stringResource(R.string.txt_ttl_service_error),
             image = painterResource(R.drawable.ic_error),
             message = stringResource(R.string.err_server),
-            onDismissDialog = { loginVM.resetLoginUiState() }
+            onDismissDialog = loginVM::resetLoginUiState
         )
 
         GeneralError.Unknown -> SnackbarError(
             snackBarHostState = snackBarHostState,
             message = stringResource(R.string.err_get_countries),
-            withDismissAction = true
+            withDismissAction = true,
+            onDismiss = loginVM::resetLoginUiState
         )
 
         GeneralError.ConnectionError -> DialogError(
             title = stringResource(R.string.txt_ttl_unexpected_error),
             image = painterResource(R.drawable.ic_warning),
             message = stringResource(R.string.err_server_connection),
-            onDismissDialog = { loginVM.resetLoginUiState() },
+            onDismissDialog = loginVM::resetLoginUiState,
             onClickAction = loginVM::getCountriesInfo
         )
     }
@@ -196,6 +198,7 @@ fun SnackbarError(
     actionLabel: String? = null,
     withDismissAction: Boolean = false,
     duration: SnackbarDuration = if (actionLabel == null) SnackbarDuration.Short else SnackbarDuration.Indefinite,
+    onDismiss: () -> Unit,
     onActionPerformed: (() -> Unit)? = null
 ) = LaunchedEffect(true) {
     val snackbarResult = snackBarHostState.showSnackbar(
@@ -204,7 +207,8 @@ fun SnackbarError(
         withDismissAction = withDismissAction,
         duration = duration
     )
-    if (snackbarResult == SnackbarResult.ActionPerformed && onActionPerformed != null) onActionPerformed()
+    if (snackbarResult == SnackbarResult.Dismissed) onDismiss()
+    else if (onActionPerformed != null) onActionPerformed()
 }
 
 @Composable
@@ -463,27 +467,29 @@ fun SessionSection(
                 title = stringResource(R.string.txt_ttl_unexpected_error),
                 image = painterResource(R.drawable.ic_warning),
                 message = stringResource(R.string.err_server_connection),
-                onDismissDialog = { loginVM.resetLoginUiState() }
+                onDismissDialog = loginVM::resetLoginUiState
             )
 
             GeneralError.NetworkError -> SnackbarError(
                 snackBarHostState = snackBarHostState,
                 actionLabel = stringResource(R.string.txt_label_retry),
                 duration = SnackbarDuration.Long,
-                message = stringResource(R.string.err_network_connection)
+                message = stringResource(R.string.err_network_connection),
+                onDismiss = loginVM::resetLoginUiState
             )
 
             is GeneralError.ServerError -> DialogError(
                 title = stringResource(R.string.txt_ttl_service_error),
                 image = painterResource(R.drawable.ic_error),
                 message = stringResource(R.string.err_server),
-                onDismissDialog = { loginVM.resetLoginUiState() }
+                onDismissDialog = loginVM::resetLoginUiState
             )
 
             GeneralError.Unknown -> SnackbarError(
                 snackBarHostState = snackBarHostState,
                 message = stringResource(R.string.err_auth),
-                withDismissAction = true
+                withDismissAction = true,
+                onDismiss = loginVM::resetLoginUiState
             )
         }
 

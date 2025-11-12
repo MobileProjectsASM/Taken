@@ -90,30 +90,32 @@ fun SessionSection(
                 title = stringResource(R.string.txt_ttl_client_error),
                 image = painterResource(R.drawable.ic_warning),
                 message = stringResource(R.string.err_client),
-                onDismissDialog = { loginVM.resetLoginUiState() }
+                onDismissDialog =loginVM::resetLoginUiState
             )
             GeneralError.ConnectionError -> DialogError(
                 title = stringResource(R.string.txt_ttl_unexpected_error),
                 image = painterResource(R.drawable.ic_warning),
                 message = stringResource(R.string.err_server_connection),
-                onDismissDialog = { loginVM.resetLoginUiState() }
+                onDismissDialog = loginVM::resetLoginUiState
             )
             GeneralError.NetworkError -> SnackbarError(
                 snackBarHostState = snackBarHostState,
                 actionLabel = stringResource(R.string.txt_label_retry),
                 duration = SnackbarDuration.Long,
-                message = stringResource(R.string.err_network_connection)
+                message = stringResource(R.string.err_network_connection),
+                onDismiss = loginVM::resetLoginUiState
             )
             is GeneralError.ServerError -> DialogError(
                 title = stringResource(R.string.txt_ttl_service_error),
                 image = painterResource(R.drawable.ic_error),
                 message = stringResource(R.string.err_server),
-                onDismissDialog = { loginVM.resetLoginUiState() }
+                onDismissDialog = loginVM::resetLoginUiState
             )
             GeneralError.Unknown -> SnackbarError(
                 snackBarHostState = snackBarHostState,
                 message = stringResource(R.string.err_auth),
-                withDismissAction = true
+                withDismissAction = true,
+                onDismiss = loginVM::resetLoginUiState
             )
         }
         LoginUiState.Loading -> CircularProgressDialog()
