@@ -87,12 +87,14 @@ fun SessionSection(
             is GeneralError.ClientError -> DialogError(
                 title = stringResource(R.string.txt_ttl_client_error),
                 image = painterResource(R.drawable.ic_warning),
-                message = stringResource(R.string.err_client)
+                message = stringResource(R.string.err_client),
+                onDismissDialog = { }
             )
             GeneralError.ConnectionError -> DialogError(
                 title = stringResource(R.string.txt_ttl_unexpected_error),
                 image = painterResource(R.drawable.ic_warning),
                 message = stringResource(R.string.err_server_connection),
+                onDismissDialog = { }
             )
             GeneralError.NetworkError -> SnackbarError(
                 snackBarHostState = snackBarHostState,
@@ -103,7 +105,8 @@ fun SessionSection(
             is GeneralError.ServerError -> DialogError(
                 title = stringResource(R.string.txt_ttl_service_error),
                 image = painterResource(R.drawable.ic_error),
-                message = stringResource(R.string.err_server)
+                message = stringResource(R.string.err_server),
+                onDismissDialog = { }
             )
             GeneralError.Unknown -> SnackbarError(
                 snackBarHostState = snackBarHostState,

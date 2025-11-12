@@ -10,7 +10,6 @@ import com.asm.domain.entities.Gamer
 import com.asm.domain.entities.Result
 import com.asm.domain.errors.GeneralError
 import com.asm.domain.errors.toUnsuccessful
-import com.google.firebase.FirebaseException
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.FirebaseFirestoreException
 import com.google.firebase.functions.FirebaseFunctions
@@ -30,7 +29,7 @@ class GamerFirebaseSource @Inject constructor(
 ) : GamerRemoteSource {
 
     companion object {
-        const val TAG = "GamerFireStoreSource"
+        const val TAG = "GamerFirebaseSource"
         const val GAMER_COLLECTION = "gamers"
     }
 
@@ -48,7 +47,7 @@ class GamerFirebaseSource @Inject constructor(
             )
             Result.Successful(gamer)
         } catch (exception: Exception) {
-            Log.e(TAG, exception.message, exception)
+            Log.e(TAG, "Unexpected error to get gamer by Id", exception)
             GeneralError.Unknown.toUnsuccessful()
         }
     }
@@ -76,7 +75,7 @@ class GamerFirebaseSource @Inject constructor(
                 Log.e(TAG, "gamerId response is invalid")
             }
         } catch (exception: Exception) {
-            Log.e(TAG, exception.message, exception)
+            Log.e(TAG, "Unexpected save gamer", exception)
             when (exception) {
                 is IOException -> GeneralError.NetworkError.toUnsuccessful()
                 is FirebaseFunctionsException -> handleFirebaseFunctionException(exception)
@@ -92,7 +91,7 @@ class GamerFirebaseSource @Inject constructor(
             val snapshot = fs.collection(GAMER_COLLECTION).document(gamerId).get().await()
             Result.Successful(snapshot.exists())
         } catch (exception: Exception) {
-            Log.e(TAG, exception.message, exception)
+            Log.e(TAG, "Unexpected error to check gamer exists", exception)
             when {
                 exception is FirebaseFirestoreException -> GeneralError.ClientError().toUnsuccessful()
                 else -> GeneralError.Unknown.toUnsuccessful()
@@ -109,7 +108,7 @@ class GamerFirebaseSource @Inject constructor(
             fs.collection(GAMER_COLLECTION).document(gamerId).update(imageUpdate).await()
             Result.Successful(Unit)
         } catch (exception: Exception) {
-            Log.e(TAG, exception.stackTraceToString())
+            Log.e(TAG, "Unexpected error to update gamer image", exception)
             GeneralError.Unknown.toUnsuccessful()
         }
     }

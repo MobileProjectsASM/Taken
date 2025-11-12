@@ -516,10 +516,11 @@ fun ImageDialog(
     title: String,
     image: Painter,
     message: String,
+    onDismissRequest: () -> Unit,
     onCloseDialog: () -> Unit,
     onClickAction: (() -> Unit)? = null
 ) {
-    Dialog(onDismissRequest = {}) {
+    Dialog(onDismissRequest = onDismissRequest) {
         Card(modifier = Modifier.fillMaxWidth()) {
             Column {
                 Row(
