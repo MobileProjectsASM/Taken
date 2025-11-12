@@ -27,6 +27,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.asm.domain.entities.Result
 import com.asm.domain.errors.GeneralError
 import com.asm.taken.R
 import com.asm.taken.model.InputState
@@ -153,8 +154,12 @@ fun PanelCreateAccount(
                 ) { email, password ->
                     coroutineScope.launch {
                         loginVM.updateLoginState(LoginUiState.Loading)
-                        authenticationClient.createAccount(email, password)
-                        loginVM.updateLoginState(LoginUiState.AccountCreated)
+                        val createAccountResult = authenticationClient.createAccount(email, password)
+                        val loginState = when (createAccountResult) {
+                            is Result.Successful<Unit> -> LoginUiState.AccountCreated
+                            is Result.Unsuccessful<GeneralError> -> LoginUiState.Error(createAccountResult.error)
+                        }
+                        loginVM.updateLoginState(loginState)
                     }
                 }
             }

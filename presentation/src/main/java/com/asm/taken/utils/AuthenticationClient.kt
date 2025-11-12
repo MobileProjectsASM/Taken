@@ -52,7 +52,7 @@ class AuthenticationClient @Inject constructor(
     private val resourceResolver: ResourceResolver,
 ) {
     companion object {
-        const val TAG: String = "AuthenticationUiClient"
+        const val TAG: String = "AuthenticationClient"
     }
 
     suspend fun createAccount(email: String, password: String): Result<Unit, GeneralError> {
@@ -68,6 +68,7 @@ class AuthenticationClient @Inject constructor(
             Log.e(TAG, "Unexpected exception to create account", exception)
             when (exception) {
                 is FirebaseAuthException -> GeneralError.ClientError("")
+                is FirebaseNetworkException -> GeneralError.NetworkError
                 is FirebaseException -> GeneralError.ClientError("")
                 else -> GeneralError.Unknown
             }.toUnsuccessful()
@@ -88,6 +89,7 @@ class AuthenticationClient @Inject constructor(
             when (exception) {
                 is FirebaseAuthInvalidUserException -> GeneralError.ClientError("")
                 is FirebaseAuthInvalidCredentialsException -> GeneralError.ClientError("")
+                is FirebaseNetworkException -> GeneralError.NetworkError
                 is FirebaseException -> GeneralError.ClientError("")
                 else -> GeneralError.Unknown
             }.toUnsuccessful()
@@ -226,6 +228,7 @@ class AuthenticationClient @Inject constructor(
             when (exception) {
                 is FirebaseAuthInvalidUserException -> GeneralError.ClientError("")
                 is FirebaseAuthInvalidCredentialsException -> GeneralError.ClientError("")
+                is FirebaseNetworkException -> GeneralError.NetworkError
                 is FirebaseException -> GeneralError.ClientError("")
                 else -> GeneralError.Unknown
             }.toUnsuccessful()
