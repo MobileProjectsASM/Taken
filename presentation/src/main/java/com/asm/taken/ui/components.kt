@@ -39,6 +39,9 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -623,6 +626,26 @@ fun DialogError(
             }
         )
     }
+}
+
+@Composable
+fun SnackbarError(
+    snackBarHostState: SnackbarHostState,
+    message: String,
+    actionLabel: String? = null,
+    withDismissAction: Boolean = false,
+    duration: SnackbarDuration = if (actionLabel == null) SnackbarDuration.Short else SnackbarDuration.Indefinite,
+    onDismiss: () -> Unit,
+    onActionPerformed: (() -> Unit)? = null
+) = LaunchedEffect(true) {
+    val snackbarResult = snackBarHostState.showSnackbar(
+        message,
+        actionLabel = actionLabel,
+        withDismissAction = withDismissAction,
+        duration = duration
+    )
+    if (snackbarResult == SnackbarResult.Dismissed) onDismiss()
+    else if (onActionPerformed != null) onActionPerformed()
 }
 
 fun String.toDefaultText(

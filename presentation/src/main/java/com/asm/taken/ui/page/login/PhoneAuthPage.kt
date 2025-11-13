@@ -65,6 +65,7 @@ import com.asm.taken.ui.DialogError
 import com.asm.taken.ui.ImageDialog
 import com.asm.taken.ui.OtpMultiple
 import com.asm.taken.ui.PuzzleGeneralTitle
+import com.asm.taken.ui.SnackbarError
 import com.asm.taken.ui.puzzleFontFamily
 import com.asm.taken.utils.AuthenticationClient
 import com.asm.taken.utils.ResourceResolver
@@ -189,26 +190,6 @@ fun ErrorCountries(
         resourceResolver = resourceResolver,
         onSentPhone = onSentPhone
     )
-}
-
-@Composable
-fun SnackbarError(
-    snackBarHostState: SnackbarHostState,
-    message: String,
-    actionLabel: String? = null,
-    withDismissAction: Boolean = false,
-    duration: SnackbarDuration = if (actionLabel == null) SnackbarDuration.Short else SnackbarDuration.Indefinite,
-    onDismiss: () -> Unit,
-    onActionPerformed: (() -> Unit)? = null
-) = LaunchedEffect(true) {
-    val snackbarResult = snackBarHostState.showSnackbar(
-        message,
-        actionLabel = actionLabel,
-        withDismissAction = withDismissAction,
-        duration = duration
-    )
-    if (snackbarResult == SnackbarResult.Dismissed) onDismiss()
-    else if (onActionPerformed != null) onActionPerformed()
 }
 
 @Composable

@@ -113,32 +113,6 @@ enum class InputCountryError {
     EMPTY
 }
 
-enum class SendOtpError {
-    PHONE_NUMBER_INVALID_ERROR,
-    NETWORK_CONNECTION,
-    SERVER_ERROR,
-    UNKNOWN_ERROR
-}
-
-enum class AuthError {
-    ERROR_INVALID_EMAIL,
-    ERROR_WRONG_PASSWORD,
-    ERROR_USER_NOT_FOUND,
-    ERROR_INVALID_LOGIN_CREDENTIALS,
-    ERROR_USER_DISABLED,
-    ERROR_TOO_MANY_REQUESTS,
-    NETWORK_CONNECTION,
-    UNKNOWN_ERROR
-}
-
-enum class SignUpError {
-    NETWORK_CONNECTION,
-    EMAIL_ALREADY_IN_USE,
-    INVALID_EMAIL,
-    WEAK_PASSWORD,
-    UNKNOWN_ERROR
-}
-
 enum class InputOtpError {
     EMPTY,
     BE_6_DIGITS,
@@ -148,13 +122,5 @@ enum class InputOtpError {
 enum class InputImageError {
     IMAGE_IS_VERY_WEIGHT,
     UNKNOWN_ERROR
-}
-
-sealed class LoginFailure {
-    data class SendOtpFailure(val sendOtpError: SendOtpError): LoginFailure()
-    data class AuthFailure(val generalError: GeneralError): LoginFailure()
-    data class SignUpFailure(val signUpError: SignUpError): LoginFailure()
-    data class RegisterFailure(val generalFailure: GeneralError): LoginFailure()
-    data object LogoutFailure: LoginFailure()
 }
 //endregion

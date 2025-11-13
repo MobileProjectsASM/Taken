@@ -75,6 +75,7 @@ import com.asm.taken.ui.DefaultOutlinedTextFieldLI
 import com.asm.taken.ui.DefaultText
 import com.asm.taken.ui.DialogError
 import com.asm.taken.ui.PuzzleGeneralTitle
+import com.asm.taken.ui.SnackbarError
 import com.asm.taken.ui.navigation.CreateGamer
 import com.asm.taken.ui.puzzleFontFamily
 import com.asm.taken.utils.AuthenticationClient

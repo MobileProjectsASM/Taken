@@ -46,6 +46,7 @@ import com.asm.taken.ui.DefaultTextButton
 import com.asm.taken.ui.DialogError
 import com.asm.taken.ui.PasswordOutlinedTextField
 import com.asm.taken.ui.PuzzleGeneralTitle
+import com.asm.taken.ui.SnackbarError
 import com.asm.taken.utils.AuthenticationClient
 import com.asm.taken.utils.ResourceResolver
 import com.asm.taken.vm.LoginVM

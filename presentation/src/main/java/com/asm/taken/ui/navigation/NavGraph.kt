@@ -1,17 +1,13 @@
 package com.asm.taken.ui.navigation
 
 import android.app.Activity
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -28,10 +24,13 @@ import com.asm.taken.ui.page.login.CreateAccountPage
 import com.asm.taken.ui.page.login.CreateGamerPage
 import com.asm.taken.ui.page.login.MainAuthPage
 import com.asm.taken.ui.page.login.PhoneAuthPage
+import com.asm.taken.ui.page.main_menu.BackgroundMainMenu
+import com.asm.taken.ui.page.main_menu.MainMenuPage
 import com.asm.taken.utils.AuthenticationClient
 import com.asm.taken.utils.ResourceResolver
 import com.asm.taken.vm.EditGamerVM
 import com.asm.taken.vm.LoginVM
+import com.asm.taken.vm.MainVM
 
 @Composable
 fun MainNavigation(
@@ -81,7 +80,10 @@ fun MainNavigation(
                 )
             }
         }
-        navigationMainPage()
+        navigationMainPage(
+            snackBarHostState = snackBarHostState,
+            navController = navigationController
+        )
     }
 }
 
@@ -202,15 +204,23 @@ fun NavGraphBuilder.navigationLogin(
     }
 }
 
-fun NavGraphBuilder.navigationMainPage() {
+fun NavGraphBuilder.navigationMainPage(
+    snackBarHostState: SnackbarHostState,
+    navController: NavHostController
+) {
     navigation<MainPage>(startDestination = Home) {
         composable<Home> { navBackStackEntry ->
             val gamerId = navBackStackEntry.arguments?.getString("gamerId") ?: "default"
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(text = "Welcome $gamerId")
+            val parentEntry = remember(navBackStackEntry) {
+                navController.getBackStackEntry(MainPage::class)
+            }
+            val mainVM = hiltViewModel<MainVM>(parentEntry)
+            BackgroundMainMenu {
+                MainMenuPage(
+                    gamerId = gamerId,
+                    snackbarHostState = snackBarHostState,
+                    mainVM = mainVM
+                )
             }
         }
     }

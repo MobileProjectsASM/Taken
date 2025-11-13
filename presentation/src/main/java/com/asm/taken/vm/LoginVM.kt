@@ -20,7 +20,6 @@ import com.asm.taken.model.InputPhoneNumberError
 import com.asm.taken.model.InputRepeatValueError
 import com.asm.taken.model.InputState
 import com.asm.taken.model.InputUiState
-import com.asm.taken.model.LoginFailure
 import com.asm.taken.model.LoginFormCreateAccountUiState
 import com.asm.taken.model.LoginFormPhoneUiState
 import com.asm.taken.model.LoginFormUiState
