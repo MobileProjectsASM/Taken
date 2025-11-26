@@ -26,7 +26,7 @@ fun MainMenuPage(
     snackbarHostState: SnackbarHostState,
     mainVM: MainVM
 ) {
-    LaunchedEffect(true) { mainVM.getDataGamer(gamerId) }
+    LaunchedEffect(true) { mainVM.getMainDataGamer(gamerId) }
     val sessionState: SessionState by mainVM.sessionState.collectAsStateWithLifecycle()
     when (val state = sessionState) {
         is SessionState.Authenticated -> Box(
@@ -34,6 +34,7 @@ fun MainMenuPage(
             contentAlignment = Alignment.Center
         ) {
             Text(text = "Welcome ${state.gamer.gamerNickName}")
+            state.itHasProgress
         }
 
         is SessionState.Fail -> when (state.error) {
@@ -50,7 +51,7 @@ fun MainMenuPage(
                 message = stringResource(R.string.err_network_connection),
                 actionLabel = stringResource(R.string.txt_label_retry),
                 onDismiss = {},
-                onActionPerformed = { mainVM.getDataGamer(gamerId) }
+                onActionPerformed = { mainVM.getMainDataGamer(gamerId) }
             )
 
             is GeneralError.ServerError -> DialogError(

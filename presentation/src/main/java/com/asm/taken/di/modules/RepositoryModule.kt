@@ -1,13 +1,13 @@
 package com.asm.taken.di.modules
 
 import com.asm.data.repositories.CountryInfoRepositoryImpl
+import com.asm.data.repositories.GameRepositoryImpl
 import com.asm.data.repositories.GamerRepositoryImpl
 import com.asm.data.repositories.MultimediaRepositoryImpl
 import com.asm.data.repositories.SessionRepositoryImpl
 import com.asm.domain.repositories.CountryInfoRepository
 import com.asm.domain.repositories.GameRepository
 import com.asm.domain.repositories.GamerRepository
-import com.asm.domain.repositories.LevelRepository
 import com.asm.domain.repositories.MultimediaRepository
 import com.asm.domain.repositories.SessionRepository
 import dagger.Binds
@@ -34,5 +34,9 @@ abstract class RepositoryModule {
     @ViewModelScoped
     @Binds
     abstract fun getSessionRepository(sessionRepositoryImpl: SessionRepositoryImpl): SessionRepository
+
+    @ViewModelScoped
+    @Binds
+    abstract fun getGameRepository(gameRepositoryImpl: GameRepositoryImpl): GameRepository
 
 }

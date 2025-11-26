@@ -11,7 +11,10 @@ sealed class InitRouteUiState {
 }
 
 sealed class SessionState {
-    data class Authenticated(val gamer: Gamer): SessionState()
+    data class Authenticated(
+        val gamer: Gamer,
+        val itHasProgress: Boolean
+    ): SessionState()
     data object NoAuthenticated: SessionState()
     data object Loading: SessionState()
     data class Fail(val error: GeneralError): SessionState()

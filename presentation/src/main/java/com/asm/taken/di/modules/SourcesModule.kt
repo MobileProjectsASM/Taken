@@ -4,27 +4,25 @@ import com.asm.data.sources.hardware.ConnectionSource
 import com.asm.data.sources.hardware.impl.ConnectionSourceMobile
 import com.asm.data.sources.hardware.impl.LoggerSourceMobile
 import com.asm.data.sources.local.impl.CountryInfoRoomSource
-import com.asm.data.sources.local.impl.GameRoomSource
 import com.asm.data.sources.local.impl.GamerRoomSource
 import com.asm.data.sources.local.impl.LevelRoomSource
 import com.asm.data.sources.local.impl.MultimediaDeviceSource
 import com.asm.data.sources.local.impl.SessionSharedPreferencesSource
 import com.asm.data.sources.local.interfaces.CountryInfoLocalSource
-import com.asm.data.sources.local.interfaces.GameLocalSource
 import com.asm.data.sources.local.interfaces.GamerLocalSource
 import com.asm.data.sources.local.interfaces.LevelLocalSource
 import com.asm.data.sources.local.interfaces.MultimediaLocalSource
 import com.asm.data.sources.local.interfaces.SessionLocalSource
-import com.asm.data.sources.remote.impl.firebase.GameFireStoreSource
-import com.asm.data.sources.remote.impl.firebase.GamerFirebaseSource
-import com.asm.data.sources.remote.impl.firebase.LevelFireStoreSource
-import com.asm.data.sources.remote.impl.firebase.MultimediaStorageSource
-import com.asm.data.sources.remote.impl.rest.CountryInfoRestServiceSource
 import com.asm.data.sources.remote.abstract_remotes.CountryInfoRemoteSource
 import com.asm.data.sources.remote.abstract_remotes.GameRemoteSource
 import com.asm.data.sources.remote.abstract_remotes.GamerRemoteSource
 import com.asm.data.sources.remote.abstract_remotes.LevelRemoteSource
 import com.asm.data.sources.remote.abstract_remotes.MultimediaRemoteSource
+import com.asm.data.sources.remote.impl.firebase.GameFireStoreSource
+import com.asm.data.sources.remote.impl.firebase.GamerFirebaseSource
+import com.asm.data.sources.remote.impl.firebase.LevelFireStoreSource
+import com.asm.data.sources.remote.impl.firebase.MultimediaStorageSource
+import com.asm.data.sources.remote.impl.rest.CountryInfoRestServiceSource
 import com.asm.domain.utils.Logger
 import dagger.Binds
 import dagger.Module
@@ -50,10 +48,6 @@ abstract class SourcesModule {
     @ViewModelScoped
     @Binds
     abstract fun getGamerLocalSource(gamerLocalSource: GamerRoomSource): GamerLocalSource
-
-    @ViewModelScoped
-    @Binds
-    abstract fun getGameLocalSource(gameLocalSource: GameRoomSource): GameLocalSource
 
     @ViewModelScoped
     @Binds

@@ -1,12 +1,9 @@
 package com.asm.data.sources.local.mappers
 
-import com.asm.domain.entities.Game
-import com.asm.data.sources.local.entities.GameRoom as GameRoom
-import com.asm.domain.entities.GameStatus
 import javax.inject.Inject
 
 class GameMapper @Inject constructor() {
-    fun getGameRoom(game: Game, gamerId: String): GameRoom = when (val gameStatus = game.gameStatus) {
+    /*fun getGameRoom(game: Game, gamerId: String): GameRoom = when (val gameStatus = game.gameStatus) {
         GameStatus.Lock -> GameRoom(
             game.gameId,
             gamerId,
@@ -36,5 +33,5 @@ class GameMapper @Inject constructor() {
             gameStatus.timePlaying,
             gameStatus.score
         )
-    }
+    }*/
 }

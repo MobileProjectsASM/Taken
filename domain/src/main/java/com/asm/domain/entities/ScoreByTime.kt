@@ -4,7 +4,7 @@ import com.asm.domain.entities.interfaces.LevelScore
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
-class ScoreByTime: LevelScore {
+/*class ScoreByTime: LevelScore {
     override fun getScore(level: Level, gameProcess : GameStatus.Process): Double = getScoreByResolutionTime(level, gameProcess.timePlaying)
 
     private fun getScoreByResolutionTime(level: Level, resolutionTime: Int): Double {
@@ -16,4 +16,4 @@ class ScoreByTime: LevelScore {
         if (resolutionTime <= timeMetrics.percentage60) return 60.0
         return 0.0
     }
-}
+}*/
