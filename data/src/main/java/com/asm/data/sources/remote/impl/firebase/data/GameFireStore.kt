@@ -37,7 +37,7 @@ object MetricsStateKeys {
 object MetricsKeys {
     const val METRICS_ID = "id"
     const val METRICS_TABULATOR = "tabulator"
-    const val UNIT_TIME = "unit_time"
+    const val UNIT_TIME = "unitTime"
     const val INIT_TABLE = "initTable"
 }
 
