@@ -2,6 +2,7 @@ package com.asm.data.sources.remote.impl.firebase.mappers
 
 import com.asm.data.sources.remote.impl.firebase.data.CellColor
 import com.asm.data.sources.remote.impl.firebase.data.GameFireStore
+import com.asm.data.sources.remote.impl.firebase.data.Language
 import com.asm.data.sources.remote.impl.firebase.data.MetricsKeys
 import com.asm.data.sources.remote.impl.firebase.data.MetricsStateKeys
 import com.asm.data.sources.remote.impl.firebase.data.StatusKeys
@@ -22,10 +23,10 @@ class GameMapper @Inject constructor(
     fun gameSourceToDomain(gameFireStore: GameFireStore): Game {
         return Game(
             id = gameFireStore.gameId,
-            order = gameFireStore.levelInfo.order,
-            name = gameFireStore.levelInfo.name,
-            image = gameFireStore.levelInfo.image,
-            status = getStatus(gameFireStore.status),
+            order = gameFireStore.levelInfo.levelOrder,
+            name = gameFireStore.levelInfo.levelName[Language.ENGLISH.code] ?: "",
+            image = gameFireStore.levelInfo.levelImage,
+            status = getStatus(gameFireStore.gameStatus),
             metaDataMetrics = getMetaDataMetrics(gameFireStore.levelInfo.metrics),
             solution = convertStringToMatrix(gameFireStore.levelInfo.response),
             theme = getTheme(gameFireStore.levelInfo.theme)
@@ -79,8 +80,12 @@ class GameMapper @Inject constructor(
     }
 
     private fun convertStringToMatrix(currentTable: String): List<List<Int>> {
-        val type = object : TypeToken<List<List<Int>>>() {}.type
-        return gson.fromJson(currentTable, type)
+        runCatching {
+            val type = object : TypeToken<List<List<Int>>>() {}.type
+            return gson.fromJson(currentTable, type)
+        }.getOrElse {
+            return listOf()
+        }
     }
 
     private fun convertStringToArray(value: String): List<Int> {
@@ -90,13 +95,14 @@ class GameMapper @Inject constructor(
 
     private fun getMetaDataMetrics(metaDataMetrics: Map<String, Any>): MetaDataMetrics {
         return when ((metaDataMetrics[MetricsKeys.METRICS_ID] as? String)?.uppercase()) {
-            MetaDataMetrics.Companion.MetricsType.TIME -> MetaDataMetrics.Time(
-                ranges = metaDataMetrics[MetricsKeys.METRICS_TABULATOR] as? Map<Int, Int> ?: mapOf(),
-                unitTime = UnitTime.valueOf(
-                    (metaDataMetrics[MetricsKeys.UNIT_TIME] as? String ?: "").uppercase()
+            MetaDataMetrics.Companion.MetricsType.TIME -> {
+                val z = (metaDataMetrics[MetricsKeys.UNIT_TIME] as? String ?: "").uppercase()
+                MetaDataMetrics.Time(
+                    ranges = metaDataMetrics[MetricsKeys.METRICS_TABULATOR] as? Map<Int, Int>
+                        ?: mapOf(),
+                    unitTime = UnitTime.valueOf(z)
                 )
-            )
-
+            }
             MetaDataMetrics.Companion.MetricsType.MOVEMENTS -> MetaDataMetrics.Movements(
                 ranges = metaDataMetrics[MetricsKeys.METRICS_TABULATOR] as? Map<Int, Int> ?: mapOf(),
                 initTable = (metaDataMetrics[MetricsKeys.INIT_TABLE] as? String)
@@ -110,7 +116,7 @@ class GameMapper @Inject constructor(
     private fun getTheme(theme: List<CellColor>): Map<String, List<Int>> {
         val result: MutableMap<String, List<Int>> = mutableMapOf()
         theme.forEach {
-            result[it.color] = convertStringToArray(it.cells)
+            result[it.color] = convertStringToArray(it.numbers)
         }
         return result
     }

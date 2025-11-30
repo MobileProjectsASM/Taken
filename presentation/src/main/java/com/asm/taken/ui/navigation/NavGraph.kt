@@ -218,7 +218,7 @@ fun NavGraphBuilder.navigationMainPage(
             BackgroundMainMenu {
                 MainMenuPage(
                     gamerId = gamerId,
-                    snackbarHostState = snackBarHostState,
+                    snackBarHostState = snackBarHostState,
                     mainVM = mainVM
                 )
             }

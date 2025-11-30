@@ -23,7 +23,7 @@ import com.asm.taken.vm.MainVM
 @Composable
 fun MainMenuPage(
     gamerId: String,
-    snackbarHostState: SnackbarHostState,
+    snackBarHostState: SnackbarHostState,
     mainVM: MainVM
 ) {
     LaunchedEffect(true) { mainVM.getMainDataGamer(gamerId) }
@@ -47,7 +47,7 @@ fun MainMenuPage(
             )
             GeneralError.ConnectionError -> TODO()
             GeneralError.NetworkError -> SnackbarError(
-                snackBarHostState = snackbarHostState,
+                snackBarHostState = snackBarHostState,
                 message = stringResource(R.string.err_network_connection),
                 actionLabel = stringResource(R.string.txt_label_retry),
                 onDismiss = {},
@@ -62,7 +62,12 @@ fun MainMenuPage(
                 onClickAction = { }
             )
 
-            GeneralError.Unknown -> TODO()
+            GeneralError.Unknown -> SnackbarError(
+                snackBarHostState = snackBarHostState,
+                message = stringResource(R.string.err_auth),
+                withDismissAction = true,
+                onDismiss = {}//loginVM::resetLoginUiState
+            )
         }
 
         SessionState.Loading -> CircularProgressDialog()
