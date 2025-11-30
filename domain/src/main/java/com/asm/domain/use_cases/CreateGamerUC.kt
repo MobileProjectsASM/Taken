@@ -60,22 +60,13 @@ class CreateGamerUC @Inject constructor(
 
     override suspend fun run(params: GamerParams): Result<String, GeneralError> {
         return try {
-            val resultCreateGamer = gamerRepository.registerGamer(
-                userId = params.gamerId,
-                gamerAlias = params.nickName,
-                gamerAge = params.age,
-                gamerCountry = params.country,
-            )
-            val gamerIdCreated = when (resultCreateGamer) {
-                is Result.Successful<String> -> resultCreateGamer.data
-                is Result.Unsuccessful<GeneralError> -> return resultCreateGamer
-            }
+            //Update image
             val imageUrl = when (params.image) {
                 is ProfileImage.InfoImage -> {
-                    val extension = params.image.mimeType.split("/").let { it[it.size - 1] }
+                    val imageName = getImageName(params.gamerId, params.image)
                     val uploadImageResult = multimediaRepository.uploadUserImage(
                         userId = params.gamerId,
-                        profileImageName = "${PROFILE_IMAGE}_${params.gamerId}.$extension",
+                        profileImageName = imageName,
                         byteArray = params.image.byteArray
                     )
                     when (uploadImageResult) {
@@ -101,14 +92,36 @@ class CreateGamerUC @Inject constructor(
                     }
                 }
             }
-            val updateImageResult = gamerRepository.updateGamerImage(gamerIdCreated, imageUrl)
-            when (updateImageResult) {
-                is Result.Successful<Unit> -> Result.Successful(gamerIdCreated)
-                is Result.Unsuccessful<GeneralError> -> updateImageResult
+
+            //Update registerGamer
+            val resultCreateGamer = gamerRepository.registerGamer(
+                userId = params.gamerId,
+                gamerAlias = params.nickName,
+                gamerAge = params.age,
+                gamerCountry = params.country,
+                gamerImage = imageUrl
+            )
+            when (resultCreateGamer) {
+                is Result.Successful<String> -> Result.Successful(resultCreateGamer.data)
+                is Result.Unsuccessful<GeneralError> -> {
+                    if (params.image is ProfileImage.InfoImage) {
+                        val imageName = getImageName(params.gamerId, params.image)
+                        val resultDeleteImage = multimediaRepository.deleteUserImage(imageName)
+                        when (resultDeleteImage) {
+                            is Result.Successful<Unit> -> resultCreateGamer
+                            is Result.Unsuccessful<GeneralError> -> resultDeleteImage
+                        }
+                    } else resultCreateGamer
+                }
             }
         } catch (exception: Exception) {
             logger.logE(TAG, exception)
             GeneralError.Unknown.toUnsuccessful()
         }
+    }
+
+    private fun getImageName(gamerId: String, infoImage: ProfileImage.InfoImage): String {
+        val extension = infoImage.mimeType.split("/").let { it[it.size - 1] }
+        return "${PROFILE_IMAGE}_$gamerId.$extension"
     }
 }
