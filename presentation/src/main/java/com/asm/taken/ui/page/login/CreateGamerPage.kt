@@ -343,7 +343,7 @@ fun FormCreateGamer(
         if (uri != null) {
             editGamerVM.validateCreateGamerForm(
                 alias = loginCreateGamerFormState.aliasUiState.value,
-                age = loginCreateGamerFormState.aliasUiState.value,
+                age = loginCreateGamerFormState.ageUiState.value,
                 country = loginCreateGamerFormState.countryUiState.value,
                 imageSelected = ImageSelected.Gallery(uri)
             )
@@ -365,7 +365,7 @@ fun FormCreateGamer(
                 OptionChosen.Gallery -> launcher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
                 is OptionChosen.SocialNetwork -> editGamerVM.validateCreateGamerForm(
                     alias = loginCreateGamerFormState.aliasUiState.value,
-                    age = loginCreateGamerFormState.aliasUiState.value,
+                    age = loginCreateGamerFormState.ageUiState.value,
                     country = loginCreateGamerFormState.countryUiState.value,
                     imageSelected = ImageSelected.SocialNetwork(optionChosen.urlImage)
                 )
