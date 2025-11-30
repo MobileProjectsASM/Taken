@@ -6,7 +6,7 @@ import com.asm.domain.errors.GeneralError
 
 interface GamerRemoteSource {
     suspend fun getGamerById(gamerId: String): Result<Gamer?, GeneralError>
-    suspend fun saveGamer(userId: String, gamerAlias: String, gamerAge: Int, gamerCountry: String): Result<String, GeneralError>
+    suspend fun saveGamer(userId: String, gamerAlias: String, gamerAge: Int, gamerCountry: String, gamerImage: String = ""): Result<String, GeneralError>
     suspend fun checkGamerExists(gamerId: String): Result<Boolean, GeneralError>
     suspend fun updateGamerImage(gamerId: String, gamerImage: String): Result<Unit, GeneralError>
 }

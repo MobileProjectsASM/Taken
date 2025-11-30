@@ -56,10 +56,11 @@ class GamerFirebaseSource @Inject constructor(
         userId: String,
         gamerAlias: String,
         gamerAge: Int,
-        gamerCountry: String
+        gamerCountry: String,
+        gamerImage: String
     ): Result<String, GeneralError> {
         return try {
-            val gamerFirebase = GamerFirebase(userId, gamerAlias, gamerAge, gamerCountry, "")
+            val gamerFirebase = GamerFirebase(userId, gamerAlias, gamerAge, gamerCountry, gamerImage)
             val json = gson.toJson(gamerFirebase)
             val map = gson.fromJson(json, Map::class.java)
             val httpCallableResult =

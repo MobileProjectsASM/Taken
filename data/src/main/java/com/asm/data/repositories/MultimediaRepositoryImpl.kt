@@ -36,6 +36,17 @@ class MultimediaRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun deleteUserImage(imageName: String): Result<Unit, GeneralError> {
+        return try {
+            if (!connectionSource.isNetworkAvailable()) return Result.Unsuccessful(GeneralError.NetworkError)
+            val imagePath = "$PROFILE_IMAGES_PATH/$imageName"
+            multimediaRemoteSource.deleteResource(imagePath)
+        } catch (exception: Exception) {
+            logger.logE(TAG, exception)
+            GeneralError.Unknown.toUnsuccessful()
+        }
+    }
+
     override suspend fun getDefaultUserImage(): Result<String?, GeneralError> {
         return try {
             val fullPath = "$PROFILE_IMAGES_PATH/$DEFAULT_PROFILE_IMAGE"

@@ -48,4 +48,15 @@ class MultimediaStorageSource @Inject constructor(
             GeneralError.Unknown.toUnsuccessful()
         }
     }
+
+    override suspend fun deleteResource(path: String): Result<Unit, GeneralError> {
+        return try {
+            val resourceReference = firebaseStorage.reference.child(path)
+            resourceReference.delete().await()
+            Result.Successful(Unit)
+        } catch (exception: Exception) {
+            Log.e(TAG, exception.message, exception)
+            GeneralError.Unknown.toUnsuccessful()
+        }
+    }
 }
