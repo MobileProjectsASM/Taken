@@ -2,7 +2,6 @@ package com.asm.data.sources.remote.impl.firebase
 
 import android.content.Context
 import android.util.Log
-import com.asm.data.R
 import com.asm.data.sources.remote.abstract_remotes.MultimediaRemoteSource
 import com.asm.domain.entities.Result
 import com.asm.domain.errors.GeneralError
@@ -26,7 +25,7 @@ class MultimediaStorageSource @Inject constructor(
             val imageReference = firebaseStorage.reference.child(path)
             imageReference.putBytes(byteArray).await()
             val imageUri = imageReference.downloadUrl.await()
-            imageUri?.path?.let {
+            imageUri?.toString()?.let {
                 Result.Successful(it)
             } ?: GeneralError.ServerError().toUnsuccessful().also {
                 Log.e(TAG, "path is null")
@@ -40,7 +39,7 @@ class MultimediaStorageSource @Inject constructor(
     override suspend fun getUrlResource(path: String): Result<String?, GeneralError> {
         return try {
             val resourceReference = firebaseStorage.reference.child(path)
-            resourceReference.downloadUrl.await()?.path?.let {
+            resourceReference.downloadUrl.await()?.toString()?.let {
                 Result.Successful(it)
             } ?: Result.Successful(null)
         } catch(exception: Exception) {
