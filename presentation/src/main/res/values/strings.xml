@@ -36,6 +36,11 @@
     <string name="txt_btn_verify">VERIFY</string>
     <string name="txt_btn_create_account">CREATE ACCOUNT</string>
     <string name="txt_btn_create_gamer">CREATE GAMER</string>
+    <string name="txt_btn_new_game">New Game</string>
+    <string name="txt_btn_continue_game">Continue</string>
+    <string name="txt_btn_edit_gamer">Edit Gamer</string>
+    <string name="txt_btn_show_ranking">Show Ranking</string>
+    <string name="txt_btn_help">Help</string>
     
     <!-- Errors -->
     <string name="err_get_session_data">Error to get session data</string>

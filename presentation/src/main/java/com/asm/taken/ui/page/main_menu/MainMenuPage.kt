@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -41,6 +42,7 @@ import com.asm.domain.errors.GeneralError
 import com.asm.taken.R
 import com.asm.taken.model.SessionState
 import com.asm.taken.ui.CircularProgressDialog
+import com.asm.taken.ui.DefaultButton
 import com.asm.taken.ui.DefaultText
 import com.asm.taken.ui.DialogError
 import com.asm.taken.ui.PuzzleGeneralTitle
@@ -61,7 +63,26 @@ fun MainMenuPage(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
-            ContentMainMenu(state.gamer)
+            ContentMainMenu(
+                authenticatedGamer = state,
+                onEdit = {},
+                onCloseSession = {},
+                onCreateNewGame = {
+
+                },
+                onContinueGame = {
+
+                },
+                onEditGamer = {
+
+                },
+                onShowRanking = {
+
+                },
+                onShowHelp = {
+
+                }
+            )
         }
 
         is SessionState.Fail -> when (state.error) {
@@ -103,27 +124,45 @@ fun MainMenuPage(
 }
 
 @Composable
-fun ContentMainMenu(gamer: Gamer) {
+fun ContentMainMenu(
+    authenticatedGamer: SessionState.Authenticated,
+    onEdit: (String) -> Unit,
+    onCloseSession: () -> Unit,
+    onCreateNewGame: (Boolean) -> Unit,
+    onContinueGame: () -> Unit,
+    onEditGamer: () -> Unit,
+    onShowRanking: () -> Unit,
+    onShowHelp: () -> Unit
+) {
     Column(
         modifier = Modifier.fillMaxWidth()
     ) {
         PanelGamerProfile(
-            gamer = gamer,
-            onEdit = {}
-        ) { }
+            gamer = authenticatedGamer.gamer,
+            onEdit = onEdit,
+            onCloseSession = onCloseSession
+        )
+        PanelMenu(
+            itHasProgress = authenticatedGamer.itHasProgress,
+            onCreateNewGame = onCreateNewGame,
+            onContinueGame = onContinueGame,
+            onEditGamer = onEditGamer,
+            onShowRanking = onShowRanking,
+            onShowHelp = onShowHelp
+        )
     }
 }
 
 @Composable
 fun PanelGamerProfile(
     gamer: Gamer,
-    onEdit: (Gamer) -> Unit,
-    onCloseSession: () -> Unit
+    onEdit: (String) -> Unit,
+    onCloseSession: () -> Unit,
 ) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(20.dp)
+            .padding(start = 20.dp, top = 20.dp, end = 20.dp)
     ) {
         Column(
             modifier = Modifier
@@ -139,7 +178,7 @@ fun PanelGamerProfile(
                     modifier = Modifier
                         .size(32.dp)
                         .fillMaxWidth()
-                        .clickable { onEdit(gamer) },
+                        .clickable { onEdit(gamer.gamerId) },
                     painter = painterResource(R.drawable.ic_edit),
                     contentDescription = null
                 )
@@ -190,6 +229,57 @@ fun PanelGamerProfile(
     }
 }
 
+@Composable
+fun PanelMenu(
+    itHasProgress: Boolean,
+    onCreateNewGame: (Boolean) -> Unit,
+    onContinueGame: () -> Unit,
+    onEditGamer: () -> Unit,
+    onShowRanking: () -> Unit,
+    onShowHelp: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(20.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 20.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            DefaultButton(
+                modifier = Modifier.padding(start = 10.dp, end = 10.dp, top = 10.dp),
+                text = stringResource(id = R.string.txt_btn_new_game),
+                onClickButton = { onCreateNewGame(itHasProgress) }
+            )
+            if (itHasProgress) {
+                DefaultButton(
+                    modifier = Modifier.padding(start = 10.dp, end = 10.dp, top = 10.dp),
+                    text = stringResource(id = R.string.txt_btn_continue_game),
+                    onClickButton = onContinueGame
+                )
+            }
+            DefaultButton(
+                modifier = Modifier.padding(start = 10.dp, end = 10.dp, top = 10.dp),
+                text = stringResource(id = R.string.txt_btn_edit_gamer),
+                onClickButton = onEditGamer
+            )
+            DefaultButton(
+                modifier = Modifier.padding(start = 10.dp, end = 10.dp, top = 10.dp),
+                text = stringResource(id = R.string.txt_btn_show_ranking),
+                onClickButton = onShowRanking
+            )
+            DefaultButton(
+                modifier = Modifier.padding(10.dp),
+                text = stringResource(id = R.string.txt_btn_help),
+                onClickButton = onShowHelp
+            )
+        }
+    }
+}
+
 @Preview(showSystemUi = true)
 @Composable
 fun PreviewMainMenu() {
@@ -201,5 +291,28 @@ fun PreviewMainMenu() {
         gamerCountryFlag = "\uD83C\uDDF2\uD83C\uDDFD",
         gamerImage = "https://firebasestorage.googleapis.com/v0/b/puzzle-16426.firebasestorage.app/o/images%2Fprofile%2Fpi_7Si8Y2UkZBNVjQLVpwLuiwuqXv93.webp?alt=media&token=4b00af8a-5e39-4064-bb18-80cd6565300d"
     )
-    ContentMainMenu(gamer)
+    val authenticatedGamer = SessionState.Authenticated(
+        gamer = gamer,
+        itHasProgress = true
+    )
+    ContentMainMenu(
+        authenticatedGamer = authenticatedGamer,
+        onEdit = {},
+        onCloseSession = {},
+        onCreateNewGame = {
+
+        },
+        onContinueGame = {
+
+        },
+        onEditGamer = {
+
+        },
+        onShowRanking = {
+
+        },
+        onShowHelp = {
+
+        }
+    )
 }
