@@ -12,6 +12,7 @@
     <string name="txt_ttl_client_error">Request Error</string>
     <string name="txt_ttl_service_error">Service Error</string>
     <string name="txt_ttl_unexpected_error">Unexpected Error</string>
+    <string name="txt_ttl_welcome">Welcome!!</string>
     <string name="txt_label_default_image">Default Image</string>
     <string name="txt_label_social_network_image">Social Network</string>
     <string name="txt_label_gallery">Gallery</string>
