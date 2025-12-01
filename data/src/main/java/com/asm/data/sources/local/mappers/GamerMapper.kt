@@ -18,6 +18,7 @@ class GamerMapper @Inject constructor() {
         gamerRoom.gamerNickname,
         gamerRoom.gamerAge,
         gamerRoom.gamerCountry,
+        null,
         gamerRoom.gamerImage
     )
 }

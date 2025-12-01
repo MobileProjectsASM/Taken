@@ -10,5 +10,6 @@ data class GamerFirebase(
     val gamerNickName: String = "",
     val gamerAge: Int = 0,
     val gamerCountry: String = "",
+    val gamerCountryFlag: String? = null,
     val gamerImage: String = ""
 )

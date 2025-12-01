@@ -24,11 +24,19 @@ class GamerRepositoryImpl @Inject constructor(
         gamerAlias: String,
         gamerAge: Int,
         gamerCountry: String,
+        gamerCountryFlag: String?,
         gamerImage: String
     ): Result<String, GeneralError> {
         if (!connectionSource.isNetworkAvailable())
             return GeneralError.NetworkError.toUnsuccessful()
-        return gamerRemoteSource.saveGamer(userId, gamerAlias, gamerAge, gamerCountry, gamerImage)
+        return gamerRemoteSource.saveGamer(
+            userId,
+            gamerAlias,
+            gamerAge,
+            gamerCountry,
+            gamerCountryFlag,
+            gamerImage
+        )
     }
 
     override suspend fun updateGamerImage(
