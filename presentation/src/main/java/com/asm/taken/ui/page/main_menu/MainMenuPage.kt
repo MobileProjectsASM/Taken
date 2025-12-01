@@ -177,13 +177,14 @@ fun PanelGamerProfile(
                 modifier = Modifier.padding(bottom = 10.dp, start = 10.dp, end = 10.dp)
             ) {
                 DefaultText(
-                    modifier = Modifier.padding(end = 10.dp),
                     text = gamer.gamerNickName
                 )
-                DefaultText(
-                    modifier = Modifier.padding(end = 5.dp),
-                    text = "\uD83C\uDDF2\uD83C\uDDFD"
-                )
+                gamer.gamerCountryFlag?.also {
+                    DefaultText(
+                        modifier = Modifier.padding(start = 10.dp),
+                        text = it
+                    )
+                }
             }
         }
     }
@@ -197,6 +198,7 @@ fun PreviewMainMenu() {
         gamerNickName = "Arturo",
         gamerAge = 28,
         gamerCountry = "Mexico",
+        gamerCountryFlag = "\uD83C\uDDF2\uD83C\uDDFD",
         gamerImage = "https://firebasestorage.googleapis.com/v0/b/puzzle-16426.firebasestorage.app/o/images%2Fprofile%2Fpi_7Si8Y2UkZBNVjQLVpwLuiwuqXv93.webp?alt=media&token=4b00af8a-5e39-4064-bb18-80cd6565300d"
     )
     ContentMainMenu(gamer)
