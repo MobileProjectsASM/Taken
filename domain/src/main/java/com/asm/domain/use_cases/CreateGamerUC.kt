@@ -55,6 +55,7 @@ class CreateGamerUC @Inject constructor(
         val nickName: String,
         val age: Int,
         val country: String,
+        val countryFlag: String?,
         val image: ProfileImage?
     )
 
@@ -99,6 +100,7 @@ class CreateGamerUC @Inject constructor(
                 gamerAlias = params.nickName,
                 gamerAge = params.age,
                 gamerCountry = params.country,
+                gamerCountryFlag = params.countryFlag,
                 gamerImage = imageUrl
             )
             when (resultCreateGamer) {

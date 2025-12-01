@@ -59,7 +59,7 @@ data class LoginCreateGamerFormUiState(
     val imageSelected: InputUiState<ImageSelected, InputImageError>,
     val aliasUiState: InputUiState<String, InputAliasError>,
     val ageUiState: InputUiState<String, InputAgeError>,
-    val countryUiState: InputUiState<String, InputCountryError>
+    val countryUiState: InputUiState<CountryData, InputCountryError>
 )
 
 sealed class ImageSelected {
@@ -67,6 +67,11 @@ sealed class ImageSelected {
     data class SocialNetwork(val urlImage: String): ImageSelected()
     data class Gallery(val uri: Uri): ImageSelected()
 }
+
+data class CountryData(
+    val name: String,
+    val flag: String?
+)
 
 //region ERRORS
 

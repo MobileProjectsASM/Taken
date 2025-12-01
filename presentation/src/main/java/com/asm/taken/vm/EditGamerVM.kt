@@ -14,6 +14,7 @@ import com.asm.domain.use_cases.GetCountriesInfoUC
 import com.asm.domain.use_cases.SaveSessionUC
 import com.asm.taken.mappers.CountryMapper
 import com.asm.taken.model.CountriesUiState
+import com.asm.taken.model.CountryData
 import com.asm.taken.model.ImageSelected
 import com.asm.taken.model.InputAgeError
 import com.asm.taken.model.InputAliasError
@@ -55,7 +56,7 @@ class EditGamerVM @Inject constructor(
                 imageSelected = InputUiState(ImageSelected.Default),
                 aliasUiState = InputUiState(""),
                 ageUiState = InputUiState(""),
-                countryUiState = InputUiState("")
+                countryUiState = InputUiState(CountryData("", null))
             )
         )
     private val _navigationState: MutableStateFlow<NavigationState?> = MutableStateFlow(null)
@@ -91,6 +92,7 @@ class EditGamerVM @Inject constructor(
         alias: String,
         age: Int,
         country: String,
+        countryFlag: String?,
         imageSelected: ImageSelected
     ) {
         viewModelScope.launch {
@@ -117,6 +119,7 @@ class EditGamerVM @Inject constructor(
                     nickName = alias,
                     age = age,
                     country = country,
+                    countryFlag = countryFlag,
                     image = image
                 )
                 val navigationState = when (val createGamerResult = createGamerUC.execute(params)) {
@@ -166,12 +169,12 @@ class EditGamerVM @Inject constructor(
     fun validateCreateGamerForm(
         alias: String,
         age: String,
-        country: String,
+        countryData: CountryData,
         imageSelected: ImageSelected
     ) {
         val aliasErrors = validateAlias(alias)
         val ageErrors = validateAge(age)
-        val countryErrors = validateCountry(country)
+        val countryErrors = validateCountry(countryData.name)
         _loginCreateGamerFormUiState.update {
             LoginCreateGamerFormUiState(
                 aliasUiState = aliasErrors.run {
@@ -183,8 +186,8 @@ class EditGamerVM @Inject constructor(
                     else InputUiState(age, InputState.Error(this))
                 },
                 countryUiState = countryErrors.run {
-                    if (isEmpty()) InputUiState(country, InputState.Success)
-                    else InputUiState(country, InputState.Error(this))
+                    if (isEmpty()) InputUiState(countryData, InputState.Success)
+                    else InputUiState(countryData, InputState.Error(this))
                 },
                 imageSelected = InputUiState(imageSelected)
             )

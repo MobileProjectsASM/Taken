@@ -5,6 +5,7 @@ data class Gamer(
     val gamerNickName: String,
     val gamerAge:Int,
     val gamerCountry: String,
+    val gamerCountryFlag: String?,
     val gamerImage: String
 )
 

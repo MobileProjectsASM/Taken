@@ -60,6 +60,7 @@ import coil.compose.AsyncImage
 import com.asm.domain.errors.GeneralError
 import com.asm.taken.R
 import com.asm.taken.model.CountriesUiState
+import com.asm.taken.model.CountryData
 import com.asm.taken.model.CountryUiState
 import com.asm.taken.model.NavigationState
 import com.asm.taken.model.ImageSelected
@@ -212,12 +213,14 @@ fun NavigationSection(
                 message = stringResource(R.string.err_client),
                 onDismissDialog = editGamerVM::resetNavigationState
             )
+
             GeneralError.ConnectionError -> DialogError(
                 title = stringResource(R.string.txt_ttl_unexpected_error),
                 image = painterResource(R.drawable.ic_warning),
                 message = stringResource(R.string.err_server_connection),
                 onDismissDialog = editGamerVM::resetNavigationState
             )
+
             GeneralError.NetworkError -> SnackbarError(
                 snackBarHostState = snackBarHostState,
                 actionLabel = stringResource(R.string.txt_label_retry),
@@ -225,12 +228,14 @@ fun NavigationSection(
                 message = stringResource(R.string.err_network_connection),
                 onDismiss = editGamerVM::resetNavigationState
             )
+
             is GeneralError.ServerError -> DialogError(
                 title = stringResource(R.string.txt_ttl_service_error),
                 image = painterResource(R.drawable.ic_error),
                 message = stringResource(R.string.err_server),
                 onDismissDialog = editGamerVM::resetNavigationState
             )
+
             GeneralError.Unknown -> SnackbarError(
                 snackBarHostState = snackBarHostState,
                 message = stringResource(R.string.err_auth),
@@ -238,12 +243,15 @@ fun NavigationSection(
                 onDismiss = editGamerVM::resetNavigationState
             )
         }
+
         is NavigationState.GamerCreated -> LaunchedEffect(true) {
             onNavigateToHome(state.gamerId)
         }
+
         NavigationState.SessionClosed -> LaunchedEffect(true) {
             onNavigateToAuthentication()
         }
+
         NavigationState.Loading -> CircularProgressDialog()
         null -> return
     }
@@ -323,32 +331,56 @@ fun FormCreateGamer(
 ) {
     val loginCreateGamerFormState: LoginCreateGamerFormUiState by editGamerVM.loginCreateGamerFormState.collectAsStateWithLifecycle()
     var showChangeProfileImageDialog: Boolean by rememberSaveable { mutableStateOf(false) }
-    val aliasErrors: List<String> = when (val aliasUiState = loginCreateGamerFormState.aliasUiState.state) {
-        is InputState.Error<InputAliasError> -> aliasUiState.errors.map { resourceResolver.getErrorAlias(it) }
-        InputState.Init, InputState.Success -> listOf()
-    }
-    val ageErrors: List<String> = when (val ageUiState = loginCreateGamerFormState.ageUiState.state) {
-        is InputState.Error<InputAgeError> -> ageUiState.errors.map { resourceResolver.getErrorAge(it) }
-        InputState.Init, InputState.Success -> listOf()
-    }
-    val countryErrors: List<String> = when (val countryState = loginCreateGamerFormState.countryUiState.state) {
-        is InputState.Error<InputCountryError> -> countryState.errors.map { resourceResolver.getErrorCountry(it) }
-        InputState.Init, InputState.Success -> listOf()
-    }
+    val aliasErrors: List<String> =
+        when (val aliasUiState = loginCreateGamerFormState.aliasUiState.state) {
+            is InputState.Error<InputAliasError> -> aliasUiState.errors.map {
+                resourceResolver.getErrorAlias(
+                    it
+                )
+            }
+
+            InputState.Init, InputState.Success -> listOf()
+        }
+    val ageErrors: List<String> =
+        when (val ageUiState = loginCreateGamerFormState.ageUiState.state) {
+            is InputState.Error<InputAgeError> -> ageUiState.errors.map {
+                resourceResolver.getErrorAge(
+                    it
+                )
+            }
+
+            InputState.Init, InputState.Success -> listOf()
+        }
+    val countryErrors: List<String> =
+        when (val countryState = loginCreateGamerFormState.countryUiState.state) {
+            is InputState.Error<InputCountryError> -> countryState.errors.map {
+                resourceResolver.getErrorCountry(
+                    it
+                )
+            }
+
+            InputState.Init, InputState.Success -> listOf()
+        }
     when (val imageSelectedState = loginCreateGamerFormState.imageSelected.state) {
-        is InputState.Error<InputImageError> -> imageSelectedState.errors.map { resourceResolver.getErrorImage(it) }
-        InputState.Init, InputState.Success -> listOf()
-    }
-    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
-        if (uri != null) {
-            editGamerVM.validateCreateGamerForm(
-                alias = loginCreateGamerFormState.aliasUiState.value,
-                age = loginCreateGamerFormState.ageUiState.value,
-                country = loginCreateGamerFormState.countryUiState.value,
-                imageSelected = ImageSelected.Gallery(uri)
+        is InputState.Error<InputImageError> -> imageSelectedState.errors.map {
+            resourceResolver.getErrorImage(
+                it
             )
         }
+
+        InputState.Init, InputState.Success -> listOf()
     }
+    val launcher =
+        rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+            if (uri != null) {
+                editGamerVM.validateCreateGamerForm(
+                    alias = loginCreateGamerFormState.aliasUiState.value,
+                    age = loginCreateGamerFormState.ageUiState.value,
+                    countryData = loginCreateGamerFormState.countryUiState.value,
+                    imageSelected = ImageSelected.Gallery(uri)
+                )
+            }
+        }
     if (showChangeProfileImageDialog) {
         ChangeProfileImageDialog(
             createGamerInfo = createGamerInfo,
@@ -359,14 +391,20 @@ fun FormCreateGamer(
                 OptionChosen.Default -> editGamerVM.validateCreateGamerForm(
                     alias = loginCreateGamerFormState.aliasUiState.value,
                     age = loginCreateGamerFormState.ageUiState.value,
-                    country = loginCreateGamerFormState.countryUiState.value,
+                    countryData = loginCreateGamerFormState.countryUiState.value,
                     imageSelected = ImageSelected.Default
                 )
-                OptionChosen.Gallery -> launcher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+
+                OptionChosen.Gallery -> launcher.launch(
+                    PickVisualMediaRequest(
+                        ActivityResultContracts.PickVisualMedia.ImageOnly
+                    )
+                )
+
                 is OptionChosen.SocialNetwork -> editGamerVM.validateCreateGamerForm(
                     alias = loginCreateGamerFormState.aliasUiState.value,
                     age = loginCreateGamerFormState.ageUiState.value,
-                    country = loginCreateGamerFormState.countryUiState.value,
+                    countryData = loginCreateGamerFormState.countryUiState.value,
                     imageSelected = ImageSelected.SocialNetwork(optionChosen.urlImage)
                 )
             }
@@ -392,7 +430,7 @@ fun FormCreateGamer(
             editGamerVM.validateCreateGamerForm(
                 alias = newAlias,
                 age = loginCreateGamerFormState.ageUiState.value,
-                country = loginCreateGamerFormState.countryUiState.value,
+                countryData = loginCreateGamerFormState.countryUiState.value,
                 imageSelected = loginCreateGamerFormState.imageSelected.value
             )
         }
@@ -411,7 +449,7 @@ fun FormCreateGamer(
             editGamerVM.validateCreateGamerForm(
                 alias = loginCreateGamerFormState.aliasUiState.value,
                 age = newAge,
-                country = loginCreateGamerFormState.countryUiState.value,
+                countryData = loginCreateGamerFormState.countryUiState.value,
                 imageSelected = loginCreateGamerFormState.imageSelected.value
             )
         }
@@ -423,11 +461,11 @@ fun FormCreateGamer(
             countriesUiState = countriesUiState,
             value = loginCreateGamerFormState.countryUiState.value,
             countryErrors = countryErrors
-        ) { newCountry ->
+        ) {
             editGamerVM.validateCreateGamerForm(
                 alias = loginCreateGamerFormState.aliasUiState.value,
                 age = loginCreateGamerFormState.ageUiState.value,
-                country = newCountry,
+                countryData = it,
                 imageSelected = loginCreateGamerFormState.imageSelected.value
             )
         }
@@ -440,7 +478,14 @@ fun FormCreateGamer(
                 text = stringResource(id = R.string.txt_btn_create_gamer),
                 enable = loginCreateGamerFormState.ageUiState.state is InputState.Success && loginCreateGamerFormState.ageUiState.state is InputState.Success && loginCreateGamerFormState.countryUiState.state is InputState.Success,
             ) {
-                editGamerVM.createGamer(createGamerInfo.id, loginCreateGamerFormState.aliasUiState.value, loginCreateGamerFormState.ageUiState.value.toInt(), loginCreateGamerFormState.countryUiState.value, loginCreateGamerFormState.imageSelected.value)
+                editGamerVM.createGamer(
+                    createGamerInfo.id,
+                    loginCreateGamerFormState.aliasUiState.value,
+                    loginCreateGamerFormState.ageUiState.value.toInt(),
+                    loginCreateGamerFormState.countryUiState.value.name,
+                    loginCreateGamerFormState.countryUiState.value.flag,
+                    loginCreateGamerFormState.imageSelected.value
+                )
             }
         }
         Spacer(modifier = Modifier.height(20.dp))
@@ -451,20 +496,21 @@ fun FormCreateGamer(
 fun CountryInput(
     modifier: Modifier = Modifier,
     countriesUiState: List<CountryUiState>?,
-    value: String,
+    value: CountryData,
     countryErrors: List<String>,
-    onCountryChange: (String) -> Unit
+    onCountryChange: (CountryData) -> Unit
 ) {
     if (countriesUiState == null) {
         DefaultOutlinedTextFieldLI(
             modifier = modifier,
-            value = value,
+            value = value.name,
             label = R.string.txt_label_country,
             leadingIcon = Icons.Default.Public,
             cdLeadingIcon = null,
             errors = countryErrors,
-            onValueChange = onCountryChange
-        )
+        ) { country ->
+            onCountryChange(CountryData(country, null))
+        }
     } else {
         var showChoseCountryDialog by rememberSaveable {
             mutableStateOf(false)
@@ -472,16 +518,17 @@ fun CountryInput(
 
         if (showChoseCountryDialog) {
             ChooseCountryDialog(
-                country = value,
+                country = value.name,
+                flag = value.flag,
                 countriesUiState = countriesUiState
-            ) {
+            ) { country, flag ->
                 showChoseCountryDialog = false
-                onCountryChange(it)
+                onCountryChange(CountryData(country, flag))
             }
         }
         DefaultOutlinedTextFieldLI(
             modifier = modifier,
-            value = value,
+            value = value.name,
             label = R.string.txt_label_country,
             leadingIcon = Icons.Default.Public,
             cdLeadingIcon = null,
@@ -497,11 +544,12 @@ fun CountryInput(
 @Composable
 fun ChooseCountryDialog(
     country: String,
+    flag: String?,
     countriesUiState: List<CountryUiState>,
-    onCountrySelected: (String) -> Unit
+    onCountrySelected: (String, String?) -> Unit
 ) {
     Dialog(
-        onDismissRequest = { onCountrySelected(country) }
+        onDismissRequest = { onCountrySelected(country, flag) }
     ) {
         Card(
             modifier = Modifier.fillMaxWidth()
@@ -525,7 +573,7 @@ fun ChooseCountryDialog(
                 LazyColumn {
                     items(countriesUiState) {
                         ItemCountry(countryUiState = it) { countryUiState ->
-                            onCountrySelected(countryUiState.country)
+                            onCountrySelected(countryUiState.country, countryUiState.flag)
                         }
                     }
                 }
@@ -650,7 +698,7 @@ fun OptionItem(
 }
 
 sealed class OptionChosen {
-    data object Default: OptionChosen()
-    data object Gallery: OptionChosen()
-    data class SocialNetwork(val urlImage: String): OptionChosen()
+    data object Default : OptionChosen()
+    data object Gallery : OptionChosen()
+    data class SocialNetwork(val urlImage: String) : OptionChosen()
 }
