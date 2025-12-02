@@ -456,9 +456,6 @@ fun DefaultTextButton(
     TextButton(
         modifier = modifier,
         onClick = { onClickButton?.invoke() },
-        colors = ButtonDefaults.textButtonColors(
-            contentColor = Color.Black
-        )
     ) {
         DefaultText(
             text = text,
