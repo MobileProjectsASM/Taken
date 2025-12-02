@@ -39,7 +39,7 @@ import com.asm.taken.ui.DefaultOutlinedTextFieldLI
 import com.asm.taken.ui.DialogError
 import com.asm.taken.ui.PasswordOutlinedTextField
 import com.asm.taken.ui.PuzzleGeneralTitle
-import com.asm.taken.ui.SnackbarError
+import com.asm.taken.ui.SnackBarError
 import com.asm.taken.utils.AuthenticationClient
 import com.asm.taken.utils.ResourceResolver
 import com.asm.taken.vm.LoginVM
@@ -99,7 +99,7 @@ fun SessionSection(
                 message = stringResource(R.string.err_server_connection),
                 onDismissDialog = loginVM::resetLoginUiState
             )
-            GeneralError.NetworkError -> SnackbarError(
+            GeneralError.NetworkError -> SnackBarError(
                 snackBarHostState = snackBarHostState,
                 actionLabel = stringResource(R.string.txt_label_retry),
                 duration = SnackbarDuration.Long,
@@ -112,7 +112,7 @@ fun SessionSection(
                 message = stringResource(R.string.err_server),
                 onDismissDialog = loginVM::resetLoginUiState
             )
-            GeneralError.Unknown -> SnackbarError(
+            GeneralError.Unknown -> SnackBarError(
                 snackBarHostState = snackBarHostState,
                 message = stringResource(R.string.err_auth),
                 withDismissAction = true,

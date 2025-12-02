@@ -76,7 +76,7 @@ import com.asm.taken.ui.DefaultOutlinedTextFieldLI
 import com.asm.taken.ui.DefaultText
 import com.asm.taken.ui.DialogError
 import com.asm.taken.ui.PuzzleGeneralTitle
-import com.asm.taken.ui.SnackbarError
+import com.asm.taken.ui.SnackBarError
 import com.asm.taken.ui.navigation.CreateGamer
 import com.asm.taken.ui.puzzleFontFamily
 import com.asm.taken.utils.AuthenticationClient
@@ -221,7 +221,7 @@ fun NavigationSection(
                 onDismissDialog = editGamerVM::resetNavigationState
             )
 
-            GeneralError.NetworkError -> SnackbarError(
+            GeneralError.NetworkError -> SnackBarError(
                 snackBarHostState = snackBarHostState,
                 actionLabel = stringResource(R.string.txt_label_retry),
                 duration = SnackbarDuration.Long,
@@ -236,7 +236,7 @@ fun NavigationSection(
                 onDismissDialog = editGamerVM::resetNavigationState
             )
 
-            GeneralError.Unknown -> SnackbarError(
+            GeneralError.Unknown -> SnackBarError(
                 snackBarHostState = snackBarHostState,
                 message = stringResource(R.string.err_auth),
                 withDismissAction = true,

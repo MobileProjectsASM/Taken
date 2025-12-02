@@ -14,6 +14,7 @@ import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -73,6 +74,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -248,7 +250,10 @@ fun OtpMultiple(
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp, alignment = Alignment.CenterHorizontally)
+            horizontalArrangement = Arrangement.spacedBy(
+                8.dp,
+                alignment = Alignment.CenterHorizontally
+            )
         ) {
             for (currentPosition in 0..<numberInputs) {
                 val textInputMutableState = otpInputStates[currentPosition].first
@@ -517,77 +522,64 @@ fun ImageDialog(
     image: Painter,
     message: String,
     onDismissRequest: () -> Unit,
-    onCloseDialog: () -> Unit,
-    onClickAction: (() -> Unit)? = null
+    onCloseDialog: (() -> Unit)? = null,
+    contentButtons: @Composable (ColumnScope.() -> Unit)? = null,
 ) {
     Dialog(onDismissRequest = onDismissRequest) {
         Card(modifier = Modifier.fillMaxWidth()) {
-            Column {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 10.dp, end = 10.dp),
-                    horizontalArrangement = Arrangement.End
-                ) {
-                    Image(
-                        modifier = Modifier
-                            .size(24.dp)
-                            .fillMaxWidth()
-                            .clickable(onClick = onCloseDialog),
-                        painter = painterResource(R.drawable.ic_cancelar),
-                        contentDescription = null
-                    )
-                }
-                Column(
-                    modifier = Modifier.padding(horizontal = 10.dp)
-                ) {
-                    Spacer(modifier = Modifier.height(10.dp))
-                    Text(
-                        modifier = Modifier.fillMaxWidth(),
-                        fontSize = dimensionResource(
-                            id = R.dimen.title_text_size
-                        ).value.sp,
-                        text = title,
-                        fontFamily = puzzleFontFamily,
-                        fontWeight = FontWeight.Bold,
-                        textAlign = TextAlign.Center
-                    )
-                    Spacer(modifier = Modifier.height(50.dp))
-                    Image(
-                        modifier = Modifier
-                            .size(100.dp)
-                            .fillMaxWidth()
-                            .align(Alignment.CenterHorizontally),
-                        alignment = Alignment.Center,
-                        painter = image,
-                        contentDescription = null
-                    )
-                    Spacer(modifier = Modifier.height(30.dp))
-                    Text(
-                        modifier = Modifier
-                            .fillMaxWidth(),
-                        textAlign = TextAlign.Center,
-                        fontSize = dimensionResource(
-                            id = R.dimen.default_text_size
-                        ).value.sp,
-                        text = message,
-                        fontFamily = puzzleFontFamily
-                    )
-                    if (onClickAction != null) {
-                        Spacer(modifier = Modifier.height(20.dp))
-                        Column(
+            Column(
+                modifier = Modifier.padding(10.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                onCloseDialog?.also {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(bottom = 10.dp),
+                        horizontalArrangement = Arrangement.End
+                    ) {
+                        Image(
                             modifier = Modifier
+                                .size(24.dp)
                                 .fillMaxWidth()
-                                .padding(horizontal = 16.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            DefaultButton(
-                                text = stringResource(id = R.string.txt_label_retry),
-                                onClickButton = onClickAction
-                            )
-                        }
+                                .clickable(onClick = it),
+                            painter = painterResource(R.drawable.ic_cancelar),
+                            contentDescription = null
+                        )
                     }
-                    Spacer(modifier = Modifier.height(16.dp))
+                }
+                Text(
+                    modifier = Modifier.fillMaxWidth(),
+                    fontSize = dimensionResource(
+                        id = R.dimen.title_text_size
+                    ).value.sp,
+                    text = title,
+                    fontFamily = puzzleFontFamily,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center
+                )
+                Spacer(modifier = Modifier.height(50.dp))
+                Image(
+                    modifier = Modifier
+                        .size(100.dp)
+                        .fillMaxWidth()
+                        .align(Alignment.CenterHorizontally),
+                    alignment = Alignment.Center,
+                    painter = image,
+                    contentDescription = null
+                )
+                Spacer(modifier = Modifier.height(30.dp))
+                Text(
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                    textAlign = TextAlign.Center,
+                    fontSize = dimensionResource(
+                        id = R.dimen.default_text_size
+                    ).value.sp,
+                    text = message,
+                    fontFamily = puzzleFontFamily
+                )
+                if (contentButtons != null) {
+                    Spacer(modifier = Modifier.height(20.dp))
+                    contentButtons()
                 }
             }
         }
@@ -616,11 +608,16 @@ fun DialogError(
                 showErrorDialog = false
                 onDismissDialog()
             },
-            onClickAction = onClickAction?.let {
+            contentButtons = onClickAction?.let {
                 {
-                    onClickAction()
-                    showErrorDialog = false
-                    onDismissDialog()
+                    DefaultButton(
+                        text = stringResource(id = R.string.txt_label_retry),
+                        onClickButton = {
+                            onClickAction()
+                            showErrorDialog = false
+                            onDismissDialog()
+                        }
+                    )
                 }
             }
         )
@@ -628,12 +625,12 @@ fun DialogError(
 }
 
 @Composable
-fun SnackbarError(
+fun SnackBarError(
     snackBarHostState: SnackbarHostState,
     message: String,
     actionLabel: String? = null,
     withDismissAction: Boolean = false,
-    duration: SnackbarDuration = if (actionLabel == null) SnackbarDuration.Short else SnackbarDuration.Indefinite,
+    duration: SnackbarDuration = if (actionLabel == null) SnackbarDuration.Short else SnackbarDuration.Long,
     onDismiss: () -> Unit,
     onActionPerformed: (() -> Unit)? = null
 ) = LaunchedEffect(true) {

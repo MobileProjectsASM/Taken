@@ -24,10 +24,10 @@
         </DropdownSelection>
         <DialogSelection />
       </SelectionState>
-      <SelectionState runConfigName="PreviewBackgroundMainMenu">
+      <SelectionState runConfigName="PreviewMainMenu">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
-      <SelectionState runConfigName="PreviewMainMenu">
+      <SelectionState runConfigName="PreviewImageDialog">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
     </selectionStates>

@@ -26,7 +26,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -38,15 +37,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.painter.Painter
-import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -62,11 +57,9 @@ import com.asm.taken.ui.DefaultButton
 import com.asm.taken.ui.DefaultOutlinedTextFieldLI
 import com.asm.taken.ui.DefaultText
 import com.asm.taken.ui.DialogError
-import com.asm.taken.ui.ImageDialog
 import com.asm.taken.ui.OtpMultiple
 import com.asm.taken.ui.PuzzleGeneralTitle
-import com.asm.taken.ui.SnackbarError
-import com.asm.taken.ui.puzzleFontFamily
+import com.asm.taken.ui.SnackBarError
 import com.asm.taken.utils.AuthenticationClient
 import com.asm.taken.utils.ResourceResolver
 import com.asm.taken.vm.LoginVM
@@ -153,7 +146,7 @@ fun ErrorCountries(
             onDismissDialog = loginVM::resetLoginUiState
         )
 
-        GeneralError.NetworkError -> SnackbarError(
+        GeneralError.NetworkError -> SnackBarError(
             snackBarHostState = snackBarHostState,
             actionLabel = stringResource(R.string.txt_label_retry),
             duration = SnackbarDuration.Long,
@@ -169,7 +162,7 @@ fun ErrorCountries(
             onDismissDialog = loginVM::resetLoginUiState
         )
 
-        GeneralError.Unknown -> SnackbarError(
+        GeneralError.Unknown -> SnackBarError(
             snackBarHostState = snackBarHostState,
             message = stringResource(R.string.err_get_countries),
             withDismissAction = true,
@@ -446,7 +439,7 @@ fun SessionSection(
                 onDismissDialog = loginVM::resetLoginUiState
             )
 
-            GeneralError.NetworkError -> SnackbarError(
+            GeneralError.NetworkError -> SnackBarError(
                 snackBarHostState = snackBarHostState,
                 actionLabel = stringResource(R.string.txt_label_retry),
                 duration = SnackbarDuration.Long,
@@ -461,7 +454,7 @@ fun SessionSection(
                 onDismissDialog = loginVM::resetLoginUiState
             )
 
-            GeneralError.Unknown -> SnackbarError(
+            GeneralError.Unknown -> SnackBarError(
                 snackBarHostState = snackBarHostState,
                 message = stringResource(R.string.err_auth),
                 withDismissAction = true,

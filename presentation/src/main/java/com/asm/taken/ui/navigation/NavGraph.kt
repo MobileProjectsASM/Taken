@@ -81,8 +81,9 @@ fun MainNavigation(
             }
         }
         navigationMainPage(
+            authenticationClient = authenticationClient,
             snackBarHostState = snackBarHostState,
-            navController = navigationController
+            navigationController = navigationController
         )
     }
 }
@@ -205,21 +206,30 @@ fun NavGraphBuilder.navigationLogin(
 }
 
 fun NavGraphBuilder.navigationMainPage(
+    authenticationClient: AuthenticationClient,
     snackBarHostState: SnackbarHostState,
-    navController: NavHostController
+    navigationController: NavHostController
 ) {
     navigation<MainPage>(startDestination = Home) {
         composable<Home> { navBackStackEntry ->
             val gamerId = navBackStackEntry.arguments?.getString("gamerId") ?: "default"
             val parentEntry = remember(navBackStackEntry) {
-                navController.getBackStackEntry(MainPage::class)
+                navigationController.getBackStackEntry(MainPage::class)
             }
             val mainVM = hiltViewModel<MainVM>(parentEntry)
             BackgroundMainMenu {
                 MainMenuPage(
                     gamerId = gamerId,
                     snackBarHostState = snackBarHostState,
-                    mainVM = mainVM
+                    mainVM = mainVM,
+                    authenticationClient = authenticationClient,
+                    onNavigateToAuthentication = {
+                        navigationController.navigate(Login) {
+                            popUpTo(MainPage::class) {
+                                inclusive = true
+                            }
+                        }
+                    }
                 )
             }
         }

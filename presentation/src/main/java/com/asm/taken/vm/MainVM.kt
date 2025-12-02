@@ -9,7 +9,8 @@ import com.asm.domain.errors.GeneralError
 import com.asm.domain.use_cases.CloseSessionUC
 import com.asm.domain.use_cases.GetGamerUC
 import com.asm.domain.use_cases.HasThereBeenAnyProgressUC
-import com.asm.taken.model.SessionState
+import com.asm.taken.model.GamerState
+import com.asm.taken.model.MainMenuState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -29,34 +30,47 @@ class MainVM @Inject constructor(
         const val TAG = "MainMenuVM"
     }
 
-    private val _sessionState = MutableStateFlow<SessionState>(SessionState.Loading)
+    private val _gamerState = MutableStateFlow<GamerState>(GamerState.Loading)
+    private val _mainMenuState = MutableStateFlow<MainMenuState?>(null)
 
 
-    val sessionState: StateFlow<SessionState> = _sessionState
+    val gamerState: StateFlow<GamerState> = _gamerState
+    val mainMenuState: StateFlow<MainMenuState?> = _mainMenuState
 
     fun getMainDataGamer(gamerId: String) {
         viewModelScope.launch {
-            _sessionState.update { SessionState.Loading }
+            _gamerState.update { GamerState.Loading }
             val gamerData = async { getGamerUC.execute(gamerId) }
             val gamesData = async { hasThereBeenAnyProgressUC.execute(gamerId) }
 
             val resultGamerData = gamerData.await()
             val isThereProgressResult = gamesData.await()
 
-            val sessionState: SessionState = when {
-                resultGamerData is Result.Unsuccessful<GeneralError> -> SessionState.Fail(resultGamerData.error)
-                isThereProgressResult is Result.Unsuccessful<GeneralError> -> SessionState.Fail(isThereProgressResult.error)
+            val gamerState: GamerState = when {
+                resultGamerData is Result.Unsuccessful<GeneralError> -> GamerState.Fail(resultGamerData.error)
+                isThereProgressResult is Result.Unsuccessful<GeneralError> -> GamerState.Fail(isThereProgressResult.error)
                 else -> {
                     val gamer = resultGamerData.asSuccessful().data
                     val isThereProgress = isThereProgressResult.asSuccessful().data
                     gamer?.let {
-                        SessionState.Authenticated(it, isThereProgress)
-                    } ?: SessionState.Fail(GeneralError.ServerError()).also {
+                        GamerState.Successful(it, isThereProgress)
+                    } ?: GamerState.Fail(GeneralError.ServerError()).also {
                         Log.e(TAG, "The user is authenticated but the associated gamer not exits")
                     }
                 }
             }
-            _sessionState.update { sessionState }
+            _gamerState.update { gamerState }
+        }
+    }
+
+    fun closeSession(signOut: suspend () -> Result<Unit, GeneralError>) {
+        viewModelScope.launch {
+            _mainMenuState.update { MainMenuState.Loading }
+            val mainMenuState = when (val closeSessionResult = closeSessionUC.execute(signOut)) {
+                is Result.Successful<Unit> -> MainMenuState.SessionClosed
+                is Result.Unsuccessful<GeneralError> -> MainMenuState.Fail(closeSessionResult.error)
+            }
+            _mainMenuState.update { mainMenuState }
         }
     }
 }
