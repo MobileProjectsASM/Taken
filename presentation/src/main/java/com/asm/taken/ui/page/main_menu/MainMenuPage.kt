@@ -57,6 +57,7 @@ fun MainMenuPage(
 ) {
     LaunchedEffect(true) { mainVM.getMainDataGamer(gamerId) }
     MainSection(
+        gamerId = gamerId,
         mainVM = mainVM,
         authenticationClient = authenticationClient,
         snackBarHostState = snackBarHostState
@@ -70,6 +71,7 @@ fun MainMenuPage(
 
 @Composable
 fun MainSection(
+    gamerId: String,
     snackBarHostState: SnackbarHostState,
     mainVM: MainVM,
     authenticationClient: AuthenticationClient
@@ -112,7 +114,7 @@ fun MainSection(
                 image = painterResource(R.drawable.ic_warning),
                 message = stringResource(R.string.err_network_connection),
                 retryProcess = {
-
+                    mainVM.getMainDataGamer(gamerId)
                 },
                 logOut = {
                     mainVM.closeSession(authenticationClient::signOut)
