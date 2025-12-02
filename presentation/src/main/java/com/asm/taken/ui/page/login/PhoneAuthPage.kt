@@ -367,14 +367,9 @@ fun ChoosePhoneCodeDialog(
                     .padding(vertical = 20.dp)
                     .height(400.dp)
             ) {
-                Text(
+                PuzzleGeneralTitle(
                     modifier = Modifier.fillMaxWidth(),
-                    fontSize = dimensionResource(
-                        id = R.dimen.title_text_size
-                    ).value.sp,
                     text = stringResource(id = R.string.txt_ttl_choose_phone_code),
-                    fontFamily = puzzleFontFamily,
-                    fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.Center
                 )
                 Spacer(modifier = Modifier.height(10.dp))
@@ -533,16 +528,11 @@ fun OtpDialog(
                     }
                 }
                 Spacer(modifier = Modifier.height(16.dp))
-                Text(
+                PuzzleGeneralTitle(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp),
-                    fontSize = dimensionResource(
-                        id = R.dimen.title_text_size
-                    ).value.sp,
                     text = stringResource(id = R.string.txt_ttl_enter_otp),
-                    fontFamily = puzzleFontFamily,
-                    fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.Center
                 )
                 Spacer(modifier = Modifier.height(20.dp))
