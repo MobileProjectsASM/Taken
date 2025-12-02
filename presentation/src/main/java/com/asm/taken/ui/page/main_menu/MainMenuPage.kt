@@ -13,6 +13,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.filled.Logout
+import androidx.compose.material.icons.filled.Replay
 import androidx.compose.material3.Card
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
@@ -40,6 +44,7 @@ import com.asm.taken.model.GamerState
 import com.asm.taken.model.MainMenuState
 import com.asm.taken.ui.CircularProgressDialog
 import com.asm.taken.ui.DefaultButton
+import com.asm.taken.ui.DefaultIconButton
 import com.asm.taken.ui.DefaultText
 import com.asm.taken.ui.ImageDialog
 import com.asm.taken.ui.PuzzleGeneralTitle
@@ -346,16 +351,19 @@ fun DialogError(
 
             }
         ) {
-            DefaultButton(
+            DefaultIconButton(
                 text = stringResource(id = R.string.txt_label_retry),
+                imageVector = Icons.Filled.Replay,
                 onClickButton = {
                     retryProcess()
                     showErrorDialog = false
                     onDismissDialog()
                 }
             )
-            DefaultButton(
+            Spacer(modifier = Modifier.height(10.dp))
+            DefaultIconButton(
                 text = stringResource(id = R.string.txt_btn_logout),
+                imageVector = Icons.AutoMirrored.Filled.Logout,
                 onClickButton = {
                     logOut()
                     showErrorDialog = false

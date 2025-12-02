@@ -453,6 +453,39 @@ fun DefaultButton(
 }
 
 @Composable
+fun DefaultIconButton(
+    modifier: Modifier = Modifier,
+    enable: Boolean = true,
+    text: String,
+    imageVector: ImageVector,
+    onClickButton: () -> Unit
+) {
+    Button(
+        modifier = modifier,
+        onClick = onClickButton,
+        enabled = enable,
+        colors = ButtonDefaults.buttonColors(
+            containerColor = colorResource(R.color.purple_200),
+            contentColor = Color.White,
+            disabledContainerColor = Purple80,
+            disabledContentColor = Color.White
+        )
+    ) {
+        Icon(
+            imageVector = imageVector,
+            contentDescription = null
+        )
+        Spacer(
+            modifier = Modifier.width(10.dp)
+        )
+        DefaultText(
+            text = text,
+            textAlign = TextAlign.Center
+        )
+    }
+}
+
+@Composable
 fun DefaultTextButton(
     modifier: Modifier = Modifier,
     text: String,
