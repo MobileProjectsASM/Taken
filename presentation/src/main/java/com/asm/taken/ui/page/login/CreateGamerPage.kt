@@ -3,6 +3,7 @@ package com.asm.taken.ui.page.login
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -32,6 +33,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -279,29 +281,23 @@ fun MainCreateGamer(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 15.dp, horizontal = 10.dp)
             ) {
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().padding(10.dp),
                     horizontalArrangement = Arrangement.End
                 ) {
-                    Button(
-                        modifier = Modifier
-                            .size(38.dp),
-                        shape = CircleShape,
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color.Red,
-                            contentColor = Color.White
-                        ),
-                        contentPadding = PaddingValues(7.dp),
+                    IconButton(
                         onClick = {
                             editGamerVM.closeSession(authenticationClient::signOut)
-                        }
+                        },
+                        modifier = Modifier
+                            .background(color = Color.Red, shape = CircleShape)
                     ) {
                         Icon(
+                            modifier = Modifier.size(24.dp),
                             imageVector = Icons.AutoMirrored.Filled.Logout,
-                            contentDescription = stringResource(R.string.txt_cd_btn_logout),
-                            modifier = Modifier.size(24.dp)
+                            contentDescription = null,
+                            tint = Color.White
                         )
                     }
                 }
@@ -410,7 +406,10 @@ fun FormCreateGamer(
             }
         }
     }
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+    Column(
+        modifier = Modifier.padding(horizontal = 10.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
         InputSelectImage(
             imageSelected = loginCreateGamerFormState.imageSelected.value
         ) {

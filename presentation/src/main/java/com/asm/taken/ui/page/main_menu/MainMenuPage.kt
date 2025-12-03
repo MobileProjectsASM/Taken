@@ -1,10 +1,12 @@
 package com.asm.taken.ui.page.main_menu
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -12,12 +14,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
-import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material.icons.filled.Replay
 import androidx.compose.material3.Card
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -237,14 +241,18 @@ fun PanelGamerProfile(
                 Spacer(
                     modifier = Modifier.weight(weight = 1f)
                 )
-                Image(
+                IconButton(
+                    onClick = onCloseSession,
                     modifier = Modifier
-                        .size(32.dp)
-                        .fillMaxWidth()
-                        .clickable(onClick = onCloseSession),
-                    painter = painterResource(R.drawable.ic_logout),
-                    contentDescription = null
-                )
+                        .background(color = Color.Red, shape = CircleShape)
+                ) {
+                    Icon(
+                        modifier = Modifier.size(24.dp),
+                        imageVector = Icons.AutoMirrored.Filled.Logout,
+                        contentDescription = null,
+                        tint = Color.White
+                    )
+                }
             }
             PuzzleGeneralTitle(
                 modifier = Modifier.padding(bottom = 10.dp, start = 10.dp, end = 10.dp),
