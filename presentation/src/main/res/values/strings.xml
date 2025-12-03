@@ -80,6 +80,7 @@
     <string name="err_image_is_very_weight">Image is very weight</string>
     <string name="err_sign_up">SignUp error</string>
     <string name="err_logout">Logout Error</string>
+    <string name="err_process_data">An error occurred while processing data.</string>
     <string name="err_client">An error occurred while processing your request.\nPlease verify that your information is correct.</string>
     <string name="err_server">There has been an error with the service.\nPlease try again later.</string>
     <string name="err_server_connection">There was an error connecting to the service.\nPlease check your internet connection.</string>

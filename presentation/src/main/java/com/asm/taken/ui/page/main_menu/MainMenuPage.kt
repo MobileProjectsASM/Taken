@@ -1,12 +1,9 @@
 package com.asm.taken.ui.page.main_menu
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -14,7 +11,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
@@ -116,11 +112,22 @@ fun MainSection(
         }
 
         is GamerState.Fail -> when (state.error) {
-            is GeneralError.ClientError -> TODO()
+            is GeneralError.ClientError -> DialogError(
+                title = stringResource(R.string.txt_ttl_client_error),
+                image = painterResource(R.drawable.ic_warning),
+                message = stringResource(R.string.err_client),
+                logOut = {
+                    mainVM.closeSession(authenticationClient::signOut)
+                },
+                onDismissDialog = {
+
+                }
+            )
+
             GeneralError.ConnectionError -> TODO()
             GeneralError.NetworkError -> DialogError(
                 title = stringResource(R.string.txt_ttl_client_error),
-                image = painterResource(R.drawable.ic_warning),
+                image = painterResource(R.drawable.ic_sin_internet),
                 message = stringResource(R.string.err_network_connection),
                 retryProcess = {
                     mainVM.getMainDataGamer(gamerId)
@@ -137,22 +144,24 @@ fun MainSection(
                 title = stringResource(R.string.txt_ttl_service_error),
                 image = painterResource(R.drawable.ic_error),
                 message = stringResource(R.string.err_server),
-                retryProcess = {
-
-                },
                 logOut = {
-
+                    mainVM.closeSession(authenticationClient::signOut)
                 },
                 onDismissDialog = {
 
                 }
             )
 
-            GeneralError.Unknown -> SnackBarError(
-                snackBarHostState = snackBarHostState,
-                message = stringResource(R.string.err_auth),
-                withDismissAction = true,
-                onDismiss = {}
+            GeneralError.Unknown -> DialogError(
+                title = stringResource(R.string.txt_ttl_unexpected_error),
+                image = painterResource(R.drawable.ic_cancelar),
+                message = stringResource(R.string.err_process_data),
+                logOut = {
+                    mainVM.closeSession(authenticationClient::signOut)
+                },
+                onDismissDialog = {
+
+                }
             )
         }
 
@@ -345,7 +354,7 @@ fun DialogError(
     title: String,
     image: Painter,
     message: String,
-    retryProcess: () -> Unit,
+    retryProcess: (() -> Unit)? = null,
     logOut: () -> Unit,
     onDismissDialog: () -> Unit
 ) {
@@ -359,16 +368,18 @@ fun DialogError(
 
             }
         ) {
-            DefaultIconButton(
-                text = stringResource(id = R.string.txt_label_retry),
-                imageVector = Icons.Filled.Replay,
-                onClickButton = {
-                    retryProcess()
-                    showErrorDialog = false
-                    onDismissDialog()
-                }
-            )
-            Spacer(modifier = Modifier.height(10.dp))
+            retryProcess?.also {
+                DefaultIconButton(
+                    text = stringResource(id = R.string.txt_label_retry),
+                    imageVector = Icons.Filled.Replay,
+                    onClickButton = {
+                        retryProcess()
+                        showErrorDialog = false
+                        onDismissDialog()
+                    }
+                )
+                Spacer(modifier = Modifier.height(10.dp))
+            }
             DefaultIconButton(
                 text = stringResource(id = R.string.txt_btn_logout),
                 imageVector = Icons.AutoMirrored.Filled.Logout,
