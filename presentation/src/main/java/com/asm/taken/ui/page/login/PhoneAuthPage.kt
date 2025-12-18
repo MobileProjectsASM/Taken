@@ -79,6 +79,9 @@ fun PhoneAuthPage(
     onNavigateToMainPage: (String) -> Unit,
     onNavigateToCreateGamer: (String, String?) -> Unit
 ) {
+    LaunchedEffect(true) {
+        loginVM.getCountriesInfo()
+    }
     BackHandler {
         loginVM.cleanLoginPhoneForm()
         popBackStack()
@@ -107,21 +110,25 @@ fun AuthWithPhone(
     onSentPhone: (String, String) -> Unit
 ) {
     val countriesUiState: CountriesUiState by loginVM.countriesUiState.collectAsStateWithLifecycle()
+    val loginPhoneFormState by loginVM.loginFormPhoneUiState.collectAsStateWithLifecycle()
 
+    PanelFormPhoneNumber(
+        countriesUiState = (countriesUiState as? CountriesUiState.Successful)?.countriesInfo,
+        loginPhoneFormState = loginPhoneFormState,
+        validateForm = loginVM::validatePhoneNumberForm,
+        onSentPhone = onSentPhone
+    )
     when (val currentState = countriesUiState) {
         is CountriesUiState.Failure -> ErrorCountries(
             generalError = currentState.generalFailure,
             snackBarHostState = snackBarHostState,
-            loginVM = loginVM,
-            onSentPhone = onSentPhone
+            onDissmissDialog = loginVM::resetLoginUiState,
+            onClickActionDialog = loginVM::getCountriesInfo,
+            onDismissSnackBar = loginVM::resetLoginUiState,
         )
 
         CountriesUiState.Loading -> CircularProgressDialog()
-        is CountriesUiState.Successful -> PanelAuthPhone(
-            countriesUiState = currentState.countriesInfo,
-            loginVM = loginVM,
-            onSentPhone = onSentPhone
-        )
+        is CountriesUiState.Successful -> return
     }
 }
 
@@ -129,15 +136,16 @@ fun AuthWithPhone(
 fun ErrorCountries(
     generalError: GeneralError,
     snackBarHostState: SnackbarHostState,
-    loginVM: LoginVM,
-    onSentPhone: (String, String) -> Unit
+    onDissmissDialog: () -> Unit,
+    onClickActionDialog: () -> Unit,
+    onDismissSnackBar: () -> Unit,
 ) {
     when (generalError) {
         is GeneralError.ClientError -> DialogError(
             title = stringResource(R.string.txt_ttl_client_error),
             image = painterResource(R.drawable.ic_warning),
             message = stringResource(R.string.err_client),
-            onDismissDialog = loginVM::resetLoginUiState
+            onDismissDialog = onDissmissDialog
         )
 
         GeneralError.NetworkError -> SnackbarError(
@@ -145,43 +153,39 @@ fun ErrorCountries(
             actionLabel = stringResource(R.string.txt_label_retry),
             duration = SnackbarDuration.Long,
             message = stringResource(R.string.err_network_connection),
-            onDismiss = loginVM::resetLoginUiState,
-            onActionPerformed = loginVM::getCountriesInfo
+            onDismiss = onDismissSnackBar,
+            onActionPerformed = onClickActionDialog
         )
 
         is GeneralError.ServerError -> DialogError(
             title = stringResource(R.string.txt_ttl_service_error),
             image = painterResource(R.drawable.ic_error),
             message = stringResource(R.string.err_server),
-            onDismissDialog = loginVM::resetLoginUiState
+            onDismissDialog = onDissmissDialog
         )
 
         GeneralError.Unknown -> SnackbarError(
             snackBarHostState = snackBarHostState,
             message = stringResource(R.string.err_get_countries),
             withDismissAction = true,
-            onDismiss = loginVM::resetLoginUiState
+            onDismiss = onDismissSnackBar
         )
 
         GeneralError.ConnectionError -> DialogError(
             title = stringResource(R.string.txt_ttl_unexpected_error),
             image = painterResource(R.drawable.ic_warning),
             message = stringResource(R.string.err_server_connection),
-            onDismissDialog = loginVM::resetLoginUiState,
-            onClickAction = loginVM::getCountriesInfo
+            onDismissDialog = onDissmissDialog,
+            onClickAction = onClickActionDialog
         )
     }
-    PanelAuthPhone(
-        countriesUiState = null,
-        loginVM = loginVM,
-        onSentPhone = onSentPhone
-    )
 }
 
 @Composable
-fun PanelAuthPhone(
+fun PanelFormPhoneNumber(
     countriesUiState: List<CountryUiState>?,
-    loginVM: LoginVM,
+    loginPhoneFormState: LoginFormPhoneUiState,
+    validateForm: (String, String) -> Unit,
     onSentPhone: (String, String) -> Unit
 ) {
     Column(
@@ -206,7 +210,8 @@ fun PanelAuthPhone(
                 Spacer(modifier = Modifier.height(50.dp))
                 FormPhoneNumber(
                     countriesUiState = countriesUiState,
-                    loginVM = loginVM,
+                    loginPhoneFormState = loginPhoneFormState,
+                    validateForm = validateForm,
                     onSentPhone = onSentPhone
                 )
             }
@@ -217,24 +222,6 @@ fun PanelAuthPhone(
 
 @Composable
 fun FormPhoneNumber(
-    countriesUiState: List<CountryUiState>?,
-    loginVM: LoginVM,
-    onSentPhone: (String, String) -> Unit
-) {
-    val loginPhoneFormState by loginVM.loginFormPhoneUiState.collectAsStateWithLifecycle()
-
-    StatelessFormPhoneNumber(
-        countriesUiState = countriesUiState,
-        loginPhoneFormState = loginPhoneFormState,
-        validateForm = { code, phoneNumber ->
-            loginVM.validatePhoneNumberForm(code, phoneNumber)
-        },
-        onSentPhone = onSentPhone
-    )
-}
-
-@Composable
-fun StatelessFormPhoneNumber(
     countriesUiState: List<CountryUiState>?,
     loginPhoneFormState: LoginFormPhoneUiState,
     validateForm: (String, String) -> Unit,

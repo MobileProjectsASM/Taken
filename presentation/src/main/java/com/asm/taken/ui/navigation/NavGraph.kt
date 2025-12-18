@@ -119,7 +119,7 @@ fun NavGraphBuilder.navigationLogin(
                         }
                     },
                     onNavigateToCreateGamer = { userId, imageUrl ->
-                        navController.navigate(
+                          navController.navigate(
                             CreateGamer(
                                 id = userId,
                                 image = imageUrl
@@ -134,16 +134,13 @@ fun NavGraphBuilder.navigationLogin(
             }
         }
         composable<AuthenticationPhone> { navBackStackEntry ->
-            val coroutineScope = rememberCoroutineScope()
             val parentEntry = remember(navBackStackEntry) {
                 navController.getBackStackEntry(Login)
             }
-            val context = LocalContext.current
             val loginVM = hiltViewModel<LoginVM>(parentEntry)
+            val coroutineScope = rememberCoroutineScope()
+            val context = LocalContext.current
             BackgroundLogin {
-                LaunchedEffect(true) {
-                    loginVM.getCountriesInfo()
-                }
                 PhoneAuthPage(
                     loginVM = loginVM,
                     authenticationClient = authenticationClient,
