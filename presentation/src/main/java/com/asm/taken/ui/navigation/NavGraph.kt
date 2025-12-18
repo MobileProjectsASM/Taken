@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
@@ -144,7 +143,6 @@ fun NavGraphBuilder.navigationLogin(
                 PhoneAuthPage(
                     loginVM = loginVM,
                     authenticationClient = authenticationClient,
-                    resourceResolver = resourceResolver,
                     snackBarHostState = snackBarHostState,
                     onSentPhone = { code, phoneNumber ->
                         authenticationClient.authWithPhoneNumber(
@@ -160,6 +158,14 @@ fun NavGraphBuilder.navigationLogin(
                             onAuthResult = loginVM::updateLoginState
                         )
                     },
+                    popBackStack = navController::popBackStack,
+                    onNavigateToMainPage = {
+                        navController.navigate(MainPage(gamerId = it)) {
+                            popUpTo(Login::class) {
+                                inclusive = true
+                            }
+                        }
+                    },
                     onNavigateToCreateGamer = { userId, imageUrl ->
                         navController.navigate(
                             CreateGamer(
@@ -171,15 +177,7 @@ fun NavGraphBuilder.navigationLogin(
                                 inclusive = true
                             }
                         }
-                    },
-                    onNavigateToMainPage = {
-                        navController.navigate(MainPage(gamerId = it)) {
-                            popUpTo(Login::class) {
-                                inclusive = true
-                            }
-                        }
-                    },
-                    popBackStack = navController::popBackStack
+                    }
                 )
             }
         }
