@@ -26,7 +26,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -38,15 +37,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.painter.Painter
-import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -55,18 +50,19 @@ import com.asm.domain.errors.GeneralError
 import com.asm.taken.R
 import com.asm.taken.model.CountriesUiState
 import com.asm.taken.model.CountryUiState
+import com.asm.taken.model.InputPhoneCodeError
+import com.asm.taken.model.InputPhoneNumberError
 import com.asm.taken.model.InputState
+import com.asm.taken.model.LoginFormPhoneUiState
 import com.asm.taken.model.LoginUiState
 import com.asm.taken.ui.CircularProgressDialog
 import com.asm.taken.ui.DefaultButton
 import com.asm.taken.ui.DefaultOutlinedTextFieldLI
 import com.asm.taken.ui.DefaultText
 import com.asm.taken.ui.DialogError
-import com.asm.taken.ui.ImageDialog
 import com.asm.taken.ui.OtpMultiple
 import com.asm.taken.ui.PuzzleGeneralTitle
 import com.asm.taken.ui.SnackbarError
-import com.asm.taken.ui.puzzleFontFamily
 import com.asm.taken.utils.AuthenticationClient
 import com.asm.taken.utils.ResourceResolver
 import com.asm.taken.vm.LoginVM
@@ -83,17 +79,12 @@ fun PhoneAuthPage(
     onNavigateToMainPage: (String) -> Unit,
     onNavigateToCreateGamer: (String, String?) -> Unit
 ) {
-    val countriesUiState: CountriesUiState by loginVM.countriesUiState.collectAsStateWithLifecycle()
-    val loginUiState: LoginUiState by loginVM.loginUiState.collectAsStateWithLifecycle()
-
     BackHandler {
         loginVM.cleanLoginPhoneForm()
         popBackStack()
     }
     AuthWithPhone(
         loginVM = loginVM,
-        resourceResolver = resourceResolver,
-        countriesUiState = countriesUiState,
         snackBarHostState = snackBarHostState,
         onSentPhone = onSentPhone
     )
@@ -101,7 +92,6 @@ fun PhoneAuthPage(
         loginVM = loginVM,
         authenticationClient = authenticationClient,
         resourceResolver = resourceResolver,
-        loginUiState = loginUiState,
         snackBarHostState = snackBarHostState,
         onNavigateToMainPage = onNavigateToMainPage,
         onNavigateToCreateGamer = { authUser ->
@@ -113,25 +103,23 @@ fun PhoneAuthPage(
 @Composable
 fun AuthWithPhone(
     loginVM: LoginVM,
-    resourceResolver: ResourceResolver,
-    countriesUiState: CountriesUiState,
     snackBarHostState: SnackbarHostState,
     onSentPhone: (String, String) -> Unit
 ) {
-    when (countriesUiState) {
+    val countriesUiState: CountriesUiState by loginVM.countriesUiState.collectAsStateWithLifecycle()
+
+    when (val currentState = countriesUiState) {
         is CountriesUiState.Failure -> ErrorCountries(
-            generalError = countriesUiState.generalFailure,
+            generalError = currentState.generalFailure,
             snackBarHostState = snackBarHostState,
             loginVM = loginVM,
-            resourceResolver = resourceResolver,
             onSentPhone = onSentPhone
         )
 
         CountriesUiState.Loading -> CircularProgressDialog()
         is CountriesUiState.Successful -> PanelAuthPhone(
-            countriesUiState = countriesUiState.countriesInfo,
+            countriesUiState = currentState.countriesInfo,
             loginVM = loginVM,
-            resourceResolver = resourceResolver,
             onSentPhone = onSentPhone
         )
     }
@@ -142,7 +130,6 @@ fun ErrorCountries(
     generalError: GeneralError,
     snackBarHostState: SnackbarHostState,
     loginVM: LoginVM,
-    resourceResolver: ResourceResolver,
     onSentPhone: (String, String) -> Unit
 ) {
     when (generalError) {
@@ -187,7 +174,6 @@ fun ErrorCountries(
     PanelAuthPhone(
         countriesUiState = null,
         loginVM = loginVM,
-        resourceResolver = resourceResolver,
         onSentPhone = onSentPhone
     )
 }
@@ -196,7 +182,6 @@ fun ErrorCountries(
 fun PanelAuthPhone(
     countriesUiState: List<CountryUiState>?,
     loginVM: LoginVM,
-    resourceResolver: ResourceResolver,
     onSentPhone: (String, String) -> Unit
 ) {
     Column(
@@ -222,7 +207,6 @@ fun PanelAuthPhone(
                 FormPhoneNumber(
                     countriesUiState = countriesUiState,
                     loginVM = loginVM,
-                    resourceResolver = resourceResolver,
                     onSentPhone = onSentPhone
                 )
             }
@@ -235,30 +219,27 @@ fun PanelAuthPhone(
 fun FormPhoneNumber(
     countriesUiState: List<CountryUiState>?,
     loginVM: LoginVM,
-    resourceResolver: ResourceResolver,
     onSentPhone: (String, String) -> Unit
 ) {
     val loginPhoneFormState by loginVM.loginFormPhoneUiState.collectAsStateWithLifecycle()
-    val phoneCodeErrors: List<String> =
-        when (val phoneCodeUiState = loginPhoneFormState.phoneCodeUiState.state) {
-            is InputState.Error -> phoneCodeUiState.errors.map {
-                resourceResolver.getErrorPhoneCode(
-                    it
-                )
-            }
 
-            InputState.Init, InputState.Success -> listOf()
-        }
-    val phoneNumberErrors: List<String> =
-        when (val phoneNumberUiState = loginPhoneFormState.phoneNumberUiState.state) {
-            is InputState.Error -> phoneNumberUiState.errors.map {
-                resourceResolver.getErrorPhoneNumber(
-                    it
-                )
-            }
+    StatelessFormPhoneNumber(
+        countriesUiState = countriesUiState,
+        loginPhoneFormState = loginPhoneFormState,
+        validateForm = { code, phoneNumber ->
+            loginVM.validatePhoneNumberForm(code, phoneNumber)
+        },
+        onSentPhone = onSentPhone
+    )
+}
 
-            InputState.Init, InputState.Success -> listOf()
-        }
+@Composable
+fun StatelessFormPhoneNumber(
+    countriesUiState: List<CountryUiState>?,
+    loginPhoneFormState: LoginFormPhoneUiState,
+    validateForm: (String, String) -> Unit,
+    onSentPhone: (String, String) -> Unit
+) {
     Column {
         PhoneCodeInput(
             modifier = Modifier
@@ -266,9 +247,16 @@ fun FormPhoneNumber(
                 .padding(horizontal = 10.dp),
             countriesUiState = countriesUiState,
             codeValue = loginPhoneFormState.phoneCodeUiState.value,
-            phoneNumberValue = loginPhoneFormState.phoneNumberUiState.value,
-            phoneCodeErrors = phoneCodeErrors,
-            loginVM = loginVM
+            phoneCodeErrors = loginPhoneFormState.phoneCodeUiState.state.let { phoneCodeState ->
+                when (phoneCodeState) {
+                    is InputState.Error -> phoneCodeState.errors.map { getErrorPhoneCode(it) }
+
+                    InputState.Init, InputState.Success -> listOf()
+                }
+            },
+            onChageCode = {
+                validateForm(it, loginPhoneFormState.phoneNumberUiState.value)
+            }
         )
         Spacer(modifier = Modifier.height(10.dp))
         DefaultOutlinedTextFieldLI(
@@ -280,9 +268,15 @@ fun FormPhoneNumber(
             label = R.string.txt_label_pn,
             leadingIcon = Icons.Default.Phone,
             cdLeadingIcon = null,
-            errors = phoneNumberErrors
+            errors = loginPhoneFormState.phoneNumberUiState.state.let { phoneNumberState ->
+                when (phoneNumberState) {
+                    is InputState.Error -> phoneNumberState.errors.map { getErrorPhoneNumber(it) }
+
+                    InputState.Init, InputState.Success -> listOf()
+                }
+            }
         ) {
-            loginVM.validatePhoneNumberForm(loginPhoneFormState.phoneCodeUiState.value, it)
+            validateForm(loginPhoneFormState.phoneCodeUiState.value, it)
         }
         Spacer(modifier = Modifier.height(20.dp))
         Column(
@@ -307,9 +301,8 @@ fun PhoneCodeInput(
     modifier: Modifier = Modifier,
     countriesUiState: List<CountryUiState>?,
     codeValue: String,
-    phoneNumberValue: String,
     phoneCodeErrors: List<String>,
-    loginVM: LoginVM
+    onChageCode: (String) -> Unit
 ) {
     if (countriesUiState == null) {
         DefaultOutlinedTextFieldLI(
@@ -319,10 +312,9 @@ fun PhoneCodeInput(
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             leadingIcon = Icons.Default.Pin,
             cdLeadingIcon = null,
-            errors = phoneCodeErrors
-        ) {
-            loginVM.validatePhoneNumberForm(it, phoneNumberValue)
-        }
+            errors = phoneCodeErrors,
+            onValueChange = onChageCode
+        )
     } else {
         var showChosePhoneCodeDialog by rememberSaveable {
             mutableStateOf(false)
@@ -334,7 +326,7 @@ fun PhoneCodeInput(
                 countriesUiState = countriesUiState
             ) {
                 showChosePhoneCodeDialog = false
-                loginVM.validatePhoneNumberForm(it, phoneNumberValue)
+                onChageCode(it)
             }
         }
         DefaultOutlinedTextFieldLI(
@@ -415,23 +407,24 @@ fun SessionSection(
     loginVM: LoginVM,
     authenticationClient: AuthenticationClient,
     resourceResolver: ResourceResolver,
-    loginUiState: LoginUiState,
     snackBarHostState: SnackbarHostState,
     onNavigateToMainPage: (String) -> Unit,
     onNavigateToCreateGamer: (AuthUser) -> Unit
 ) {
+    val loginUiState: LoginUiState by loginVM.loginUiState.collectAsStateWithLifecycle()
+
     val scope = rememberCoroutineScope()
-    when (loginUiState) {
+    when (val loginState = loginUiState) {
         LoginUiState.Loading -> CircularProgressDialog()
         is LoginUiState.RegisteredUser -> LaunchedEffect(true) {
-            onNavigateToMainPage(loginUiState.gamerId)
+            onNavigateToMainPage(loginState.gamerId)
         }
 
         is LoginUiState.UnregisteredUser -> LaunchedEffect(true) {
-            onNavigateToCreateGamer(loginUiState.authUser)
+            onNavigateToCreateGamer(loginState.authUser)
         }
 
-        is LoginUiState.Error -> when (loginUiState.generalError) {
+        is LoginUiState.Error -> when (loginState.generalError) {
             is GeneralError.ClientError -> DialogError(
                 title = stringResource(R.string.txt_ttl_client_error),
                 image = painterResource(R.drawable.ic_warning),
@@ -471,12 +464,12 @@ fun SessionSection(
 
         is LoginUiState.SentOtp -> OtpDialog(
             loginVM = loginVM,
-            phoneNumber = loginUiState.phoneNumber,
+            phoneNumber = loginState.phoneNumber,
             resourceResolver = resourceResolver,
         ) { otp ->
             scope.launch {
                 loginVM.updateLoginState(LoginUiState.Loading)
-                val authResult = authenticationClient.verifyOtp(loginUiState.verificationId, otp)
+                val authResult = authenticationClient.verifyOtp(loginState.verificationId, otp)
                 loginVM.updateLoginState(authResult)
             }
         }
@@ -576,4 +569,17 @@ fun OtpDialog(
             }
         }
     }
+}
+
+@Composable
+fun getErrorPhoneCode(error: InputPhoneCodeError): String = when (error) {
+    InputPhoneCodeError.EMPTY -> stringResource(R.string.err_empty_field)
+    InputPhoneCodeError.LESS_THAN_4_DIGITS -> stringResource(R.string.err_less_than_4_digits)
+    InputPhoneCodeError.ONLY_INT_NUMBERS -> stringResource(R.string.err_only_int_numbers)
+}
+
+@Composable
+fun getErrorPhoneNumber(error: InputPhoneNumberError): String = when (error) {
+    InputPhoneNumberError.EMPTY -> stringResource(R.string.err_empty_field)
+    InputPhoneNumberError.ONLY_INT_NUMBERS -> stringResource(R.string.err_only_int_numbers)
 }
