@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.input.TextFieldState.Saver.save
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
@@ -49,10 +50,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.Saver
+import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -188,7 +193,7 @@ fun DefaultOutlinedTextField(
 @Composable
 fun OtpInput(
     size: Dp = 40.dp,
-    text: TextFieldValue,
+    textFieldValue: TextFieldValue,
     colorScheme: ColorScheme,
     focusRequester: FocusRequester,
     interactionSource: MutableInteractionSource = remember {
@@ -207,7 +212,7 @@ fun OtpInput(
             )
             .background(colorScheme.surfaceContainer, RoundedCornerShape(8.dp))
             .focusRequester(focusRequester),
-        value = text,
+        value = textFieldValue,
         onValueChange = onValueChange,
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
         textStyle = TextStyle(
@@ -236,10 +241,26 @@ fun OtpMultiple(
     errors: List<String> = listOf(),
     onChange: (String) -> Unit
 ) {
-    val otpInputStates = rememberSaveable {
-        List(numberInputs) {
-            Pair(mutableStateOf(TextFieldValue("", TextRange(0, 0))), FocusRequester())
+    val otpStateSaver = listSaver<MutableList<Pair<TextFieldValue, FocusRequester>>, Any>(
+        save = { stateList ->
+            stateList.map { state ->
+                with(TextFieldValue.Saver) {
+                    save(state.first) ?: listOf<Any>()
+                }
+            }
+        },
+        restore = { salvageable ->
+            val restoredList = salvageable.map {
+                val textFieldValue = TextFieldValue.Saver.restore(it)
+                Pair(textFieldValue ?: TextFieldValue("", TextRange(0, 0)), FocusRequester())
+            }
+            restoredList.toMutableStateList()
         }
+    )
+    val otpInputStates = rememberSaveable(saver = otpStateSaver) {
+        mutableStateListOf(*List(numberInputs) {
+            Pair(TextFieldValue("", TextRange(0, 0)), FocusRequester())
+        }.toTypedArray())
     }
 
     Column(
@@ -248,27 +269,33 @@ fun OtpMultiple(
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp, alignment = Alignment.CenterHorizontally)
+            horizontalArrangement = Arrangement.spacedBy(
+                8.dp,
+                alignment = Alignment.CenterHorizontally
+            )
         ) {
             for (currentPosition in 0..<numberInputs) {
-                val textInputMutableState = otpInputStates[currentPosition].first
+                val currentTextFieldValue = otpInputStates[currentPosition].first
                 val focusRequester = otpInputStates[currentPosition].second
                 OtpInput(
                     size = size,
-                    text = textInputMutableState.value,
+                    textFieldValue = currentTextFieldValue,
                     colorScheme = MaterialTheme.colorScheme,
                     focusRequester = focusRequester,
                 ) { newValue ->
                     if (newValue.text.isEmpty()) {
-                        textInputMutableState.value = newValue
+                        otpInputStates[currentPosition] =
+                            otpInputStates[currentPosition].copy(first = newValue)
                         if (currentPosition > 0) {
                             val beforeFocusRequester = otpInputStates[currentPosition - 1].second
                             beforeFocusRequester.requestFocus()
                         }
                         onChange(otpInputStates.getOtpValue())
                     } else if (newValue.text.length == 1) {
-                        textInputMutableState.value = newValue.copy(
-                            selection = TextRange(1)
+                        otpInputStates[currentPosition] = otpInputStates[currentPosition].copy(
+                            first = newValue.copy(
+                                selection = TextRange(1)
+                            )
                         )
                         if (currentPosition < numberInputs - 1) {
                             val nextFocusRequester = otpInputStates[currentPosition + 1].second
@@ -279,9 +306,10 @@ fun OtpMultiple(
                         var otpIndex = currentPosition
                         var stringIndex = 0
                         while (otpIndex < numberInputs && stringIndex < newValue.text.length) {
-                            val currentMutableState = otpInputStates[otpIndex].first
                             val auxString = newValue.text[stringIndex].toString()
-                            currentMutableState.value = TextFieldValue(auxString, TextRange(1))
+                            otpInputStates[currentPosition] = otpInputStates[currentPosition].copy(
+                                first = TextFieldValue(auxString, TextRange(1))
+                            )
                             otpIndex++
                             stringIndex++
                         }
@@ -658,10 +686,8 @@ fun String.toDefaultText(
     )
 }
 
-fun List<Pair<MutableState<TextFieldValue>, FocusRequester>>.getOtpValue(): String {
-    var value = ""
-    for (otpValue in this) {
-        value += otpValue.first.value.text
+fun List<Pair<TextFieldValue, FocusRequester>>.getOtpValue(): String =
+    fold("") { ac, currentValue ->
+        val currentText = currentValue.first.text
+        "$ac$currentText"
     }
-    return value
-}
