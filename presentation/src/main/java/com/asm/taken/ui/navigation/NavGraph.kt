@@ -45,8 +45,7 @@ fun MainNavigation(
         navigationLogin(
             navController = navigationController,
             snackBarHostState = snackBarHostState,
-            authenticationClient = authenticationClient,
-            resourceResolver = resourceResolver
+            authenticationClient = authenticationClient
         )
         composable<CreateGamer> { navBackStackEntry ->
             val createGamer: CreateGamer = navBackStackEntry.toRoute()
@@ -85,8 +84,7 @@ fun MainNavigation(
 fun NavGraphBuilder.navigationLogin(
     navController: NavHostController,
     snackBarHostState: SnackbarHostState,
-    authenticationClient: AuthenticationClient,
-    resourceResolver: ResourceResolver
+    authenticationClient: AuthenticationClient
 ) {
     navigation<Login>(startDestination = Authentication) {
         composable<Authentication> { navBackStackEntry ->
@@ -99,7 +97,6 @@ fun NavGraphBuilder.navigationLogin(
                     loginVM = loginVM,
                     authenticationClient = authenticationClient,
                     snackBarHostState = snackBarHostState,
-                    resourceResolver = resourceResolver,
                     onNavigateToCreateAccount = {
                         navController.navigate(CreateAccount)
                     },

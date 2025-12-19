@@ -2,6 +2,8 @@ package com.asm.taken.utils
 
 import android.content.Context
 import androidx.annotation.StringRes
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.res.stringResource
 import com.asm.taken.R
 import com.asm.taken.model.InputAgeError
 import com.asm.taken.model.InputAliasError
@@ -12,6 +14,21 @@ import com.asm.taken.model.InputImageError.*
 import com.asm.taken.model.InputPasswordError
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
+
+@Composable
+fun getErrorEmail(error: InputEmailError): String = when (error) {
+    InputEmailError.EMPTY -> stringResource(R.string.err_empty_field)
+    InputEmailError.EMAIL_INVALID -> stringResource(R.string.err_email_invalid)
+}
+
+@Composable
+fun getErrorPassword(error: InputPasswordError): String = when (error) {
+    InputPasswordError.EMPTY -> stringResource(R.string.err_empty_field)
+    InputPasswordError.LEAST_THAN_8_CHARACTERS -> stringResource(R.string.err_min_8_characters)
+    InputPasswordError.LEAST_ONE_NUMBER -> stringResource(R.string.err_least_one_number)
+    InputPasswordError.LEAST_ONE_SPECIAL_CHARACTER -> stringResource(R.string.err_least_one_character)
+    InputPasswordError.LEAST_ONE_UPPERCASE -> stringResource(R.string.err_least_one_uppercase)
+}
 
 class ResourceResolver @Inject constructor(
     @ApplicationContext val context: Context

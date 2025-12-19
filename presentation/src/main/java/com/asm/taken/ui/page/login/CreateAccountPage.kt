@@ -43,6 +43,8 @@ import com.asm.taken.ui.PasswordOutlinedTextField
 import com.asm.taken.ui.PuzzleGeneralTitle
 import com.asm.taken.ui.SnackbarError
 import com.asm.taken.utils.AuthenticationClient
+import com.asm.taken.utils.getErrorEmail
+import com.asm.taken.utils.getErrorPassword
 import com.asm.taken.vm.LoginVM
 import kotlinx.coroutines.launch
 
@@ -283,19 +285,4 @@ fun FormCreateAccount(
             )
         }
     }
-}
-
-@Composable
-fun getErrorEmail(error: InputEmailError): String = when (error) {
-    InputEmailError.EMPTY -> stringResource(R.string.err_empty_field)
-    InputEmailError.EMAIL_INVALID -> stringResource(R.string.err_email_invalid)
-}
-
-@Composable
-fun getErrorPassword(error: InputPasswordError): String = when (error) {
-    InputPasswordError.EMPTY -> stringResource(R.string.err_empty_field)
-    InputPasswordError.LEAST_THAN_8_CHARACTERS -> stringResource(R.string.err_min_8_characters)
-    InputPasswordError.LEAST_ONE_NUMBER -> stringResource(R.string.err_least_one_number)
-    InputPasswordError.LEAST_ONE_SPECIAL_CHARACTER -> stringResource(R.string.err_least_one_character)
-    InputPasswordError.LEAST_ONE_UPPERCASE -> stringResource(R.string.err_least_one_uppercase)
 }
