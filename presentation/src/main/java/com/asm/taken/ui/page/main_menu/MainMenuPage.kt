@@ -45,6 +45,7 @@ import com.asm.taken.ui.CircularProgressDialog
 import com.asm.taken.ui.DefaultButton
 import com.asm.taken.ui.DefaultText
 import com.asm.taken.ui.DialogError
+import com.asm.taken.ui.PuzzleGeneralTitle
 import com.asm.taken.ui.SnackBarError
 import com.asm.taken.vm.MainVM
 import org.intellij.lang.annotations.JdkConstants.HorizontalAlignment
