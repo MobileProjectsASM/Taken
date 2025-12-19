@@ -1,15 +1,11 @@
 package com.asm.taken.ui.navigation
 
-import android.app.Activity
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
@@ -18,7 +14,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navigation
 import androidx.navigation.toRoute
-import com.asm.taken.model.LoginUiState
 import com.asm.taken.ui.page.login.BackgroundLogin
 import com.asm.taken.ui.page.login.CreateAccountPage
 import com.asm.taken.ui.page.login.CreateGamerPage
@@ -27,7 +22,6 @@ import com.asm.taken.ui.page.login.PhoneAuthPage
 import com.asm.taken.ui.page.main_menu.BackgroundMainMenu
 import com.asm.taken.ui.page.main_menu.MainMenuPage
 import com.asm.taken.utils.AuthenticationClient
-import com.asm.taken.utils.ResourceResolver
 import com.asm.taken.vm.EditGamerVM
 import com.asm.taken.vm.LoginVM
 import com.asm.taken.vm.MainVM
@@ -37,8 +31,7 @@ fun MainNavigation(
     initRoute: Route,
     innerPadding: PaddingValues,
     snackBarHostState: SnackbarHostState,
-    authenticationClient: AuthenticationClient,
-    resourceResolver: ResourceResolver
+    authenticationClient: AuthenticationClient
 ) {
     val navigationController = rememberNavController()
 
@@ -50,8 +43,7 @@ fun MainNavigation(
         navigationLogin(
             navController = navigationController,
             snackBarHostState = snackBarHostState,
-            authenticationClient = authenticationClient,
-            resourceResolver = resourceResolver
+            authenticationClient = authenticationClient
         )
         composable<CreateGamer> { navBackStackEntry ->
             val createGamer: CreateGamer = navBackStackEntry.toRoute()
@@ -61,7 +53,6 @@ fun MainNavigation(
                     createGamerInfo = createGamer,
                     editGamerVM = editGamerVM,
                     authenticationClient = authenticationClient,
-                    resourceResolver = resourceResolver,
                     snackBarHostState = snackBarHostState,
                     onNavigateToAuthentication = {
                         navigationController.navigate(Login) {
@@ -91,8 +82,7 @@ fun MainNavigation(
 fun NavGraphBuilder.navigationLogin(
     navController: NavHostController,
     snackBarHostState: SnackbarHostState,
-    authenticationClient: AuthenticationClient,
-    resourceResolver: ResourceResolver
+    authenticationClient: AuthenticationClient
 ) {
     navigation<Login>(startDestination = Authentication) {
         composable<Authentication> { navBackStackEntry ->
@@ -105,13 +95,45 @@ fun NavGraphBuilder.navigationLogin(
                     loginVM = loginVM,
                     authenticationClient = authenticationClient,
                     snackBarHostState = snackBarHostState,
-                    resourceResolver = resourceResolver,
                     onNavigateToCreateAccount = {
                         navController.navigate(CreateAccount)
                     },
                     onNavigateToAuthWithPhone = {
                         navController.navigate(AuthenticationPhone)
                     },
+                    onNavigateToMainPage = {
+                        navController.navigate(MainPage(gamerId = it)) {
+                            popUpTo(Login::class) {
+                                inclusive = true
+                            }
+                        }
+                    },
+                    onNavigateToCreateGamer = { userId, imageUrl ->
+                          navController.navigate(
+                            CreateGamer(
+                                id = userId,
+                                image = imageUrl
+                            )
+                        ) {
+                            popUpTo(Login::class) {
+                                inclusive = true
+                            }
+                        }
+                    }
+                )
+            }
+        }
+        composable<AuthenticationPhone> { navBackStackEntry ->
+            val parentEntry = remember(navBackStackEntry) {
+                navController.getBackStackEntry(Login)
+            }
+            val loginVM = hiltViewModel<LoginVM>(parentEntry)
+            BackgroundLogin {
+                PhoneAuthPage(
+                    loginVM = loginVM,
+                    authenticationClient = authenticationClient,
+                    snackBarHostState = snackBarHostState,
+                    popBackStack = navController::popBackStack,
                     onNavigateToMainPage = {
                         navController.navigate(MainPage(gamerId = it)) {
                             popUpTo(Login::class) {
@@ -134,59 +156,6 @@ fun NavGraphBuilder.navigationLogin(
                 )
             }
         }
-        composable<AuthenticationPhone> { navBackStackEntry ->
-            val coroutineScope = rememberCoroutineScope()
-            val parentEntry = remember(navBackStackEntry) {
-                navController.getBackStackEntry(Login)
-            }
-            val context = LocalContext.current
-            val loginVM = hiltViewModel<LoginVM>(parentEntry)
-            BackgroundLogin {
-                LaunchedEffect(true) {
-                    loginVM.getCountriesInfo()
-                }
-                PhoneAuthPage(
-                    loginVM = loginVM,
-                    authenticationClient = authenticationClient,
-                    resourceResolver = resourceResolver,
-                    snackBarHostState = snackBarHostState,
-                    onSentPhone = { code, phoneNumber ->
-                        authenticationClient.authWithPhoneNumber(
-                            context as Activity,
-                            coroutineScope = coroutineScope,
-                            phoneNumber = "+$code$phoneNumber",
-                            onPhoneLoginLoading = { loginVM.updateLoginState(LoginUiState.Loading) },
-                            onOtpSend = { verificationId, _ ->
-                                loginVM.updateLoginState(
-                                    LoginUiState.SentOtp(verificationId, phoneNumber)
-                                )
-                            },
-                            onAuthResult = loginVM::updateLoginState
-                        )
-                    },
-                    onNavigateToCreateGamer = { userId, imageUrl ->
-                        navController.navigate(
-                            CreateGamer(
-                                id = userId,
-                                image = imageUrl
-                            )
-                        ) {
-                            popUpTo(Login::class) {
-                                inclusive = true
-                            }
-                        }
-                    },
-                    onNavigateToMainPage = {
-                        navController.navigate(MainPage(gamerId = it)) {
-                            popUpTo(Login::class) {
-                                inclusive = true
-                            }
-                        }
-                    },
-                    popBackStack = navController::popBackStack
-                )
-            }
-        }
         composable<CreateAccount> { navBackStackEntry ->
             val parentEntry = remember(navBackStackEntry) {
                 navController.getBackStackEntry(Login)
@@ -196,7 +165,6 @@ fun NavGraphBuilder.navigationLogin(
                 CreateAccountPage(
                     loginVM = loginVM,
                     authenticationClient = authenticationClient,
-                    resourceResolver = resourceResolver,
                     snackBarHostState = snackBarHostState,
                     popBackStack = navController::popBackStack
                 )

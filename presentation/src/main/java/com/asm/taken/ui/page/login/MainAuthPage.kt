@@ -48,28 +48,23 @@ import com.asm.taken.ui.PasswordOutlinedTextField
 import com.asm.taken.ui.PuzzleGeneralTitle
 import com.asm.taken.ui.SnackBarError
 import com.asm.taken.utils.AuthenticationClient
-import com.asm.taken.utils.ResourceResolver
+import com.asm.taken.utils.getErrorEmail
+import com.asm.taken.utils.getErrorPassword
 import com.asm.taken.vm.LoginVM
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
 @Composable
 fun MainAuthPage(
     loginVM: LoginVM,
     authenticationClient: AuthenticationClient,
-    resourceResolver: ResourceResolver,
     snackBarHostState: SnackbarHostState,
     onNavigateToCreateAccount: () -> Unit,
     onNavigateToAuthWithPhone: () -> Unit,
     onNavigateToMainPage: (String) -> Unit,
     onNavigateToCreateGamer: (String, String?) -> Unit
 ) {
-    val coroutineScope = rememberCoroutineScope()
-
     AuthenticationSection(
         loginVM = loginVM,
-        resourceResolver = resourceResolver,
-        coroutineScope = coroutineScope,
         authenticationClient = authenticationClient,
         onNavigateToCreateAccount = onNavigateToCreateAccount,
         onNavigateToAuthWithPhone = onNavigateToAuthWithPhone
@@ -87,25 +82,30 @@ fun MainAuthPage(
 @Composable
 fun AuthenticationSection(
     loginVM: LoginVM,
-    resourceResolver: ResourceResolver,
-    coroutineScope: CoroutineScope,
     authenticationClient: AuthenticationClient,
     onNavigateToCreateAccount: () -> Unit,
     onNavigateToAuthWithPhone: () -> Unit,
 ) {
+    val loginFormState: LoginFormUiState by loginVM.loginFormUiState.collectAsStateWithLifecycle()
+    val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .verticalScroll(rememberScrollState())
     ) {
         Box(modifier = Modifier.height(250.dp))
-        PanelLogin(
-            loginVM = loginVM,
-            authenticationClient = authenticationClient,
-            coroutineScope = coroutineScope,
-            resourceResolver = resourceResolver
-        )
+        PanelFormLogin(
+            loginFormState = loginFormState,
+            validateFormLogin = loginVM::validateLoginForm,
+        ) { email, password ->
+            coroutineScope.launch {
+                loginVM.updateLoginState(LoginUiState.Loading)
+                val authResult = authenticationClient.signInWithEmailAndPassword(email, password)
+                loginVM.updateLoginState(authResult)
+            }
+        }
         PanelSocialMedia(
             signInWithGoogle = {
                 coroutineScope.launch {
@@ -130,11 +130,10 @@ fun AuthenticationSection(
 }
 
 @Composable
-fun PanelLogin(
-    loginVM: LoginVM,
-    authenticationClient: AuthenticationClient,
-    coroutineScope: CoroutineScope,
-    resourceResolver: ResourceResolver
+fun PanelFormLogin(
+    loginFormState: LoginFormUiState,
+    validateFormLogin: (String, String) -> Unit,
+    signInWithEmailAndPassword: (String, String) -> Unit,
 ) {
     Card(
         modifier = Modifier
@@ -157,15 +156,10 @@ fun PanelLogin(
             )
             Spacer(modifier = Modifier.height(50.dp))
             FormLogin(
-                loginVM = loginVM,
-                resourceResolver = resourceResolver
-            ) { email, password ->
-                coroutineScope.launch {
-                    loginVM.updateLoginState(LoginUiState.Loading)
-                    val authResult = authenticationClient.signInWithEmailAndPassword(email, password)
-                    loginVM.updateLoginState(authResult)
-                }
-            }
+                loginFormState = loginFormState,
+                validateFormLogin = validateFormLogin,
+                signInWithEmailAndPassword = signInWithEmailAndPassword
+            )
         }
     }
 }
@@ -227,22 +221,10 @@ fun SessionSection(
 
 @Composable
 fun FormLogin(
-    loginVM: LoginVM,
-    resourceResolver: ResourceResolver,
+    loginFormState: LoginFormUiState,
+    validateFormLogin: (String, String) -> Unit,
     signInWithEmailAndPassword: (String, String) -> Unit,
 ) {
-    val loginFormState: LoginFormUiState by loginVM.loginFormUiState.collectAsStateWithLifecycle()
-    val emailErrors: List<String> = when (val emailUiState = loginFormState.emailUiState.state) {
-        is InputState.Error -> emailUiState.errors.map { resourceResolver.getErrorEmail(it) }
-        InputState.Init -> listOf()
-        InputState.Success -> listOf()
-    }
-    val passwordErrors: List<String> =
-        when (val passwordUiState = loginFormState.passwordUiState.state) {
-            is InputState.Error -> passwordUiState.errors.map { resourceResolver.getErrorPassword(it) }
-            InputState.Init -> listOf()
-            InputState.Success -> listOf()
-        }
     Column {
         DefaultOutlinedTextFieldLI(
             modifier = Modifier
@@ -253,9 +235,14 @@ fun FormLogin(
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
             leadingIcon = Icons.Default.Mail,
             cdLeadingIcon = null,
-            errors = emailErrors
+            errors = loginFormState.emailUiState.state.let {
+                when (val emailUiState = loginFormState.emailUiState.state) {
+                    is InputState.Error -> emailUiState.errors.map { getErrorEmail(it) }
+                    InputState.Init, InputState.Success -> listOf()
+                }
+            }
         ) {
-            loginVM.validateLoginForm(it, loginFormState.passwordUiState.value)
+            validateFormLogin(it, loginFormState.passwordUiState.value)
         }
         Spacer(modifier = Modifier.height(10.dp))
         PasswordOutlinedTextField(
@@ -265,9 +252,14 @@ fun FormLogin(
             label = R.string.txt_label_password,
             password = loginFormState.passwordUiState.value,
             leadingIcon = Icons.Default.Lock,
-            errors = passwordErrors,
+            errors = loginFormState.passwordUiState.state.let {
+                when (val passwordUiState = loginFormState.passwordUiState.state) {
+                    is InputState.Error -> passwordUiState.errors.map { getErrorPassword(it) }
+                    InputState.Init, InputState.Success -> listOf()
+                }
+            },
         ) {
-            loginVM.validateLoginForm(loginFormState.emailUiState.value, it)
+            validateFormLogin(loginFormState.emailUiState.value, it)
         }
         Spacer(modifier = Modifier.height(20.dp))
         Column(

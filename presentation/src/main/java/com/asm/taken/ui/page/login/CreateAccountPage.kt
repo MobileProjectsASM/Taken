@@ -41,30 +41,25 @@ import com.asm.taken.ui.PasswordOutlinedTextField
 import com.asm.taken.ui.PuzzleGeneralTitle
 import com.asm.taken.ui.SnackBarError
 import com.asm.taken.utils.AuthenticationClient
-import com.asm.taken.utils.ResourceResolver
+import com.asm.taken.utils.getErrorEmail
+import com.asm.taken.utils.getErrorPassword
 import com.asm.taken.vm.LoginVM
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
 @Composable
 fun CreateAccountPage(
     loginVM: LoginVM,
     authenticationClient: AuthenticationClient,
-    resourceResolver: ResourceResolver,
     snackBarHostState: SnackbarHostState,
     popBackStack: () -> Unit
 ) {
-    val coroutineScope = rememberCoroutineScope()
-
     BackHandler {
         loginVM.cleanLoginFormCreateAccount()
         popBackStack()
     }
-    PanelCreateAccount(
+    CreateAccountSection(
         loginVM = loginVM,
         authenticationClient = authenticationClient,
-        resourceResolver = resourceResolver,
-        coroutineScope = coroutineScope
     )
     SessionSection(
         loginVM = loginVM,
@@ -86,13 +81,15 @@ fun SessionSection(
             loginVM.cleanLoginFormCreateAccount()
             loginVM.resetLoginUiState()
         }
+
         is LoginUiState.Error -> when (state.generalError) {
             is GeneralError.ClientError -> DialogError(
                 title = stringResource(R.string.txt_ttl_client_error),
                 image = painterResource(R.drawable.ic_warning),
                 message = stringResource(R.string.err_client),
-                onDismissDialog =loginVM::resetLoginUiState
+                onDismissDialog = loginVM::resetLoginUiState
             )
+
             GeneralError.ConnectionError -> DialogError(
                 title = stringResource(R.string.txt_ttl_unexpected_error),
                 image = painterResource(R.drawable.ic_warning),
@@ -125,16 +122,43 @@ fun SessionSection(
 }
 
 @Composable
-fun PanelCreateAccount(
+fun CreateAccountSection(
     loginVM: LoginVM,
-    authenticationClient: AuthenticationClient,
-    resourceResolver: ResourceResolver,
-    coroutineScope: CoroutineScope
+    authenticationClient: AuthenticationClient
+) {
+
+    val loginFormCreateAccountState: LoginFormCreateAccountUiState by loginVM.loginFormCreateAccountState.collectAsStateWithLifecycle()
+    val coroutineScope = rememberCoroutineScope()
+
+    PanelFormCreateAccount(
+        loginFormCreateAccountState = loginFormCreateAccountState,
+        validateFormCreateAccount = { email, password, passwordRepeat ->
+            loginVM.validateFormCreateAccount(email, password, passwordRepeat)
+        },
+        createAccount = { email, password ->
+            coroutineScope.launch {
+                loginVM.updateLoginState(LoginUiState.Loading)
+                val createAccountResult = authenticationClient.createAccount(email, password)
+                val loginState = when (createAccountResult) {
+                    is Result.Successful<Unit> -> LoginUiState.AccountCreated
+                    is Result.Unsuccessful<GeneralError> -> LoginUiState.Error(createAccountResult.error)
+                }
+                loginVM.updateLoginState(loginState)
+            }
+        }
+    )
+}
+
+@Composable
+fun PanelFormCreateAccount(
+    loginFormCreateAccountState: LoginFormCreateAccountUiState,
+    validateFormCreateAccount: (String, String, String) -> Unit,
+    createAccount: (String, String) -> Unit
 ) {
     Column(
-       modifier = Modifier
-           .fillMaxWidth()
-           .verticalScroll(rememberScrollState())
+        modifier = Modifier
+            .fillMaxWidth()
+            .verticalScroll(rememberScrollState())
     ) {
         Box(modifier = Modifier.height(250.dp))
         Card(
@@ -152,19 +176,10 @@ fun PanelCreateAccount(
                 )
                 Spacer(modifier = Modifier.height(50.dp))
                 FormCreateAccount(
-                    loginVM = loginVM,
-                    resourceResolver = resourceResolver
-                ) { email, password ->
-                    coroutineScope.launch {
-                        loginVM.updateLoginState(LoginUiState.Loading)
-                        val createAccountResult = authenticationClient.createAccount(email, password)
-                        val loginState = when (createAccountResult) {
-                            is Result.Successful<Unit> -> LoginUiState.AccountCreated
-                            is Result.Unsuccessful<GeneralError> -> LoginUiState.Error(createAccountResult.error)
-                        }
-                        loginVM.updateLoginState(loginState)
-                    }
-                }
+                    loginFormCreateAccountState = loginFormCreateAccountState,
+                    validateFormCreateAccount = validateFormCreateAccount,
+                    createAccount = createAccount
+                )
             }
         }
         Box(modifier = Modifier.height(250.dp))
@@ -173,23 +188,10 @@ fun PanelCreateAccount(
 
 @Composable
 fun FormCreateAccount(
-    loginVM: LoginVM,
-    resourceResolver: ResourceResolver,
+    loginFormCreateAccountState: LoginFormCreateAccountUiState,
+    validateFormCreateAccount: (String, String, String) -> Unit,
     createAccount: (String, String) -> Unit
 ) {
-    val loginFormCreateAccountState: LoginFormCreateAccountUiState by loginVM.loginFormCreateAccountState.collectAsStateWithLifecycle()
-    val emailErrors: List<String> = when (val emailUiState = loginFormCreateAccountState.emailUiState.state) {
-        is InputState.Error -> emailUiState.errors.map { resourceResolver.getErrorEmail(it) }
-        InputState.Init, InputState.Success -> listOf()
-    }
-    val passwordErrors: List<String> = when (val passwordUiState = loginFormCreateAccountState.passwordUiState.state) {
-        is InputState.Error -> passwordUiState.errors.map { resourceResolver.getErrorPassword(it) }
-        InputState.Init, InputState.Success -> listOf()
-    }
-    val passwordRepeatErrors: List<String> = when (val passwordRepeatUiState = loginFormCreateAccountState.passwordRepeatUiState.state) {
-        is InputState.Error -> passwordRepeatUiState.errors.map { resourceResolver.getErrorPasswordRepeat(it) }
-        InputState.Init, InputState.Success -> listOf()
-    }
     Column {
         DefaultOutlinedTextFieldLI(
             modifier = Modifier
@@ -200,9 +202,18 @@ fun FormCreateAccount(
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
             leadingIcon = Icons.Default.Mail,
             cdLeadingIcon = null,
-            errors = emailErrors
+            errors = loginFormCreateAccountState.emailUiState.state.let { emailState ->
+                when (emailState) {
+                    is InputState.Error -> emailState.errors.map { getErrorEmail(it) }
+                    InputState.Init, InputState.Success -> listOf()
+                }
+            }
         ) {
-            loginVM.validateFormCreateAccount(it, loginFormCreateAccountState.passwordUiState.value, loginFormCreateAccountState.passwordRepeatUiState.value)
+            validateFormCreateAccount(
+                it,
+                loginFormCreateAccountState.passwordUiState.value,
+                loginFormCreateAccountState.passwordRepeatUiState.value
+            )
         }
         Spacer(modifier = Modifier.height(10.dp))
         PasswordOutlinedTextField(
@@ -212,9 +223,18 @@ fun FormCreateAccount(
             label = R.string.txt_label_password,
             password = loginFormCreateAccountState.passwordUiState.value,
             leadingIcon = Icons.Default.Lock,
-            errors = passwordErrors
+            errors = loginFormCreateAccountState.passwordUiState.state.let { passwordState ->
+                when (passwordState) {
+                    is InputState.Error -> passwordState.errors.map { getErrorPassword(it) }
+                    InputState.Init, InputState.Success -> listOf()
+                }
+            }
         ) {
-            loginVM.validateFormCreateAccount(loginFormCreateAccountState.emailUiState.value, it, loginFormCreateAccountState.passwordRepeatUiState.value)
+            validateFormCreateAccount(
+                loginFormCreateAccountState.emailUiState.value,
+                it,
+                loginFormCreateAccountState.passwordRepeatUiState.value
+            )
         }
         Spacer(modifier = Modifier.height(10.dp))
         PasswordOutlinedTextField(
@@ -224,9 +244,21 @@ fun FormCreateAccount(
             label = R.string.txt_label_password_repeat,
             password = loginFormCreateAccountState.passwordRepeatUiState.value,
             leadingIcon = Icons.Default.Lock,
-            errors = passwordRepeatErrors
+            errors = loginFormCreateAccountState.passwordRepeatUiState.state.let { passwordRepeatState ->
+                when (passwordRepeatState) {
+                    is InputState.Error -> passwordRepeatState.errors.map {
+                        stringResource(R.string.err_password_is_not_same)
+                    }
+
+                    InputState.Init, InputState.Success -> listOf()
+                }
+            }
         ) {
-            loginVM.validateFormCreateAccount(loginFormCreateAccountState.emailUiState.value, loginFormCreateAccountState.passwordUiState.value, it)
+            validateFormCreateAccount(
+                loginFormCreateAccountState.emailUiState.value,
+                loginFormCreateAccountState.passwordUiState.value,
+                it
+            )
         }
         Spacer(modifier = Modifier.height(20.dp))
         Column(
@@ -239,7 +271,10 @@ fun FormCreateAccount(
                         && loginFormCreateAccountState.passwordUiState.state is InputState.Success
                         && loginFormCreateAccountState.passwordRepeatUiState.state is InputState.Success,
                 onClickButton = {
-                    createAccount(loginFormCreateAccountState.emailUiState.value, loginFormCreateAccountState.passwordUiState.value)
+                    createAccount(
+                        loginFormCreateAccountState.emailUiState.value,
+                        loginFormCreateAccountState.passwordUiState.value
+                    )
                 }
             )
         }

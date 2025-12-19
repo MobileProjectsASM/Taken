@@ -48,12 +48,14 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -80,6 +82,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import com.asm.domain.errors.GeneralError
 import com.asm.taken.R
 import com.asm.taken.ui.theme.Purple80
 
@@ -190,7 +193,7 @@ fun DefaultOutlinedTextField(
 @Composable
 fun OtpInput(
     size: Dp = 40.dp,
-    text: TextFieldValue,
+    textFieldValue: TextFieldValue,
     colorScheme: ColorScheme,
     focusRequester: FocusRequester,
     interactionSource: MutableInteractionSource = remember {
@@ -209,7 +212,7 @@ fun OtpInput(
             )
             .background(colorScheme.surfaceContainer, RoundedCornerShape(8.dp))
             .focusRequester(focusRequester),
-        value = text,
+        value = textFieldValue,
         onValueChange = onValueChange,
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
         textStyle = TextStyle(
@@ -238,10 +241,25 @@ fun OtpMultiple(
     errors: List<String> = listOf(),
     onChange: (String) -> Unit
 ) {
-    val otpInputStates = rememberSaveable {
-        List(numberInputs) {
-            Pair(mutableStateOf(TextFieldValue("", TextRange(0, 0))), FocusRequester())
+    val otpStateSaver = listSaver<MutableList<Pair<TextFieldValue, FocusRequester>>, Any>(
+        save = { stateList ->
+            stateList.map { state ->
+                with(TextFieldValue.Saver) { save(state.first) ?: Any() }
+            }
+        },
+        restore = { salvageable ->
+            val restoredList = salvageable.map {
+                val textFieldValue = TextFieldValue.Saver.restore(it)
+                Pair(textFieldValue ?: TextFieldValue(""), FocusRequester())
+            }
+            restoredList.toMutableStateList()
         }
+    )
+    val otpInputStates = rememberSaveable(saver = otpStateSaver) {
+        val inputStates = List(numberInputs) {
+            Pair(TextFieldValue("", TextRange(0, 0)), FocusRequester())
+        }.toTypedArray()
+        mutableStateListOf(*inputStates)
     }
 
     Column(
@@ -256,24 +274,27 @@ fun OtpMultiple(
             )
         ) {
             for (currentPosition in 0..<numberInputs) {
-                val textInputMutableState = otpInputStates[currentPosition].first
+                val currentTextFieldValue = otpInputStates[currentPosition].first
                 val focusRequester = otpInputStates[currentPosition].second
                 OtpInput(
                     size = size,
-                    text = textInputMutableState.value,
+                    textFieldValue = currentTextFieldValue,
                     colorScheme = MaterialTheme.colorScheme,
                     focusRequester = focusRequester,
                 ) { newValue ->
                     if (newValue.text.isEmpty()) {
-                        textInputMutableState.value = newValue
+                        otpInputStates[currentPosition] =
+                            otpInputStates[currentPosition].copy(first = newValue)
                         if (currentPosition > 0) {
                             val beforeFocusRequester = otpInputStates[currentPosition - 1].second
                             beforeFocusRequester.requestFocus()
                         }
                         onChange(otpInputStates.getOtpValue())
                     } else if (newValue.text.length == 1) {
-                        textInputMutableState.value = newValue.copy(
-                            selection = TextRange(1)
+                        otpInputStates[currentPosition] = otpInputStates[currentPosition].copy(
+                            first = newValue.copy(
+                                selection = TextRange(1)
+                            )
                         )
                         if (currentPosition < numberInputs - 1) {
                             val nextFocusRequester = otpInputStates[currentPosition + 1].second
@@ -284,9 +305,10 @@ fun OtpMultiple(
                         var otpIndex = currentPosition
                         var stringIndex = 0
                         while (otpIndex < numberInputs && stringIndex < newValue.text.length) {
-                            val currentMutableState = otpInputStates[otpIndex].first
                             val auxString = newValue.text[stringIndex].toString()
-                            currentMutableState.value = TextFieldValue(auxString, TextRange(1))
+                            otpInputStates[currentPosition] = otpInputStates[currentPosition].copy(
+                                first = TextFieldValue(auxString, TextRange(1))
+                            )
                             otpIndex++
                             stringIndex++
                         }
@@ -667,14 +689,62 @@ fun SnackBarError(
     onDismiss: () -> Unit,
     onActionPerformed: (() -> Unit)? = null
 ) = LaunchedEffect(true) {
-    val snackbarResult = snackBarHostState.showSnackbar(
+    val snackBarResult = snackBarHostState.showSnackbar(
         message,
         actionLabel = actionLabel,
         withDismissAction = withDismissAction,
         duration = duration
     )
-    if (snackbarResult == SnackbarResult.Dismissed) onDismiss()
+    if (snackBarResult == SnackbarResult.Dismissed) onDismiss()
     else if (onActionPerformed != null) onActionPerformed()
+}
+
+@Composable
+fun ErrorCountries(
+    generalError: GeneralError,
+    snackBarHostState: SnackbarHostState,
+    resetState: () -> Unit,
+    retryProcess: () -> Unit,
+) {
+    when (generalError) {
+        is GeneralError.ClientError -> DialogError(
+            title = stringResource(R.string.txt_ttl_client_error),
+            image = painterResource(R.drawable.ic_warning),
+            message = stringResource(R.string.err_client),
+            onDismissDialog = resetState
+        )
+
+        GeneralError.NetworkError -> SnackBarError(
+            snackBarHostState = snackBarHostState,
+            actionLabel = stringResource(R.string.txt_label_retry),
+            duration = SnackbarDuration.Long,
+            message = stringResource(R.string.err_network_connection),
+            onDismiss = resetState,
+            onActionPerformed = retryProcess
+        )
+
+        is GeneralError.ServerError -> DialogError(
+            title = stringResource(R.string.txt_ttl_service_error),
+            image = painterResource(R.drawable.ic_error),
+            message = stringResource(R.string.err_server),
+            onDismissDialog = resetState
+        )
+
+        GeneralError.Unknown -> SnackBarError(
+            snackBarHostState = snackBarHostState,
+            message = stringResource(R.string.err_get_countries),
+            withDismissAction = true,
+            onDismiss = resetState
+        )
+
+        GeneralError.ConnectionError -> DialogError(
+            title = stringResource(R.string.txt_ttl_unexpected_error),
+            image = painterResource(R.drawable.ic_warning),
+            message = stringResource(R.string.err_server_connection),
+            onDismissDialog = resetState,
+            onClickAction = retryProcess
+        )
+    }
 }
 
 fun String.toDefaultText(
@@ -688,10 +758,8 @@ fun String.toDefaultText(
     )
 }
 
-fun List<Pair<MutableState<TextFieldValue>, FocusRequester>>.getOtpValue(): String {
-    var value = ""
-    for (otpValue in this) {
-        value += otpValue.first.value.text
+fun List<Pair<TextFieldValue, FocusRequester>>.getOtpValue(): String =
+    fold("") { ac, currentValue ->
+        val currentText = currentValue.first.text
+        "$ac$currentText"
     }
-    return value
-}

@@ -50,8 +50,8 @@ class LoginVM @Inject constructor(
             passwordUiState = InputUiState("")
         )
     )
-    private val _countriesUiState: MutableStateFlow<CountriesUiState> =
-        MutableStateFlow(CountriesUiState.Loading)
+    private val _countriesUiState: MutableStateFlow<CountriesUiState?> =
+        MutableStateFlow(null)
     private val _loginFormPhoneUiState: MutableStateFlow<LoginFormPhoneUiState> = MutableStateFlow(
         LoginFormPhoneUiState(
             phoneCodeUiState = InputUiState(""),
@@ -78,7 +78,7 @@ class LoginVM @Inject constructor(
     //region StateFlows
 
     val loginFormUiState: StateFlow<LoginFormUiState> = _loginFormUiState
-    val countriesUiState: StateFlow<CountriesUiState> = _countriesUiState
+    val countriesUiState: StateFlow<CountriesUiState?> = _countriesUiState
     val loginFormPhoneUiState: StateFlow<LoginFormPhoneUiState> = _loginFormPhoneUiState
     val loginFormCreateAccountState: StateFlow<LoginFormCreateAccountUiState> =
         _loginFormCreateAccountUiState
@@ -95,7 +95,7 @@ class LoginVM @Inject constructor(
     //region LoginForm
     fun validateLoginForm(email: String, password: String) {
         val emailErrors = validateEmail(email)
-        val passwordErrors = validatePassword(password)
+        val passwordErrors = validatePasswordEmpty(password)
         _loginFormUiState.update {
             val emailUiState = emailErrors.run {
                 if (isEmpty()) InputUiState(email, InputState.Success)
@@ -145,6 +145,10 @@ class LoginVM @Inject constructor(
         _loginUiState.update { LoginUiState.Logout }
     }
 
+    fun resetCountriesUiState() {
+        _countriesUiState.update { null }
+    }
+
     fun cleanLoginPhoneForm() {
         _loginFormPhoneUiState.update {
             it.copy(
@@ -170,6 +174,12 @@ class LoginVM @Inject constructor(
         if (!password.contains("[A-Z]".toRegex())) errors.add(InputPasswordError.LEAST_ONE_UPPERCASE)
         if (!password.contains("\\d".toRegex())) errors.add(InputPasswordError.LEAST_ONE_NUMBER)
         if (!password.contains("[@$!%*?&#]".toRegex())) errors.add(InputPasswordError.LEAST_ONE_SPECIAL_CHARACTER)
+        return errors
+    }
+
+    private fun validatePasswordEmpty(password: String): List<InputPasswordError> {
+        val errors = mutableListOf<InputPasswordError>()
+        if (password.isEmpty()) errors.add(InputPasswordError.EMPTY)
         return errors
     }
     //endregion

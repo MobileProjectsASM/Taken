@@ -24,7 +24,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.automirrored.rounded.Logout
 import androidx.compose.material.icons.filled.Attribution
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Public
@@ -77,12 +77,16 @@ import com.asm.taken.ui.DefaultButton
 import com.asm.taken.ui.DefaultOutlinedTextFieldLI
 import com.asm.taken.ui.DefaultText
 import com.asm.taken.ui.DialogError
+import com.asm.taken.ui.ErrorCountries
 import com.asm.taken.ui.PuzzleGeneralTitle
 import com.asm.taken.ui.SnackBarError
 import com.asm.taken.ui.navigation.CreateGamer
 import com.asm.taken.ui.puzzleFontFamily
 import com.asm.taken.utils.AuthenticationClient
-import com.asm.taken.utils.ResourceResolver
+import com.asm.taken.utils.getErrorAge
+import com.asm.taken.utils.getErrorAlias
+import com.asm.taken.utils.getErrorCountry
+import com.asm.taken.utils.getErrorImage
 import com.asm.taken.vm.EditGamerVM
 
 @Composable
@@ -90,106 +94,15 @@ fun CreateGamerPage(
     createGamerInfo: CreateGamer,
     editGamerVM: EditGamerVM,
     authenticationClient: AuthenticationClient,
-    resourceResolver: ResourceResolver,
     snackBarHostState: SnackbarHostState,
     onNavigateToAuthentication: () -> Unit,
     onNavigateToHome: (String) -> Unit
 ) {
-    LaunchedEffect(true) {
-        editGamerVM.getCountriesInfo()
-    }
-    val countriesUiState: CountriesUiState by editGamerVM.countriesUiState.collectAsStateWithLifecycle()
     CreateGamerSection(
         createGamerInfo = createGamerInfo,
         authenticationClient = authenticationClient,
         editGamerVM = editGamerVM,
-        snackBarHostState = snackBarHostState,
-        countriesUiState = countriesUiState,
-        resourceResolver = resourceResolver,
-        onNavigateToHome = onNavigateToHome,
-        onNavigateToAuthentication = onNavigateToAuthentication
-    )
-}
-
-@Composable
-fun CreateGamerSection(
-    createGamerInfo: CreateGamer,
-    authenticationClient: AuthenticationClient,
-    editGamerVM: EditGamerVM,
-    snackBarHostState: SnackbarHostState,
-    countriesUiState: CountriesUiState,
-    resourceResolver: ResourceResolver,
-    onNavigateToHome: (String) -> Unit,
-    onNavigateToAuthentication: () -> Unit
-) {
-    when (countriesUiState) {
-        is CountriesUiState.Failure -> ErrorCountries(
-            createGamerInfo = createGamerInfo,
-            authenticationClient = authenticationClient,
-            editGamerVM = editGamerVM,
-            snackBarHostState = snackBarHostState,
-            resourceResolver = resourceResolver,
-            onNavigateToHome = onNavigateToHome,
-            onNavigateToAuthentication = onNavigateToAuthentication
-        )
-
-        CountriesUiState.Loading -> CircularProgressDialog()
-
-        is CountriesUiState.Successful -> PanelCreateGamer(
-            snackBarHostState = snackBarHostState,
-            createGamerInfo = createGamerInfo,
-            authenticationClient = authenticationClient,
-            editGamerVM = editGamerVM,
-            countriesUiState = countriesUiState.countriesInfo,
-            resourceResolver = resourceResolver,
-            onNavigateToHome = onNavigateToHome,
-            onNavigateToAuthentication = onNavigateToAuthentication
-        )
-    }
-}
-
-@Composable
-fun ErrorCountries(
-    createGamerInfo: CreateGamer,
-    authenticationClient: AuthenticationClient,
-    editGamerVM: EditGamerVM,
-    snackBarHostState: SnackbarHostState,
-    resourceResolver: ResourceResolver,
-    onNavigateToHome: (String) -> Unit,
-    onNavigateToAuthentication: () -> Unit
-) {
-    LaunchedEffect(true) {
-        snackBarHostState.showSnackbar(resourceResolver.getString(R.string.err_get_countries))
-    }
-    PanelCreateGamer(
-        snackBarHostState = snackBarHostState,
-        createGamerInfo = createGamerInfo,
-        authenticationClient = authenticationClient,
-        editGamerVM = editGamerVM,
-        countriesUiState = null,
-        resourceResolver = resourceResolver,
-        onNavigateToHome = onNavigateToHome,
-        onNavigateToAuthentication = onNavigateToAuthentication
-    )
-}
-
-@Composable
-fun PanelCreateGamer(
-    snackBarHostState: SnackbarHostState,
-    createGamerInfo: CreateGamer,
-    authenticationClient: AuthenticationClient,
-    editGamerVM: EditGamerVM,
-    countriesUiState: List<CountryUiState>?,
-    resourceResolver: ResourceResolver,
-    onNavigateToHome: (String) -> Unit,
-    onNavigateToAuthentication: () -> Unit
-) {
-    MainCreateGamer(
-        createGamerInfo = createGamerInfo,
-        authenticationClient = authenticationClient,
-        editGamerVM = editGamerVM,
-        countriesUiState = countriesUiState,
-        resourceResolver = resourceResolver
+        snackBarHostState = snackBarHostState
     )
     NavigationSection(
         snackBarHostState = snackBarHostState,
@@ -200,6 +113,51 @@ fun PanelCreateGamer(
 }
 
 @Composable
+fun CreateGamerSection(
+    createGamerInfo: CreateGamer,
+    authenticationClient: AuthenticationClient,
+    editGamerVM: EditGamerVM,
+    snackBarHostState: SnackbarHostState,
+) {
+    val loginCreateGamerFormState: LoginCreateGamerFormUiState by editGamerVM.loginCreateGamerFormState.collectAsStateWithLifecycle()
+    val countriesUiState: CountriesUiState? by editGamerVM.countriesUiState.collectAsStateWithLifecycle()
+
+    LaunchedEffect(true) {
+        editGamerVM.getCountriesInfo()
+    }
+
+    PanelFormCreateGamer(
+        loginCreateGamerFormState = loginCreateGamerFormState,
+        createGamerInfo = createGamerInfo,
+        countriesUiState = (countriesUiState as? CountriesUiState.Successful)?.countriesInfo,
+        validateFormCreateGamer = editGamerVM::validateCreateGamerForm,
+        createGamer = { gamer, formState ->
+            editGamerVM.createGamer(
+                gamer.id,
+                formState.aliasUiState.value,
+                formState.ageUiState.value.toInt(),
+                formState.countryUiState.value.name,
+                formState.countryUiState.value.flag,
+                formState.imageSelected.value
+            )
+        },
+        closeSession = {
+            editGamerVM.closeSession(authenticationClient::signOut)
+        }
+    )
+    when (val countriesState = countriesUiState) {
+        is CountriesUiState.Failure -> ErrorCountries(
+            generalError = countriesState.generalFailure,
+            snackBarHostState = snackBarHostState,
+            resetState = editGamerVM::resetCountriesState,
+            retryProcess = editGamerVM::getCountriesInfo
+        )
+        CountriesUiState.Loading -> CircularProgressDialog()
+        else -> return
+    }
+}
+
+@Composable
 fun NavigationSection(
     snackBarHostState: SnackbarHostState,
     editGamerVM: EditGamerVM,
@@ -207,6 +165,7 @@ fun NavigationSection(
     onNavigateToAuthentication: () -> Unit
 ) {
     val navigationState: NavigationState? by editGamerVM.navigationState.collectAsStateWithLifecycle()
+
     when (val state = navigationState) {
         is NavigationState.Failure -> when (state.error) {
             is GeneralError.ClientError -> DialogError(
@@ -260,12 +219,13 @@ fun NavigationSection(
 }
 
 @Composable
-fun MainCreateGamer(
+fun PanelFormCreateGamer(
+    loginCreateGamerFormState: LoginCreateGamerFormUiState,
     createGamerInfo: CreateGamer,
-    authenticationClient: AuthenticationClient,
-    editGamerVM: EditGamerVM,
     countriesUiState: List<CountryUiState>?,
-    resourceResolver: ResourceResolver
+    validateFormCreateGamer: (String, String, CountryData, ImageSelected) -> Unit,
+    createGamer: (CreateGamer, LoginCreateGamerFormUiState) -> Unit,
+    closeSession: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -287,15 +247,14 @@ fun MainCreateGamer(
                     horizontalArrangement = Arrangement.End
                 ) {
                     IconButton(
-                        onClick = {
-                            editGamerVM.closeSession(authenticationClient::signOut)
-                        },
                         modifier = Modifier
                             .background(color = Color.Red, shape = CircleShape)
+                            .size(32.dp),
+                        onClick = closeSession
                     ) {
                         Icon(
-                            modifier = Modifier.size(24.dp),
-                            imageVector = Icons.AutoMirrored.Filled.Logout,
+                            modifier = Modifier.size(20.dp),
+                            imageVector = Icons.AutoMirrored.Rounded.Logout,
                             contentDescription = null,
                             tint = Color.White
                         )
@@ -307,10 +266,11 @@ fun MainCreateGamer(
                 )
                 Spacer(modifier = Modifier.height(50.dp))
                 FormCreateGamer(
+                    loginCreateGamerFormState = loginCreateGamerFormState,
                     createGamerInfo = createGamerInfo,
-                    editGamerVM = editGamerVM,
                     countriesUiState = countriesUiState,
-                    resourceResolver = resourceResolver,
+                    validateFormCreateGamer = validateFormCreateGamer,
+                    createGamer = createGamer
                 )
             }
         }
@@ -320,75 +280,40 @@ fun MainCreateGamer(
 
 @Composable
 fun FormCreateGamer(
+    loginCreateGamerFormState: LoginCreateGamerFormUiState,
     createGamerInfo: CreateGamer,
-    editGamerVM: EditGamerVM,
     countriesUiState: List<CountryUiState>?,
-    resourceResolver: ResourceResolver
+    validateFormCreateGamer: (String, String, CountryData, ImageSelected) -> Unit,
+    createGamer: (CreateGamer, LoginCreateGamerFormUiState) -> Unit
 ) {
-    val loginCreateGamerFormState: LoginCreateGamerFormUiState by editGamerVM.loginCreateGamerFormState.collectAsStateWithLifecycle()
     var showChangeProfileImageDialog: Boolean by rememberSaveable { mutableStateOf(false) }
-    val aliasErrors: List<String> =
-        when (val aliasUiState = loginCreateGamerFormState.aliasUiState.state) {
-            is InputState.Error<InputAliasError> -> aliasUiState.errors.map {
-                resourceResolver.getErrorAlias(
-                    it
-                )
-            }
-
-            InputState.Init, InputState.Success -> listOf()
-        }
-    val ageErrors: List<String> =
-        when (val ageUiState = loginCreateGamerFormState.ageUiState.state) {
-            is InputState.Error<InputAgeError> -> ageUiState.errors.map {
-                resourceResolver.getErrorAge(
-                    it
-                )
-            }
-
-            InputState.Init, InputState.Success -> listOf()
-        }
-    val countryErrors: List<String> =
-        when (val countryState = loginCreateGamerFormState.countryUiState.state) {
-            is InputState.Error<InputCountryError> -> countryState.errors.map {
-                resourceResolver.getErrorCountry(
-                    it
-                )
-            }
-
-            InputState.Init, InputState.Success -> listOf()
-        }
     when (val imageSelectedState = loginCreateGamerFormState.imageSelected.state) {
-        is InputState.Error<InputImageError> -> imageSelectedState.errors.map {
-            resourceResolver.getErrorImage(
-                it
-            )
-        }
-
+        is InputState.Error<InputImageError> -> imageSelectedState.errors.map { getErrorImage(it) }
         InputState.Init, InputState.Success -> listOf()
     }
-    val launcher =
-        rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
-            if (uri != null) {
-                editGamerVM.validateCreateGamerForm(
-                    alias = loginCreateGamerFormState.aliasUiState.value,
-                    age = loginCreateGamerFormState.ageUiState.value,
-                    countryData = loginCreateGamerFormState.countryUiState.value,
-                    imageSelected = ImageSelected.Gallery(uri)
-                )
-            }
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia()
+    ) { uri ->
+        if (uri != null) {
+            validateFormCreateGamer(
+                loginCreateGamerFormState.aliasUiState.value,
+                loginCreateGamerFormState.ageUiState.value,
+                loginCreateGamerFormState.countryUiState.value,
+                ImageSelected.Gallery(uri)
+            )
         }
+    }
     if (showChangeProfileImageDialog) {
         ChangeProfileImageDialog(
-            createGamerInfo = createGamerInfo,
-            resourceResolver = resourceResolver
+            createGamerInfo = createGamerInfo
         ) { optionChosen ->
             showChangeProfileImageDialog = false
             when (optionChosen) {
-                OptionChosen.Default -> editGamerVM.validateCreateGamerForm(
-                    alias = loginCreateGamerFormState.aliasUiState.value,
-                    age = loginCreateGamerFormState.ageUiState.value,
-                    countryData = loginCreateGamerFormState.countryUiState.value,
-                    imageSelected = ImageSelected.Default
+                OptionChosen.Default -> validateFormCreateGamer(
+                    loginCreateGamerFormState.aliasUiState.value,
+                    loginCreateGamerFormState.ageUiState.value,
+                    loginCreateGamerFormState.countryUiState.value,
+                    ImageSelected.Default
                 )
 
                 OptionChosen.Gallery -> launcher.launch(
@@ -397,11 +322,11 @@ fun FormCreateGamer(
                     )
                 )
 
-                is OptionChosen.SocialNetwork -> editGamerVM.validateCreateGamerForm(
-                    alias = loginCreateGamerFormState.aliasUiState.value,
-                    age = loginCreateGamerFormState.ageUiState.value,
-                    countryData = loginCreateGamerFormState.countryUiState.value,
-                    imageSelected = ImageSelected.SocialNetwork(optionChosen.urlImage)
+                is OptionChosen.SocialNetwork -> validateFormCreateGamer(
+                    loginCreateGamerFormState.aliasUiState.value,
+                    loginCreateGamerFormState.ageUiState.value,
+                    loginCreateGamerFormState.countryUiState.value,
+                    ImageSelected.SocialNetwork(optionChosen.urlImage)
                 )
             }
         }
@@ -424,13 +349,18 @@ fun FormCreateGamer(
             label = R.string.txt_label_alias,
             leadingIcon = Icons.Default.Person,
             cdLeadingIcon = null,
-            errors = aliasErrors
+            errors = loginCreateGamerFormState.aliasUiState.state.let { aliasState ->
+                when (aliasState) {
+                    is InputState.Error<InputAliasError> -> aliasState.errors.map { getErrorAlias(it) }
+                    InputState.Init, InputState.Success -> listOf()
+                }
+            }
         ) { newAlias ->
-            editGamerVM.validateCreateGamerForm(
-                alias = newAlias,
-                age = loginCreateGamerFormState.ageUiState.value,
-                countryData = loginCreateGamerFormState.countryUiState.value,
-                imageSelected = loginCreateGamerFormState.imageSelected.value
+            validateFormCreateGamer(
+                newAlias,
+                loginCreateGamerFormState.ageUiState.value,
+                loginCreateGamerFormState.countryUiState.value,
+                loginCreateGamerFormState.imageSelected.value
             )
         }
         Spacer(modifier = Modifier.height(10.dp))
@@ -443,13 +373,18 @@ fun FormCreateGamer(
             label = R.string.txt_label_age,
             leadingIcon = Icons.Default.Attribution,
             cdLeadingIcon = null,
-            errors = ageErrors
+            errors = loginCreateGamerFormState.ageUiState.state.let { ageState ->
+                when (ageState) {
+                    is InputState.Error<InputAgeError> -> ageState.errors.map { getErrorAge(it) }
+                    InputState.Init, InputState.Success -> listOf()
+                }
+            }
         ) { newAge ->
-            editGamerVM.validateCreateGamerForm(
-                alias = loginCreateGamerFormState.aliasUiState.value,
-                age = newAge,
-                countryData = loginCreateGamerFormState.countryUiState.value,
-                imageSelected = loginCreateGamerFormState.imageSelected.value
+            validateFormCreateGamer(
+                loginCreateGamerFormState.aliasUiState.value,
+                newAge,
+                loginCreateGamerFormState.countryUiState.value,
+                loginCreateGamerFormState.imageSelected.value
             )
         }
         Spacer(modifier = Modifier.height(10.dp))
@@ -459,32 +394,32 @@ fun FormCreateGamer(
                 .padding(horizontal = 10.dp),
             countriesUiState = countriesUiState,
             value = loginCreateGamerFormState.countryUiState.value,
-            countryErrors = countryErrors
+            countryErrors = loginCreateGamerFormState.countryUiState.state.let { countryState ->
+                when (countryState) {
+                    is InputState.Error<InputCountryError> -> countryState.errors.map {
+                        getErrorCountry(it)
+                    }
+
+                    InputState.Init, InputState.Success -> listOf()
+                }
+            }
         ) {
-            editGamerVM.validateCreateGamerForm(
-                alias = loginCreateGamerFormState.aliasUiState.value,
-                age = loginCreateGamerFormState.ageUiState.value,
-                countryData = it,
-                imageSelected = loginCreateGamerFormState.imageSelected.value
+            validateFormCreateGamer(
+                loginCreateGamerFormState.aliasUiState.value,
+                loginCreateGamerFormState.ageUiState.value,
+                it,
+                loginCreateGamerFormState.imageSelected.value
             )
         }
         Spacer(modifier = Modifier.height(20.dp))
         Column(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally
+            modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally
         ) {
             DefaultButton(
                 text = stringResource(id = R.string.txt_btn_create_gamer),
                 enable = loginCreateGamerFormState.ageUiState.state is InputState.Success && loginCreateGamerFormState.ageUiState.state is InputState.Success && loginCreateGamerFormState.countryUiState.state is InputState.Success,
             ) {
-                editGamerVM.createGamer(
-                    createGamerInfo.id,
-                    loginCreateGamerFormState.aliasUiState.value,
-                    loginCreateGamerFormState.ageUiState.value.toInt(),
-                    loginCreateGamerFormState.countryUiState.value.name,
-                    loginCreateGamerFormState.countryUiState.value.flag,
-                    loginCreateGamerFormState.imageSelected.value
-                )
+                createGamer(createGamerInfo, loginCreateGamerFormState)
             }
         }
         Spacer(modifier = Modifier.height(20.dp))
@@ -517,9 +452,7 @@ fun CountryInput(
 
         if (showChoseCountryDialog) {
             ChooseCountryDialog(
-                country = value.name,
-                flag = value.flag,
-                countriesUiState = countriesUiState
+                country = value.name, flag = value.flag, countriesUiState = countriesUiState
             ) { country, flag ->
                 showChoseCountryDialog = false
                 onCountryChange(CountryData(country, flag))
@@ -535,8 +468,7 @@ fun CountryInput(
             errors = countryErrors,
             onClickable = {
                 showChoseCountryDialog = true
-            }
-        )
+            })
     }
 }
 
@@ -548,8 +480,7 @@ fun ChooseCountryDialog(
     onCountrySelected: (String, String?) -> Unit
 ) {
     Dialog(
-        onDismissRequest = { onCountrySelected(country, flag) }
-    ) {
+        onDismissRequest = { onCountrySelected(country, flag) }) {
         Card(
             modifier = Modifier.fillMaxWidth()
         ) {
@@ -583,12 +514,10 @@ fun ChooseCountryDialog(
 
 @Composable
 fun InputSelectImage(
-    imageSelected: ImageSelected,
-    onClick: () -> Unit
+    imageSelected: ImageSelected, onClick: () -> Unit
 ) {
     Box(
-        modifier = Modifier
-            .size(128.dp)
+        modifier = Modifier.size(128.dp)
     ) {
         AsyncImage(
             modifier = Modifier
@@ -609,8 +538,7 @@ fun InputSelectImage(
                 .align(Alignment.BottomEnd),
             shape = CircleShape,
             colors = ButtonDefaults.buttonColors(
-                containerColor = Color.Black,
-                contentColor = Color.White
+                containerColor = Color.Black, contentColor = Color.White
             ),
             contentPadding = PaddingValues(7.dp),
             onClick = onClick
@@ -627,18 +555,15 @@ fun InputSelectImage(
 @Composable
 fun ChangeProfileImageDialog(
     createGamerInfo: CreateGamer,
-    resourceResolver: ResourceResolver,
     onOptionSelected: (OptionChosen) -> Unit
 ) {
     Dialog(
-        onDismissRequest = { onOptionSelected(OptionChosen.Default) }
-    ) {
+        onDismissRequest = { onOptionSelected(OptionChosen.Default) }) {
         Card(
             modifier = Modifier.fillMaxWidth()
         ) {
             Column(
-                modifier = Modifier
-                    .padding(vertical = 20.dp)
+                modifier = Modifier.padding(vertical = 20.dp)
             ) {
                 Text(
                     modifier = Modifier.fillMaxWidth(),
@@ -646,32 +571,29 @@ fun ChangeProfileImageDialog(
                     fontSize = dimensionResource(
                         id = R.dimen.title_text_size
                     ).value.sp,
-                    text = resourceResolver.getString(R.string.txt_ttl_choose_option)
+                    text = stringResource(R.string.txt_ttl_choose_option)
                 )
                 Spacer(modifier = Modifier.height(30.dp))
                 OptionItem(
                     modifier = Modifier.fillMaxWidth(),
-                    onClick = { onOptionSelected(OptionChosen.Default) }
-                ) {
+                    onClick = { onOptionSelected(OptionChosen.Default) }) {
                     DefaultText(
-                        text = resourceResolver.getString(R.string.txt_label_default_image)
+                        text = stringResource(R.string.txt_label_default_image)
                     )
                 }
                 OptionItem(
                     modifier = Modifier.fillMaxWidth(),
-                    onClick = { onOptionSelected(OptionChosen.Gallery) }
-                ) {
+                    onClick = { onOptionSelected(OptionChosen.Gallery) }) {
                     DefaultText(
-                        text = resourceResolver.getString(R.string.txt_label_gallery)
+                        text = stringResource(R.string.txt_label_gallery)
                     )
                 }
                 if (createGamerInfo.image != null) {
                     OptionItem(
                         modifier = Modifier.fillMaxWidth(),
-                        onClick = { onOptionSelected(OptionChosen.SocialNetwork(createGamerInfo.image)) }
-                    ) {
+                        onClick = { onOptionSelected(OptionChosen.SocialNetwork(createGamerInfo.image)) }) {
                         DefaultText(
-                            text = resourceResolver.getString(R.string.txt_label_social_network_image)
+                            text = stringResource(R.string.txt_label_social_network_image)
                         )
                     }
                 }
@@ -682,9 +604,7 @@ fun ChangeProfileImageDialog(
 
 @Composable
 fun OptionItem(
-    modifier: Modifier,
-    onClick: () -> Unit,
-    content: @Composable RowScope.() -> Unit
+    modifier: Modifier, onClick: () -> Unit, content: @Composable RowScope.() -> Unit
 ) {
     Row(
         modifier = modifier
@@ -692,8 +612,7 @@ fun OptionItem(
             .padding(horizontal = 16.dp, vertical = 15.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Center,
-        content = content
-    )
+        content = content)
 }
 
 sealed class OptionChosen {
