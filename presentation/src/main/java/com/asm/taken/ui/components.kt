@@ -242,23 +242,22 @@ fun OtpMultiple(
     val otpStateSaver = listSaver<MutableList<Pair<TextFieldValue, FocusRequester>>, Any>(
         save = { stateList ->
             stateList.map { state ->
-                with(TextFieldValue.Saver) {
-                    save(state.first) ?: listOf<Any>()
-                }
+                with(TextFieldValue.Saver) { save(state.first) ?: Any() }
             }
         },
         restore = { salvageable ->
             val restoredList = salvageable.map {
                 val textFieldValue = TextFieldValue.Saver.restore(it)
-                Pair(textFieldValue ?: TextFieldValue("", TextRange(0, 0)), FocusRequester())
+                Pair(textFieldValue ?: TextFieldValue(""), FocusRequester())
             }
             restoredList.toMutableStateList()
         }
     )
     val otpInputStates = rememberSaveable(saver = otpStateSaver) {
-        mutableStateListOf(*List(numberInputs) {
+        val inputStates = List(numberInputs) {
             Pair(TextFieldValue("", TextRange(0, 0)), FocusRequester())
-        }.toTypedArray())
+        }.toTypedArray()
+        mutableStateListOf(*inputStates)
     }
 
     Column(
