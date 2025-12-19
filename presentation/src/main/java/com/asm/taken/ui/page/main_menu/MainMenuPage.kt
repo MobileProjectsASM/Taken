@@ -17,7 +17,7 @@ import com.asm.taken.R
 import com.asm.taken.model.SessionState
 import com.asm.taken.ui.CircularProgressDialog
 import com.asm.taken.ui.DialogError
-import com.asm.taken.ui.SnackbarError
+import com.asm.taken.ui.SnackBarError
 import com.asm.taken.vm.MainVM
 
 @Composable
@@ -46,7 +46,7 @@ fun MainMenuPage(
                 onClickAction = { }
             )
             GeneralError.ConnectionError -> TODO()
-            GeneralError.NetworkError -> SnackbarError(
+            GeneralError.NetworkError -> SnackBarError(
                 snackBarHostState = snackBarHostState,
                 message = stringResource(R.string.err_network_connection),
                 actionLabel = stringResource(R.string.txt_label_retry),
@@ -62,7 +62,7 @@ fun MainMenuPage(
                 onClickAction = { }
             )
 
-            GeneralError.Unknown -> SnackbarError(
+            GeneralError.Unknown -> SnackBarError(
                 snackBarHostState = snackBarHostState,
                 message = stringResource(R.string.err_auth),
                 withDismissAction = true,

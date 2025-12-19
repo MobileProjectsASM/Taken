@@ -67,8 +67,7 @@ class MainActivity : ComponentActivity() {
                             Surface {
                                 PuzzleScaffold(
                                     initRoute = initRouteState.initRoute,
-                                    authenticationClient = authenticationClient,
-                                    resourceResolver = resourceResolver
+                                    authenticationClient = authenticationClient
                                 )
                             }
                         }
@@ -84,8 +83,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun PuzzleScaffold(
     initRoute: Route,
-    authenticationClient: AuthenticationClient,
-    resourceResolver: ResourceResolver
+    authenticationClient: AuthenticationClient
 ) {
     val snackBarHostState = remember { SnackbarHostState() }
 
@@ -96,8 +94,7 @@ fun PuzzleScaffold(
             initRoute = initRoute,
             innerPadding = innerPadding,
             snackBarHostState = snackBarHostState,
-            authenticationClient = authenticationClient,
-            resourceResolver = resourceResolver
+            authenticationClient = authenticationClient
         )
     }
 }

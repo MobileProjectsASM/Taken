@@ -66,9 +66,10 @@ import com.asm.taken.ui.DefaultButton
 import com.asm.taken.ui.DefaultOutlinedTextFieldLI
 import com.asm.taken.ui.DefaultText
 import com.asm.taken.ui.DialogError
+import com.asm.taken.ui.ErrorCountries
 import com.asm.taken.ui.OtpMultiple
 import com.asm.taken.ui.PuzzleGeneralTitle
-import com.asm.taken.ui.SnackbarError
+import com.asm.taken.ui.SnackBarError
 import com.asm.taken.utils.AuthenticationClient
 import com.asm.taken.vm.LoginVM
 import kotlinx.coroutines.launch
@@ -111,7 +112,7 @@ fun AuthWithPhone(
     authenticationClient: AuthenticationClient,
     snackBarHostState: SnackbarHostState
 ) {
-    val countriesUiState: CountriesUiState by loginVM.countriesUiState.collectAsStateWithLifecycle()
+    val countriesUiState: CountriesUiState? by loginVM.countriesUiState.collectAsStateWithLifecycle()
     val loginPhoneFormState by loginVM.loginFormPhoneUiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
@@ -139,62 +140,12 @@ fun AuthWithPhone(
         is CountriesUiState.Failure -> ErrorCountries(
             generalError = currentState.generalFailure,
             snackBarHostState = snackBarHostState,
-            onDissmissDialog = loginVM::resetLoginUiState,
-            onClickActionDialog = loginVM::getCountriesInfo,
-            onDismissSnackBar = loginVM::resetLoginUiState,
+            resetState = loginVM::resetCountriesUiState,
+            retryProcess = loginVM::getCountriesInfo
         )
 
         CountriesUiState.Loading -> CircularProgressDialog()
-        is CountriesUiState.Successful -> return
-    }
-}
-
-@Composable
-fun ErrorCountries(
-    generalError: GeneralError,
-    snackBarHostState: SnackbarHostState,
-    onDissmissDialog: () -> Unit,
-    onClickActionDialog: () -> Unit,
-    onDismissSnackBar: () -> Unit,
-) {
-    when (generalError) {
-        is GeneralError.ClientError -> DialogError(
-            title = stringResource(R.string.txt_ttl_client_error),
-            image = painterResource(R.drawable.ic_warning),
-            message = stringResource(R.string.err_client),
-            onDismissDialog = onDissmissDialog
-        )
-
-        GeneralError.NetworkError -> SnackbarError(
-            snackBarHostState = snackBarHostState,
-            actionLabel = stringResource(R.string.txt_label_retry),
-            duration = SnackbarDuration.Long,
-            message = stringResource(R.string.err_network_connection),
-            onDismiss = onDismissSnackBar,
-            onActionPerformed = onClickActionDialog
-        )
-
-        is GeneralError.ServerError -> DialogError(
-            title = stringResource(R.string.txt_ttl_service_error),
-            image = painterResource(R.drawable.ic_error),
-            message = stringResource(R.string.err_server),
-            onDismissDialog = onDissmissDialog
-        )
-
-        GeneralError.Unknown -> SnackbarError(
-            snackBarHostState = snackBarHostState,
-            message = stringResource(R.string.err_get_countries),
-            withDismissAction = true,
-            onDismiss = onDismissSnackBar
-        )
-
-        GeneralError.ConnectionError -> DialogError(
-            title = stringResource(R.string.txt_ttl_unexpected_error),
-            image = painterResource(R.drawable.ic_warning),
-            message = stringResource(R.string.err_server_connection),
-            onDismissDialog = onDissmissDialog,
-            onClickAction = onClickActionDialog
-        )
+        else -> return
     }
 }
 
@@ -442,7 +393,7 @@ fun SessionSection(
                 onDismissDialog = loginVM::resetLoginUiState
             )
 
-            GeneralError.NetworkError -> SnackbarError(
+            GeneralError.NetworkError -> SnackBarError(
                 snackBarHostState = snackBarHostState,
                 actionLabel = stringResource(R.string.txt_label_retry),
                 duration = SnackbarDuration.Long,
@@ -457,7 +408,7 @@ fun SessionSection(
                 onDismissDialog = loginVM::resetLoginUiState
             )
 
-            GeneralError.Unknown -> SnackbarError(
+            GeneralError.Unknown -> SnackBarError(
                 snackBarHostState = snackBarHostState,
                 message = stringResource(R.string.err_auth),
                 withDismissAction = true,
