@@ -95,7 +95,7 @@ class LoginVM @Inject constructor(
     //region LoginForm
     fun validateLoginForm(email: String, password: String) {
         val emailErrors = validateEmail(email)
-        val passwordErrors = validatePassword(password)
+        val passwordErrors = validatePasswordEmpty(password)
         _loginFormUiState.update {
             val emailUiState = emailErrors.run {
                 if (isEmpty()) InputUiState(email, InputState.Success)
@@ -170,6 +170,12 @@ class LoginVM @Inject constructor(
         if (!password.contains("[A-Z]".toRegex())) errors.add(InputPasswordError.LEAST_ONE_UPPERCASE)
         if (!password.contains("\\d".toRegex())) errors.add(InputPasswordError.LEAST_ONE_NUMBER)
         if (!password.contains("[@$!%*?&#]".toRegex())) errors.add(InputPasswordError.LEAST_ONE_SPECIAL_CHARACTER)
+        return errors
+    }
+
+    private fun validatePasswordEmpty(password: String): List<InputPasswordError> {
+        val errors = mutableListOf<InputPasswordError>()
+        if (password.isEmpty()) errors.add(InputPasswordError.EMPTY)
         return errors
     }
     //endregion
