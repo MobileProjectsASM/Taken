@@ -25,7 +25,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.text.input.TextFieldState.Saver.save
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
@@ -48,12 +47,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -83,6 +80,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import com.asm.domain.errors.GeneralError
 import com.asm.taken.R
 import com.asm.taken.ui.theme.Purple80
 
@@ -656,7 +654,7 @@ fun DialogError(
 }
 
 @Composable
-fun SnackbarError(
+fun SnackBarError(
     snackBarHostState: SnackbarHostState,
     message: String,
     actionLabel: String? = null,
@@ -665,14 +663,62 @@ fun SnackbarError(
     onDismiss: () -> Unit,
     onActionPerformed: (() -> Unit)? = null
 ) = LaunchedEffect(true) {
-    val snackbarResult = snackBarHostState.showSnackbar(
+    val snackBarResult = snackBarHostState.showSnackbar(
         message,
         actionLabel = actionLabel,
         withDismissAction = withDismissAction,
         duration = duration
     )
-    if (snackbarResult == SnackbarResult.Dismissed) onDismiss()
+    if (snackBarResult == SnackbarResult.Dismissed) onDismiss()
     else if (onActionPerformed != null) onActionPerformed()
+}
+
+@Composable
+fun ErrorCountries(
+    generalError: GeneralError,
+    snackBarHostState: SnackbarHostState,
+    resetState: () -> Unit,
+    retryProcess: () -> Unit,
+) {
+    when (generalError) {
+        is GeneralError.ClientError -> DialogError(
+            title = stringResource(R.string.txt_ttl_client_error),
+            image = painterResource(R.drawable.ic_warning),
+            message = stringResource(R.string.err_client),
+            onDismissDialog = resetState
+        )
+
+        GeneralError.NetworkError -> SnackBarError(
+            snackBarHostState = snackBarHostState,
+            actionLabel = stringResource(R.string.txt_label_retry),
+            duration = SnackbarDuration.Long,
+            message = stringResource(R.string.err_network_connection),
+            onDismiss = resetState,
+            onActionPerformed = retryProcess
+        )
+
+        is GeneralError.ServerError -> DialogError(
+            title = stringResource(R.string.txt_ttl_service_error),
+            image = painterResource(R.drawable.ic_error),
+            message = stringResource(R.string.err_server),
+            onDismissDialog = resetState
+        )
+
+        GeneralError.Unknown -> SnackBarError(
+            snackBarHostState = snackBarHostState,
+            message = stringResource(R.string.err_get_countries),
+            withDismissAction = true,
+            onDismiss = resetState
+        )
+
+        GeneralError.ConnectionError -> DialogError(
+            title = stringResource(R.string.txt_ttl_unexpected_error),
+            image = painterResource(R.drawable.ic_warning),
+            message = stringResource(R.string.err_server_connection),
+            onDismissDialog = resetState,
+            onClickAction = retryProcess
+        )
+    }
 }
 
 fun String.toDefaultText(

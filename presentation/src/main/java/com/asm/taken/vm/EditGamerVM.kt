@@ -48,8 +48,8 @@ class EditGamerVM @Inject constructor(
         const val TAG = "EditGamerVM"
     }
 
-    private val _countriesUiState: MutableStateFlow<CountriesUiState> =
-        MutableStateFlow(CountriesUiState.Loading)
+    private val _countriesUiState: MutableStateFlow<CountriesUiState?> =
+        MutableStateFlow(null)
     private val _loginCreateGamerFormUiState: MutableStateFlow<LoginCreateGamerFormUiState> =
         MutableStateFlow(
             LoginCreateGamerFormUiState(
@@ -61,7 +61,7 @@ class EditGamerVM @Inject constructor(
         )
     private val _navigationState: MutableStateFlow<NavigationState?> = MutableStateFlow(null)
 
-    val countriesUiState: StateFlow<CountriesUiState> = _countriesUiState
+    val countriesUiState: StateFlow<CountriesUiState?> = _countriesUiState
     val loginCreateGamerFormState: StateFlow<LoginCreateGamerFormUiState> =
         _loginCreateGamerFormUiState
     val navigationState: StateFlow<NavigationState?> = _navigationState
@@ -82,6 +82,10 @@ class EditGamerVM @Inject constructor(
     }
 
     fun resetNavigationState() {
+        _navigationState.update { null }
+    }
+
+    fun resetCountriesState() {
         _navigationState.update { null }
     }
 

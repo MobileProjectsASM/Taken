@@ -22,7 +22,6 @@ import com.asm.taken.ui.page.login.PhoneAuthPage
 import com.asm.taken.ui.page.main_menu.BackgroundMainMenu
 import com.asm.taken.ui.page.main_menu.MainMenuPage
 import com.asm.taken.utils.AuthenticationClient
-import com.asm.taken.utils.ResourceResolver
 import com.asm.taken.vm.EditGamerVM
 import com.asm.taken.vm.LoginVM
 import com.asm.taken.vm.MainVM
@@ -32,8 +31,7 @@ fun MainNavigation(
     initRoute: Route,
     innerPadding: PaddingValues,
     snackBarHostState: SnackbarHostState,
-    authenticationClient: AuthenticationClient,
-    resourceResolver: ResourceResolver
+    authenticationClient: AuthenticationClient
 ) {
     val navigationController = rememberNavController()
 
@@ -55,7 +53,6 @@ fun MainNavigation(
                     createGamerInfo = createGamer,
                     editGamerVM = editGamerVM,
                     authenticationClient = authenticationClient,
-                    resourceResolver = resourceResolver,
                     snackBarHostState = snackBarHostState,
                     onNavigateToAuthentication = {
                         navigationController.navigate(Login) {

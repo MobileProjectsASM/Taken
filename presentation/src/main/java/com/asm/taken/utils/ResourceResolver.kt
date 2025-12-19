@@ -30,41 +30,32 @@ fun getErrorPassword(error: InputPasswordError): String = when (error) {
     InputPasswordError.LEAST_ONE_UPPERCASE -> stringResource(R.string.err_least_one_uppercase)
 }
 
+@Composable
+fun getErrorAlias(error: InputAliasError): String = when (error) {
+    InputAliasError.EMPTY -> stringResource(R.string.err_empty_field)
+}
+
+@Composable
+fun getErrorAge(error: InputAgeError): String = when (error) {
+    InputAgeError.EMPTY -> stringResource(R.string.err_empty_field)
+    InputAgeError.ONLY_NUMBERS -> stringResource(R.string.err_only_number)
+    InputAgeError.GREATER_THAN_100 -> stringResource(R.string.err_age_greater_than_100)
+    InputAgeError.LESS_THAN_8 -> stringResource(R.string.err_age_less_than_8)
+}
+
+@Composable
+fun getErrorCountry(error: InputCountryError): String = when (error) {
+    InputCountryError.EMPTY -> stringResource(R.string.err_empty_field)
+}
+
+@Composable
+fun getErrorImage(error: InputImageError): String = when (error) {
+    IMAGE_IS_VERY_WEIGHT -> stringResource(R.string.err_image_is_very_weight)
+    UNKNOWN_ERROR -> stringResource(R.string.err_unknown)
+}
+
 class ResourceResolver @Inject constructor(
     @ApplicationContext val context: Context
 ) {
-    fun getErrorEmail(error: InputEmailError): String = when (error) {
-        InputEmailError.EMPTY -> context.getString(R.string.err_empty_field)
-        InputEmailError.EMAIL_INVALID -> context.getString(R.string.err_email_invalid)
-    }
-
-    fun getErrorPassword(error: InputPasswordError): String = when (error) {
-        InputPasswordError.EMPTY -> context.getString(R.string.err_empty_field)
-        InputPasswordError.LEAST_THAN_8_CHARACTERS -> context.getString(R.string.err_min_8_characters)
-        InputPasswordError.LEAST_ONE_NUMBER -> context.getString(R.string.err_least_one_number)
-        InputPasswordError.LEAST_ONE_SPECIAL_CHARACTER -> context.getString(R.string.err_least_one_character)
-        InputPasswordError.LEAST_ONE_UPPERCASE -> context.getString(R.string.err_least_one_uppercase)
-    }
-
-    fun getErrorAlias(error: InputAliasError): String = when (error) {
-        InputAliasError.EMPTY -> context.getString(R.string.err_empty_field)
-    }
-
-    fun getErrorAge(error: InputAgeError): String = when (error) {
-        InputAgeError.EMPTY -> context.getString(R.string.err_empty_field)
-        InputAgeError.ONLY_NUMBERS -> context.getString(R.string.err_only_number)
-        InputAgeError.GREATER_THAN_100 -> context.getString(R.string.err_age_greater_than_100)
-        InputAgeError.LESS_THAN_8 -> context.getString(R.string.err_age_less_than_8)
-    }
-
-    fun getErrorCountry(error: InputCountryError): String = when (error) {
-        InputCountryError.EMPTY -> context.getString(R.string.err_empty_field)
-    }
-
-    fun getErrorImage(error: InputImageError): String = when (error) {
-        IMAGE_IS_VERY_WEIGHT -> context.getString(R.string.err_image_is_very_weight)
-        UNKNOWN_ERROR -> context.getString(R.string.err_unknown)
-    }
-
     fun getString(@StringRes resId: Int) = context.getString(resId)
 }
