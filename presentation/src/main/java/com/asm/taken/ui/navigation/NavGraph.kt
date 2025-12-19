@@ -5,9 +5,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
@@ -172,7 +170,6 @@ fun NavGraphBuilder.navigationLogin(
                 CreateAccountPage(
                     loginVM = loginVM,
                     authenticationClient = authenticationClient,
-                    resourceResolver = resourceResolver,
                     snackBarHostState = snackBarHostState,
                     popBackStack = navController::popBackStack
                 )
