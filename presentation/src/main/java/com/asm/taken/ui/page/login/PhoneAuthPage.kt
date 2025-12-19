@@ -1,5 +1,6 @@
 package com.asm.taken.ui.page.login
 
+import android.app.Activity
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -22,7 +23,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.Pin
-import androidx.compose.material.icons.outlined.Cancel
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
@@ -40,6 +40,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
@@ -77,7 +78,6 @@ fun PhoneAuthPage(
     loginVM: LoginVM,
     authenticationClient: AuthenticationClient,
     snackBarHostState: SnackbarHostState,
-    onSentPhone: (String, String) -> Unit,
     popBackStack: () -> Unit,
     onNavigateToMainPage: (String) -> Unit,
     onNavigateToCreateGamer: (String, String?) -> Unit
@@ -91,8 +91,8 @@ fun PhoneAuthPage(
     }
     AuthWithPhone(
         loginVM = loginVM,
-        snackBarHostState = snackBarHostState,
-        onSentPhone = onSentPhone
+        authenticationClient = authenticationClient,
+        snackBarHostState = snackBarHostState
     )
     SessionSection(
         loginVM = loginVM,
@@ -108,17 +108,32 @@ fun PhoneAuthPage(
 @Composable
 fun AuthWithPhone(
     loginVM: LoginVM,
-    snackBarHostState: SnackbarHostState,
-    onSentPhone: (String, String) -> Unit
+    authenticationClient: AuthenticationClient,
+    snackBarHostState: SnackbarHostState
 ) {
     val countriesUiState: CountriesUiState by loginVM.countriesUiState.collectAsStateWithLifecycle()
     val loginPhoneFormState by loginVM.loginFormPhoneUiState.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
 
     PanelFormPhoneNumber(
         countriesUiState = (countriesUiState as? CountriesUiState.Successful)?.countriesInfo,
         loginPhoneFormState = loginPhoneFormState,
         validateForm = loginVM::validatePhoneNumberForm,
-        onSentPhone = onSentPhone
+        onSentPhone = { code, phoneNumber ->
+            authenticationClient.authWithPhoneNumber(
+                context as Activity,
+                coroutineScope = coroutineScope,
+                phoneNumber = "+$code$phoneNumber",
+                onPhoneLoginLoading = { loginVM.updateLoginState(LoginUiState.Loading) },
+                onOtpSend = { verificationId, _ ->
+                    loginVM.updateLoginState(
+                        LoginUiState.SentOtp(verificationId, phoneNumber)
+                    )
+                },
+                onAuthResult = loginVM::updateLoginState
+            )
+        }
     )
     when (val currentState = countriesUiState) {
         is CountriesUiState.Failure -> ErrorCountries(

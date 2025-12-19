@@ -1,6 +1,5 @@
 package com.asm.taken.ui.navigation
 
-import android.app.Activity
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.SnackbarHostState
@@ -17,7 +16,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navigation
 import androidx.navigation.toRoute
-import com.asm.taken.model.LoginUiState
 import com.asm.taken.ui.page.login.BackgroundLogin
 import com.asm.taken.ui.page.login.CreateAccountPage
 import com.asm.taken.ui.page.login.CreateGamerPage
@@ -137,27 +135,11 @@ fun NavGraphBuilder.navigationLogin(
                 navController.getBackStackEntry(Login)
             }
             val loginVM = hiltViewModel<LoginVM>(parentEntry)
-            val coroutineScope = rememberCoroutineScope()
-            val context = LocalContext.current
             BackgroundLogin {
                 PhoneAuthPage(
                     loginVM = loginVM,
                     authenticationClient = authenticationClient,
                     snackBarHostState = snackBarHostState,
-                    onSentPhone = { code, phoneNumber ->
-                        authenticationClient.authWithPhoneNumber(
-                            context as Activity,
-                            coroutineScope = coroutineScope,
-                            phoneNumber = "+$code$phoneNumber",
-                            onPhoneLoginLoading = { loginVM.updateLoginState(LoginUiState.Loading) },
-                            onOtpSend = { verificationId, _ ->
-                                loginVM.updateLoginState(
-                                    LoginUiState.SentOtp(verificationId, phoneNumber)
-                                )
-                            },
-                            onAuthResult = loginVM::updateLoginState
-                        )
-                    },
                     popBackStack = navController::popBackStack,
                     onNavigateToMainPage = {
                         navController.navigate(MainPage(gamerId = it)) {
