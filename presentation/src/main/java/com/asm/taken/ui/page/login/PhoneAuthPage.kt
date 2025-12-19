@@ -1,6 +1,7 @@
 package com.asm.taken.ui.page.login
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -15,12 +16,14 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.Pin
 import androidx.compose.material.icons.outlined.Cancel
+import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -504,19 +507,23 @@ fun OtpDialog(
         ) {
             Column {
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().padding(10.dp),
                     horizontalArrangement = Arrangement.End
                 ) {
+                    Spacer(
+                        modifier = Modifier.weight(weight = 1f)
+                    )
                     IconButton(
                         modifier = Modifier
-                            .size(size = 32.dp)
-                            .padding(top = 10.dp, end = 10.dp),
+                            .background(color = Color.Red, shape = CircleShape)
+                            .size(24.dp),
                         onClick = { loginVM.resetLoginUiState() }
                     ) {
                         Icon(
-                            imageVector = Icons.Outlined.Cancel,
+                            modifier = Modifier.size(20.dp),
+                            imageVector = Icons.Rounded.Close,
                             contentDescription = null,
-                            tint = Color.Red
+                            tint = Color.White
                         )
                     }
                 }
