@@ -25,3 +25,8 @@ data object Home: Route()
 data class MainPage(
     val gamerId: String
 ): Route()
+
+@Serializable
+data class EditGamer(
+    val gamerId: String
+): Route()

@@ -11,7 +11,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.asm.taken.R
 
 @Composable
-fun BackgroundMainMenu(content: @Composable () -> Unit) {
+fun BackgroundMainSection(content: @Composable () -> Unit) {
     val gradientColors = listOf(
         colorResource(id = R.color.purple_200).copy(alpha = 0.6f),
         colorResource(id = R.color.purple_500).copy(alpha = 0.6f)
@@ -35,7 +35,7 @@ fun BackgroundMainMenu(content: @Composable () -> Unit) {
 @Preview(showSystemUi = true)
 @Composable
 fun PreviewBackgroundMainMenu() {
-    BackgroundMainMenu {
+    BackgroundMainSection {
 
     }
 }

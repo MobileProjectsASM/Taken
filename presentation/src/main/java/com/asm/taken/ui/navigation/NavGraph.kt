@@ -19,10 +19,12 @@ import com.asm.taken.ui.page.login.CreateAccountPage
 import com.asm.taken.ui.page.login.CreateGamerPage
 import com.asm.taken.ui.page.login.MainAuthPage
 import com.asm.taken.ui.page.login.PhoneAuthPage
-import com.asm.taken.ui.page.main_menu.BackgroundMainMenu
+import com.asm.taken.ui.page.main_menu.BackgroundMainSection
+import com.asm.taken.ui.page.main_menu.EditGamerPage
 import com.asm.taken.ui.page.main_menu.MainMenuPage
 import com.asm.taken.utils.AuthenticationClient
 import com.asm.taken.vm.CreateGamerVM
+import com.asm.taken.vm.EditGamerVM
 import com.asm.taken.vm.LoginVM
 import com.asm.taken.vm.MainVM
 
@@ -185,7 +187,7 @@ fun NavGraphBuilder.navigationMainPage(
                 navigationController.getBackStackEntry(MainPage::class)
             }
             val mainVM = hiltViewModel<MainVM>(parentEntry)
-            BackgroundMainMenu {
+            BackgroundMainSection {
                 MainMenuPage(
                     gamerId = gamerId,
                     snackBarHostState = snackBarHostState,
@@ -197,7 +199,21 @@ fun NavGraphBuilder.navigationMainPage(
                                 inclusive = true
                             }
                         }
+                    },
+                    navigateToEditGamer = {
+                        navigationController.navigate(EditGamer(gamerId = gamerId))
                     }
+                )
+            }
+        }
+        composable<EditGamer> { navBackStackEntry ->
+            val gamerId = navBackStackEntry.arguments?.getString("gamerId") ?: "default"
+            val editGamerVM = hiltViewModel<EditGamerVM>()
+            BackgroundMainSection {
+                EditGamerPage(
+                    gamerId = gamerId,
+                    snackBarHostState = snackBarHostState,
+                    editGamerVM = editGamerVM
                 )
             }
         }

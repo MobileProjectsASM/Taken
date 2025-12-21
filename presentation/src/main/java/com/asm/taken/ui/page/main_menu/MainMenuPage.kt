@@ -59,14 +59,16 @@ fun MainMenuPage(
     snackBarHostState: SnackbarHostState,
     mainVM: MainVM,
     authenticationClient: AuthenticationClient,
-    onNavigateToAuthentication: () -> Unit
+    onNavigateToAuthentication: () -> Unit,
+    navigateToEditGamer: () -> Unit
 ) {
     LaunchedEffect(true) { mainVM.getMainDataGamer(gamerId) }
     MainSection(
         gamerId = gamerId,
         mainVM = mainVM,
         authenticationClient = authenticationClient,
-        snackBarHostState = snackBarHostState
+        snackBarHostState = snackBarHostState,
+        navigateToEditGamerPage = navigateToEditGamer
     )
     NavigateSection(
         snackBarHostState = snackBarHostState,
@@ -80,7 +82,8 @@ fun MainSection(
     gamerId: String,
     snackBarHostState: SnackbarHostState,
     mainVM: MainVM,
-    authenticationClient: AuthenticationClient
+    authenticationClient: AuthenticationClient,
+    navigateToEditGamerPage: () -> Unit
 ) {
     val gamerState: GamerState by mainVM.gamerState.collectAsStateWithLifecycle()
 
@@ -101,9 +104,7 @@ fun MainSection(
                 onContinueGame = {
 
                 },
-                onEditGamer = {
-
-                },
+                onEditGamer = navigateToEditGamerPage,
                 onShowRanking = {
 
                 },

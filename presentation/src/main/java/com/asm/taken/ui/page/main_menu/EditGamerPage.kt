@@ -3,7 +3,6 @@ package com.asm.taken.ui.page.main_menu
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
-import com.asm.taken.vm.CreateGamerVM
 import com.asm.taken.vm.EditGamerVM
 
 @Composable
@@ -12,7 +11,7 @@ fun EditGamerPage(
     snackBarHostState: SnackbarHostState,
     editGamerVM: EditGamerVM
 ) {
-    BackgroundMainMenu {
+    BackgroundMainSection {
         EditGamerSection(editGamerVM)
     }
 }
