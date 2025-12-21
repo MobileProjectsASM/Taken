@@ -2,6 +2,7 @@ package com.asm.taken.ui.page.main_menu
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -14,6 +15,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.automirrored.rounded.Logout
 import androidx.compose.material.icons.filled.Replay
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
@@ -48,7 +50,6 @@ import com.asm.taken.ui.DefaultIconButton
 import com.asm.taken.ui.DefaultText
 import com.asm.taken.ui.ImageDialog
 import com.asm.taken.ui.PuzzleGeneralTitle
-import com.asm.taken.ui.SnackBarError
 import com.asm.taken.utils.AuthenticationClient
 import com.asm.taken.vm.MainVM
 
@@ -186,7 +187,7 @@ fun ContentMainMenu(
         PanelGamerProfile(
             gamer = successfulGamer.gamer,
             onEdit = onEdit,
-            onCloseSession = onCloseSession
+            closeSession = onCloseSession
         )
         PanelMenu(
             itHasProgress = successfulGamer.itHasProgress,
@@ -230,7 +231,7 @@ fun NavigateSection(
 fun PanelGamerProfile(
     gamer: Gamer,
     onEdit: (String) -> Unit,
-    onCloseSession: () -> Unit,
+    closeSession: () -> Unit,
 ) {
     Card(
         modifier = Modifier
@@ -243,21 +244,18 @@ fun PanelGamerProfile(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(10.dp)
+                modifier = Modifier.fillMaxWidth().padding(10.dp),
+                horizontalArrangement = Arrangement.End
             ) {
-                Spacer(
-                    modifier = Modifier.weight(weight = 1f)
-                )
                 IconButton(
-                    onClick = onCloseSession,
                     modifier = Modifier
                         .background(color = Color.Red, shape = CircleShape)
+                        .size(32.dp),
+                    onClick = closeSession
                 ) {
                     Icon(
-                        modifier = Modifier.size(24.dp),
-                        imageVector = Icons.AutoMirrored.Filled.Logout,
+                        modifier = Modifier.size(20.dp),
+                        imageVector = Icons.AutoMirrored.Rounded.Logout,
                         contentDescription = null,
                         tint = Color.White
                     )

@@ -584,7 +584,9 @@ fun ImageDialog(
 ) {
     Dialog(onDismissRequest = onDismissRequest) {
         Card(modifier = Modifier.fillMaxWidth()) {
-            Column {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
                 onCloseDialog?.also {
                     Row(
                         modifier = Modifier.fillMaxWidth().padding(10.dp),
