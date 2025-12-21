@@ -1,8 +1,6 @@
 package com.asm.data.sources.remote.impl.rest
 
-import android.content.Context
 import android.util.Log
-import com.asm.data.R
 import com.asm.data.sources.remote.abstract_remotes.CountryInfoRemoteSource
 import com.asm.data.sources.remote.impl.rest.api_service.CountryInfoClient
 import com.asm.data.sources.remote.impl.rest.mappers.CountryInfoMapper
@@ -10,12 +8,10 @@ import com.asm.domain.entities.CountryInfo
 import com.asm.domain.entities.Result
 import com.asm.domain.errors.GeneralError
 import com.asm.domain.errors.toUnsuccessful
-import dagger.hilt.android.qualifiers.ApplicationContext
 import java.net.SocketTimeoutException
 import javax.inject.Inject
 
 class CountryInfoRestServiceSource @Inject constructor(
-    @ApplicationContext private val context: Context,
     private val countryInfoClient: CountryInfoClient,
     private val countryInfoMapper: CountryInfoMapper
 ): CountryInfoRemoteSource {
