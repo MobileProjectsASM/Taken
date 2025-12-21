@@ -83,6 +83,7 @@ fun MainSection(
     authenticationClient: AuthenticationClient
 ) {
     val gamerState: GamerState by mainVM.gamerState.collectAsStateWithLifecycle()
+
     when (val state = gamerState) {
         is GamerState.Successful -> Box(
             modifier = Modifier.fillMaxSize(),
@@ -130,12 +131,8 @@ fun MainSection(
                 title = stringResource(R.string.txt_ttl_client_error),
                 image = painterResource(R.drawable.ic_sin_internet),
                 message = stringResource(R.string.err_network_connection),
-                retryProcess = {
-                    mainVM.getMainDataGamer(gamerId)
-                },
-                logOut = {
-                    mainVM.closeSession(authenticationClient::signOut)
-                },
+                retryProcess = { mainVM.getMainDataGamer(gamerId) },
+                logOut = { mainVM.closeSession(authenticationClient::signOut) },
                 onDismissDialog = {
 
                 }
@@ -145,9 +142,7 @@ fun MainSection(
                 title = stringResource(R.string.txt_ttl_service_error),
                 image = painterResource(R.drawable.ic_error),
                 message = stringResource(R.string.err_server),
-                logOut = {
-                    mainVM.closeSession(authenticationClient::signOut)
-                },
+                logOut = { mainVM.closeSession(authenticationClient::signOut) },
                 onDismissDialog = {
 
                 }
@@ -157,9 +152,7 @@ fun MainSection(
                 title = stringResource(R.string.txt_ttl_unexpected_error),
                 image = painterResource(R.drawable.ic_cancelar),
                 message = stringResource(R.string.err_process_data),
-                logOut = {
-                    mainVM.closeSession(authenticationClient::signOut)
-                },
+                logOut = { mainVM.closeSession(authenticationClient::signOut) },
                 onDismissDialog = {
 
                 }
@@ -219,9 +212,7 @@ fun NavigateSection(
         }
 
         MainMenuState.Loading -> CircularProgressDialog()
-        MainMenuState.SessionClosed -> LaunchedEffect(true) {
-            onNavigateToAuthentication()
-        }
+        MainMenuState.SessionClosed -> LaunchedEffect(true) { onNavigateToAuthentication() }
 
         null -> return
     }
