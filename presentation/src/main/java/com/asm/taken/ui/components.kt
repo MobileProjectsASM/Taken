@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
@@ -30,6 +31,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.outlined.Cancel
+import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -582,49 +584,54 @@ fun ImageDialog(
 ) {
     Dialog(onDismissRequest = onDismissRequest) {
         Card(modifier = Modifier.fillMaxWidth()) {
-            Column(
-                modifier = Modifier.padding(10.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
+            Column {
                 onCloseDialog?.also {
                     Row(
-                        modifier = Modifier.fillMaxWidth().padding(bottom = 10.dp),
+                        modifier = Modifier.fillMaxWidth().padding(10.dp),
                         horizontalArrangement = Arrangement.End
                     ) {
-                        Image(
-                            modifier = Modifier
-                                .size(24.dp)
-                                .fillMaxWidth()
-                                .clickable(onClick = it),
-                            painter = painterResource(R.drawable.ic_cancelar),
-                            contentDescription = null
+                        Spacer(
+                            modifier = Modifier.weight(weight = 1f)
                         )
+                        IconButton(
+                            modifier = Modifier
+                                .background(color = Color.Red, shape = CircleShape)
+                                .size(24.dp),
+                            onClick = onCloseDialog
+                        ) {
+                            Icon(
+                                modifier = Modifier.size(20.dp),
+                                imageVector = Icons.Rounded.Close,
+                                contentDescription = null,
+                                tint = Color.White
+                            )
+                        }
                     }
                 }
-                Text(
-                    modifier = Modifier.fillMaxWidth(),
-                    fontSize = dimensionResource(
-                        id = R.dimen.title_text_size
-                    ).value.sp,
+                Spacer(modifier = Modifier.height(16.dp))
+                PuzzleGeneralTitle(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
                     text = title,
-                    fontFamily = puzzleFontFamily,
-                    fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.Center
                 )
-                Spacer(modifier = Modifier.height(50.dp))
+                Spacer(modifier = Modifier.height(20.dp))
                 Image(
                     modifier = Modifier
                         .size(100.dp)
                         .fillMaxWidth()
-                        .align(Alignment.CenterHorizontally),
+                        .align(Alignment.CenterHorizontally)
+                        .padding(horizontal = 16.dp),
                     alignment = Alignment.Center,
                     painter = image,
                     contentDescription = null
                 )
-                Spacer(modifier = Modifier.height(30.dp))
+                Spacer(modifier = Modifier.height(20.dp))
                 Text(
                     modifier = Modifier
-                        .fillMaxWidth(),
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
                     textAlign = TextAlign.Center,
                     fontSize = dimensionResource(
                         id = R.dimen.default_text_size
@@ -636,6 +643,7 @@ fun ImageDialog(
                     Spacer(modifier = Modifier.height(20.dp))
                     contentButtons()
                 }
+                Spacer(modifier = Modifier.height(20.dp))
             }
         }
     }
