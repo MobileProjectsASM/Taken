@@ -55,7 +55,7 @@ data class LoginFormCreateAccountUiState(
     val passwordRepeatUiState: InputUiState<String, InputRepeatValueError>
 )
 
-data class LoginCreateGamerFormUiState(
+data class LoginEditGamerFormUiState(
     val imageSelected: InputUiState<ImageSelected, InputImageError>,
     val aliasUiState: InputUiState<String, InputAliasError>,
     val ageUiState: InputUiState<String, InputAgeError>,

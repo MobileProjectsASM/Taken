@@ -22,7 +22,7 @@ import com.asm.taken.ui.page.login.PhoneAuthPage
 import com.asm.taken.ui.page.main_menu.BackgroundMainMenu
 import com.asm.taken.ui.page.main_menu.MainMenuPage
 import com.asm.taken.utils.AuthenticationClient
-import com.asm.taken.vm.EditGamerVM
+import com.asm.taken.vm.CreateGamerVM
 import com.asm.taken.vm.LoginVM
 import com.asm.taken.vm.MainVM
 
@@ -47,11 +47,11 @@ fun MainNavigation(
         )
         composable<CreateGamer> { navBackStackEntry ->
             val createGamer: CreateGamer = navBackStackEntry.toRoute()
-            val editGamerVM = hiltViewModel<EditGamerVM>(navBackStackEntry)
+            val createGamerVM = hiltViewModel<CreateGamerVM>(navBackStackEntry)
             BackgroundLogin {
                 CreateGamerPage(
                     createGamerInfo = createGamer,
-                    editGamerVM = editGamerVM,
+                    createGamerVM = createGamerVM,
                     authenticationClient = authenticationClient,
                     snackBarHostState = snackBarHostState,
                     onNavigateToAuthentication = {
