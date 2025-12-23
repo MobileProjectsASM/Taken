@@ -23,7 +23,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.Pin
-import androidx.compose.material.icons.outlined.Cancel
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
@@ -42,8 +41,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.graphics.painter.Painter
-import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
@@ -56,7 +53,7 @@ import com.asm.domain.entities.AuthUser
 import com.asm.domain.errors.GeneralError
 import com.asm.taken.R
 import com.asm.taken.model.CountriesUiState
-import com.asm.taken.model.CountryUiState
+import com.asm.taken.model.Country
 import com.asm.taken.model.InputOtpError
 import com.asm.taken.model.InputPhoneCodeError
 import com.asm.taken.model.InputPhoneNumberError
@@ -154,7 +151,7 @@ fun AuthWithPhone(
 
 @Composable
 fun PanelFormPhoneNumber(
-    countriesUiState: List<CountryUiState>?,
+    countriesUiState: List<Country>?,
     loginPhoneFormState: LoginFormPhoneUiState,
     validateForm: (String, String) -> Unit,
     onSentPhone: (String, String) -> Unit
@@ -193,7 +190,7 @@ fun PanelFormPhoneNumber(
 
 @Composable
 fun FormPhoneNumber(
-    countriesUiState: List<CountryUiState>?,
+    countriesUiState: List<Country>?,
     loginPhoneFormState: LoginFormPhoneUiState,
     validateForm: (String, String) -> Unit,
     onSentPhone: (String, String) -> Unit
@@ -257,7 +254,7 @@ fun FormPhoneNumber(
 @Composable
 fun PhoneCodeInput(
     modifier: Modifier = Modifier,
-    countriesUiState: List<CountryUiState>?,
+    countriesUiState: List<Country>?,
     codeValue: String,
     phoneCodeErrors: List<String>,
     onChageCode: (String) -> Unit
@@ -305,7 +302,7 @@ fun PhoneCodeInput(
 @Composable
 fun ChoosePhoneCodeDialog(
     codeValue: String,
-    countriesUiState: List<CountryUiState>,
+    countriesUiState: List<Country>,
     onPhoneCodeSelected: (String) -> Unit
 ) {
     Dialog(onDismissRequest = {
@@ -325,7 +322,7 @@ fun ChoosePhoneCodeDialog(
                 Spacer(modifier = Modifier.height(10.dp))
                 LazyColumn {
                     items(countriesUiState) {
-                        ItemCountry(countryUiState = it) { countryUiState ->
+                        ItemCountry(country = it) { countryUiState ->
                             onPhoneCodeSelected(countryUiState.phoneCode)
                         }
                     }
@@ -336,10 +333,10 @@ fun ChoosePhoneCodeDialog(
 }
 
 @Composable
-fun ItemCountry(countryUiState: CountryUiState, onClick: (CountryUiState) -> Unit) {
+fun ItemCountry(country: Country, onClick: (Country) -> Unit) {
     Row(
         modifier = Modifier
-            .clickable { onClick(countryUiState) }
+            .clickable { onClick(country) }
             .padding(horizontal = 16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -348,14 +345,14 @@ fun ItemCountry(countryUiState: CountryUiState, onClick: (CountryUiState) -> Uni
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text = countryUiState.flag,
+                text = country.flag,
                 textAlign = TextAlign.Center
             )
         }
         Spacer(modifier = Modifier.width(10.dp))
         DefaultText(
             modifier = Modifier.fillMaxWidth(),
-            text = countryUiState.country
+            text = country.name
         )
     }
 }

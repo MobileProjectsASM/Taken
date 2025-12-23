@@ -21,7 +21,7 @@ import com.asm.taken.model.InputAliasError
 import com.asm.taken.model.InputCountryError
 import com.asm.taken.model.InputState
 import com.asm.taken.model.InputUiState
-import com.asm.taken.model.LoginEditGamerFormUiState
+import com.asm.taken.model.EditGamerFormUiState
 import com.asm.taken.model.NavigationState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -50,9 +50,9 @@ class CreateGamerVM @Inject constructor(
 
     private val _countriesUiState: MutableStateFlow<CountriesUiState?> =
         MutableStateFlow(null)
-    private val _loginEditGamerFormUiState: MutableStateFlow<LoginEditGamerFormUiState> =
+    private val _editGamerFormUiState: MutableStateFlow<EditGamerFormUiState> =
         MutableStateFlow(
-            LoginEditGamerFormUiState(
+            EditGamerFormUiState(
                 imageSelected = InputUiState(ImageSelected.Default),
                 aliasUiState = InputUiState(""),
                 ageUiState = InputUiState(""),
@@ -62,8 +62,8 @@ class CreateGamerVM @Inject constructor(
     private val _navigationState: MutableStateFlow<NavigationState?> = MutableStateFlow(null)
 
     val countriesUiState: StateFlow<CountriesUiState?> = _countriesUiState
-    val loginCreateGamerFormState: StateFlow<LoginEditGamerFormUiState> =
-        _loginEditGamerFormUiState
+    val editGamerFormState: StateFlow<EditGamerFormUiState> =
+        _editGamerFormUiState
     val navigationState: StateFlow<NavigationState?> = _navigationState
 
     fun getCountriesInfo() {
@@ -114,7 +114,7 @@ class CreateGamerVM @Inject constructor(
                         CreateGamerUC.ProfileImage.InfoImage(mimeType, bytes)
                     }
 
-                    is ImageSelected.SocialNetwork -> CreateGamerUC.ProfileImage.UrlImage(
+                    is ImageSelected.NetworkImage -> CreateGamerUC.ProfileImage.UrlImage(
                         imageSelected.urlImage
                     )
                 }
@@ -179,8 +179,8 @@ class CreateGamerVM @Inject constructor(
         val aliasErrors = validateAlias(alias)
         val ageErrors = validateAge(age)
         val countryErrors = validateCountry(countryData.name)
-        _loginEditGamerFormUiState.update {
-            LoginEditGamerFormUiState(
+        _editGamerFormUiState.update {
+            EditGamerFormUiState(
                 aliasUiState = aliasErrors.run {
                     if (isEmpty()) InputUiState(alias, InputState.Success)
                     else InputUiState(alias, InputState.Error(this))

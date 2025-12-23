@@ -1,32 +1,222 @@
 package com.asm.taken.ui.page.main_menu
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material3.Card
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.asm.domain.entities.Gamer
+import com.asm.domain.errors.GeneralError
+import com.asm.taken.R
+import com.asm.taken.model.Country
+import com.asm.taken.model.CountryData
+import com.asm.taken.model.EditGamerFormUiState
+import com.asm.taken.model.EditGamerState
+import com.asm.taken.model.ImageSelected
+import com.asm.taken.model.InputState
+import com.asm.taken.ui.CircularProgressDialog
+import com.asm.taken.ui.PuzzleGeneralTitle
+import com.asm.taken.ui.SnackBarError
+import com.asm.taken.ui.page.login.FormEditGamer
+import com.asm.taken.utils.AuthenticationClient
 import com.asm.taken.vm.EditGamerVM
 
 @Composable
 fun EditGamerPage(
     gamerId: String,
     snackBarHostState: SnackbarHostState,
-    editGamerVM: EditGamerVM
+    editGamerVM: EditGamerVM,
+    authenticationClient: AuthenticationClient,
+    navigateToMainMenu: () -> Unit
 ) {
     BackgroundMainSection {
-        EditGamerSection(editGamerVM)
+        EditGamerSection(
+            gamerId = gamerId,
+            editGamerVM = editGamerVM,
+            navigateToMainMenu = navigateToMainMenu,
+            authenticationClient = authenticationClient,
+            snackBarHostState = snackBarHostState
+        )
     }
 }
 
 @Composable
-fun EditGamerSection(editGamerVM: EditGamerVM) {
+fun EditGamerSection(
+    gamerId: String,
+    editGamerVM: EditGamerVM,
+    authenticationClient: AuthenticationClient,
+    snackBarHostState: SnackbarHostState,
+    navigateToMainMenu: () -> Unit
+) {
+    LaunchedEffect(true) {
+        editGamerVM.getGamerData(
+            gamerId = gamerId,
+            getCurrentUserSocialNetworkImage = authenticationClient::getCurrentUserSocialNetworkImage
+        )
+    }
 
+    val gamerUIState: EditGamerState by editGamerVM.gamerState.collectAsStateWithLifecycle()
+    val editGamerFormState: EditGamerFormUiState by editGamerVM.editGamerFormState.collectAsStateWithLifecycle()
 
-    PanelEditGamerForm()
+    when (val gamerState = gamerUIState) {
+        is EditGamerState.Failure -> when (gamerState.error) {
+            is GeneralError.ClientError -> com.asm.taken.ui.DialogError(
+                title = stringResource(R.string.txt_ttl_client_error),
+                image = painterResource(R.drawable.ic_warning),
+                message = stringResource(R.string.err_client),
+                onDismissDialog = {  }
+            )
 
+            GeneralError.ConnectionError -> com.asm.taken.ui.DialogError(
+                title = stringResource(R.string.txt_ttl_unexpected_error),
+                image = painterResource(R.drawable.ic_warning),
+                message = stringResource(R.string.err_server_connection),
+                onDismissDialog = {  }
+            )
+
+            GeneralError.NetworkError -> SnackBarError(
+                snackBarHostState = snackBarHostState,
+                actionLabel = stringResource(R.string.txt_label_retry),
+                duration = SnackbarDuration.Long,
+                message = stringResource(R.string.err_network_connection),
+                onDismiss = {  }
+            )
+
+            is GeneralError.ServerError -> com.asm.taken.ui.DialogError(
+                title = stringResource(R.string.txt_ttl_service_error),
+                image = painterResource(R.drawable.ic_error),
+                message = stringResource(R.string.err_server),
+                onDismissDialog = {  }
+            )
+
+            GeneralError.Unknown -> SnackBarError(
+                snackBarHostState = snackBarHostState,
+                message = stringResource(R.string.err_auth),
+                withDismissAction = true,
+                onDismiss = {  }
+            )
+        }
+        EditGamerState.Loading -> CircularProgressDialog()
+        is EditGamerState.Success -> {
+            LaunchedEffect(true) {
+                editGamerVM.validateEditGamerForm(
+                    alias = gamerState.gamer.gamerNickName,
+                    age = gamerState.gamer.gamerAge.toString(),
+                    countryData = CountryData(
+                        gamerState.gamer.gamerCountry,
+                        gamerState.gamer.gamerCountryFlag
+                    ),
+                    imageSelected = ImageSelected.NetworkImage(gamerState.gamer.gamerImage)
+                )
+            }
+
+            PanelFormEditGamer(
+                currentGamer = gamerState.gamer,
+                editGamerFormState = editGamerFormState,
+                labelButtonSaveGamer = stringResource(R.string.txt_btn_save_changes),
+                socialNetworkImage = gamerState.socialNetworkImage,
+                countries = gamerState.countries,
+                validateFormCreateGamer = editGamerVM::validateEditGamerForm,
+                saveGamer = {
+
+                },
+                onBack = navigateToMainMenu
+            )
+        }
+    }
 }
 
 @Composable
-fun PanelEditGamerForm() {
-
+fun PanelFormEditGamer(
+    currentGamer: Gamer,
+    labelButtonSaveGamer: String,
+    socialNetworkImage: String?,
+    editGamerFormState: EditGamerFormUiState,
+    countries: List<Country>?,
+    validateFormCreateGamer: (String, String, CountryData, ImageSelected) -> Unit,
+    saveGamer: () -> Unit,
+    onBack: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.Center
+    ) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(20.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(10.dp)
+                ) {
+                    IconButton(
+                        modifier = Modifier
+                            .background(color = Color.Red, shape = CircleShape)
+                            .size(32.dp),
+                        onClick = onBack
+                    ) {
+                        Icon(
+                            modifier = Modifier.size(20.dp),
+                            imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
+                            contentDescription = null,
+                            tint = Color.White
+                        )
+                    }
+                }
+                PuzzleGeneralTitle(
+                    modifier = Modifier.fillMaxWidth(),
+                    text = stringResource(id = R.string.txt_ttl_form_edit_gamer)
+                )
+                Spacer(modifier = Modifier.height(50.dp))
+                FormEditGamer(
+                    labelButtonSaveGamer = labelButtonSaveGamer,
+                    socialNetworkImage = socialNetworkImage,
+                    editGamerFormState = editGamerFormState,
+                    countriesUiState = countries,
+                    validateFormCreateGamer = validateFormCreateGamer,
+                    enableActionButton = editGamerFormState.aliasUiState.state is InputState.Success && editGamerFormState.ageUiState.state is InputState.Success && editGamerFormState.countryUiState.state is InputState.Success && currentGamer.let {
+                        it.gamerNickName != editGamerFormState.aliasUiState.value
+                                || it.gamerAge.toString() != editGamerFormState.ageUiState.value
+                                || it.gamerCountry != editGamerFormState.countryUiState.value.name
+                    },
+                    saveGamer = saveGamer
+                )
+            }
+        }
+    }
 }
 
 @Preview(showSystemUi = true, showBackground = true)

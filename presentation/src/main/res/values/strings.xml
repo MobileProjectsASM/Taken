@@ -7,6 +7,7 @@
     <string name="txt_ttl_form_phone_dialog">Verify phone number</string>
     <string name="txt_ttl_form_create_account">Create Account!</string>
     <string name="txt_ttl_form_create_gamer">Create Gamer!</string>
+    <string name="txt_ttl_form_edit_gamer">Edit Gamer!</string>
     <string name="txt_ttl_choose_country">Choose country</string>
     <string name="txt_ttl_choose_option">Choose option</string>
     <string name="txt_ttl_client_error">Request Error</string>
@@ -36,6 +37,7 @@
     <string name="txt_btn_verify">VERIFY</string>
     <string name="txt_btn_create_account">CREATE ACCOUNT</string>
     <string name="txt_btn_create_gamer">CREATE GAMER</string>
+    <string name="txt_btn_save_changes">SAVE CHANGES</string>
     <string name="txt_btn_new_game">New Game</string>
     <string name="txt_btn_continue_game">Continue</string>
     <string name="txt_btn_edit_gamer">Edit Gamer</string>

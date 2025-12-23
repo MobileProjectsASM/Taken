@@ -1,14 +1,164 @@
 package com.asm.taken.vm
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.asm.domain.entities.Result
+import com.asm.domain.entities.asSuccessful
+import com.asm.domain.errors.GeneralError
+import com.asm.domain.use_cases.GetCountriesInfoUC
 import com.asm.domain.use_cases.GetGamerUC
+import com.asm.taken.model.Country
+import com.asm.taken.model.CountryData
+import com.asm.taken.model.EditGamerFormUiState
+import com.asm.taken.model.EditGamerState
+import com.asm.taken.model.ImageSelected
+import com.asm.taken.model.InputAgeError
+import com.asm.taken.model.InputAliasError
+import com.asm.taken.model.InputCountryError
+import com.asm.taken.model.InputState
+import com.asm.taken.model.InputUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.async
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class EditGamerVM @Inject constructor(
     private val getGamerUC: GetGamerUC,
+    private val getCountriesInfoUC: GetCountriesInfoUC,
     private val saveGamerUC: GetGamerUC
-): ViewModel() {
+) : ViewModel() {
+
+    companion object {
+        const val TAG = "EditGamerVM"
+    }
+
+    private val _gamerState: MutableStateFlow<EditGamerState> =
+        MutableStateFlow(EditGamerState.Loading)
+    private val _editGamerFormUiState: MutableStateFlow<EditGamerFormUiState> =
+        MutableStateFlow(
+            EditGamerFormUiState(
+                imageSelected = InputUiState(ImageSelected.Default),
+                aliasUiState = InputUiState(""),
+                ageUiState = InputUiState(""),
+                countryUiState = InputUiState(CountryData("", null))
+            )
+        )
+
+    val gamerState: StateFlow<EditGamerState> = _gamerState
+    val editGamerFormState: StateFlow<EditGamerFormUiState> =
+        _editGamerFormUiState
+
+    fun saveGamer() {
+
+    }
+
+
+    fun getGamerData(
+        gamerId: String,
+        getCurrentUserSocialNetworkImage: () -> Result<String?, GeneralError>
+    ) {
+        viewModelScope.launch {
+            _gamerState.update { EditGamerState.Loading }
+            try {
+
+                val deferredGamerResult = async { getGamerUC.execute(gamerId) }
+                val deferredCountriesInfoResult = async { getCountriesInfoUC.execute(Unit) }
+                val socialNetworkResult = getCurrentUserSocialNetworkImage()
+
+                val gamerResult = deferredGamerResult.await()
+                val countriesResult = deferredCountriesInfoResult.await()
+                val gamerState = when {
+                    gamerResult is Result.Unsuccessful -> EditGamerState.Failure(gamerResult.error)
+                    socialNetworkResult is Result.Unsuccessful -> EditGamerState.Failure(
+                        socialNetworkResult.error
+                    )
+                    countriesResult is Result.Unsuccessful -> EditGamerState.Failure(
+                        countriesResult.error
+                    )
+
+                    else -> {
+                        val gamer = gamerResult.asSuccessful().data
+                        if (gamer != null) EditGamerState.Success(
+                            gamer,
+                            socialNetworkResult.asSuccessful().data,
+                            countriesResult.asSuccessful().data.map {
+                                Country(
+                                    name = it.name,
+                                    phoneCode = it.phoneCode,
+                                    flag = it.flag
+                                )
+                            }
+                        )
+                        else EditGamerState.Failure(GeneralError.Unknown).also {
+                            Log.e(TAG, "Gamer not found")
+                        }
+                    }
+                }
+                _gamerState.update { gamerState }
+            } catch (exception: Exception) {
+                Log.e(TAG, "error to get gamer data", exception)
+                _gamerState.update { EditGamerState.Failure(GeneralError.Unknown) }
+            }
+        }
+    }
+
+
+    fun validateEditGamerForm(
+        alias: String,
+        age: String,
+        countryData: CountryData,
+        imageSelected: ImageSelected
+    ) {
+        val aliasErrors = validateAlias(alias)
+        val ageErrors = validateAge(age)
+        val countryErrors = validateCountry(countryData.name)
+        _editGamerFormUiState.update {
+            EditGamerFormUiState(
+                aliasUiState = aliasErrors.run {
+                    if (isEmpty()) InputUiState(alias, InputState.Success)
+                    else InputUiState(alias, InputState.Error(this))
+                },
+                ageUiState = ageErrors.run {
+                    if (isEmpty()) InputUiState(age, InputState.Success)
+                    else InputUiState(age, InputState.Error(this))
+                },
+                countryUiState = countryErrors.run {
+                    if (isEmpty()) InputUiState(countryData, InputState.Success)
+                    else InputUiState(countryData, InputState.Error(this))
+                },
+                imageSelected = InputUiState(imageSelected)
+            )
+        }
+    }
+
+    private fun validateAlias(alias: String): List<InputAliasError> {
+        val aliasErrors = mutableListOf<InputAliasError>()
+        if (alias.isEmpty()) aliasErrors.add(InputAliasError.EMPTY)
+        return aliasErrors
+    }
+
+    private fun validateAge(age: String): List<InputAgeError> {
+        val ageErrors = mutableListOf<InputAgeError>()
+        if (age.isEmpty()) ageErrors.add(InputAgeError.EMPTY)
+        try {
+            val ageInt = age.toInt()
+            if (ageInt > 100) ageErrors.add(InputAgeError.GREATER_THAN_100)
+            if (ageInt < 8) ageErrors.add(InputAgeError.LESS_THAN_8)
+        } catch (exception: NumberFormatException) {
+            ageErrors.add(InputAgeError.ONLY_NUMBERS)
+        }
+        return ageErrors
+    }
+
+    private fun validateCountry(country: String): List<InputCountryError> {
+        val countryErrors = mutableListOf<InputCountryError>()
+        if (country.isEmpty()) countryErrors.add(InputCountryError.EMPTY)
+        return countryErrors
+    }
 
 }

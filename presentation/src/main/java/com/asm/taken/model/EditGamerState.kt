@@ -1,11 +1,14 @@
 package com.asm.taken.model
 
+import com.asm.domain.entities.Gamer
 import com.asm.domain.errors.GeneralError
 
-sealed class NavigationState {
-    data object Loading: NavigationState()
-    data object SessionClosed: NavigationState()
-    data class GamerCreated(val gamerId: String): NavigationState()
-    data class Failure(val error: GeneralError): NavigationState()
+sealed class EditGamerState {
+    data object Loading: EditGamerState()
+    data class Success(
+        val gamer: Gamer,
+        val socialNetworkImage: String?,
+        val countries: List<Country>
+    ): EditGamerState()
+    data class Failure(val error: GeneralError): EditGamerState()
 }
-

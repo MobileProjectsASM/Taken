@@ -24,12 +24,12 @@ sealed class InputState<out InputError> {
 
 sealed class CountriesUiState {
     data object Loading: CountriesUiState()
-    data class Successful(val countriesInfo: List<CountryUiState>) : CountriesUiState()
+    data class Successful(val countriesInfo: List<Country>) : CountriesUiState()
     data class Failure(val generalFailure: GeneralError) : CountriesUiState()
 }
 
-data class CountryUiState(
-    val country: String,
+data class Country(
+    val name: String,
     val phoneCode: String,
     val flag: String
 )
@@ -55,7 +55,7 @@ data class LoginFormCreateAccountUiState(
     val passwordRepeatUiState: InputUiState<String, InputRepeatValueError>
 )
 
-data class LoginEditGamerFormUiState(
+data class EditGamerFormUiState(
     val imageSelected: InputUiState<ImageSelected, InputImageError>,
     val aliasUiState: InputUiState<String, InputAliasError>,
     val ageUiState: InputUiState<String, InputAgeError>,
@@ -64,7 +64,7 @@ data class LoginEditGamerFormUiState(
 
 sealed class ImageSelected {
     data object Default: ImageSelected()
-    data class SocialNetwork(val urlImage: String): ImageSelected()
+    data class NetworkImage(val urlImage: String): ImageSelected()
     data class Gallery(val uri: Uri): ImageSelected()
 }
 

@@ -75,7 +75,10 @@ class AuthenticationClient @Inject constructor(
         }
     }
 
-    suspend fun signInWithEmailAndPassword(email: String, password: String): Result<AuthUser, GeneralError> {
+    suspend fun signInWithEmailAndPassword(
+        email: String,
+        password: String
+    ): Result<AuthUser, GeneralError> {
         return try {
             val authResult = auth.signInWithEmailAndPassword(email, password).await()
             val firebaseUser = authResult.user
@@ -132,6 +135,15 @@ class AuthenticationClient @Inject constructor(
         )
     }
 
+    fun getCurrentUserSocialNetworkImage(): Result<String?, GeneralError> = try {
+        val socialNetworkImage = auth.currentUser?.photoUrl?.toString()?.let { baseUrl ->
+            AccessToken.getCurrentAccessToken()?.token?.let { "$baseUrl?access_token=$it" }
+        }
+        Result.Successful(socialNetworkImage)
+    } catch (exception: Exception) {
+        Result.Unsuccessful(GeneralError.Unknown)
+    }
+
     suspend fun signInWithGoogle(context: Context): Result<AuthUser, GeneralError> =
         signInWithCredentialManager(context, true)
 
@@ -158,7 +170,9 @@ class AuthenticationClient @Inject constructor(
                 override fun onVerificationFailed(firebaseException: FirebaseException) {
                     Log.e(TAG, "Unexpected Exception to auth with phone number", firebaseException)
                     val phonesSendOtpError = when (firebaseException) {
-                        is FirebaseAuthInvalidCredentialsException, is FirebaseTooManyRequestsException, is FirebaseAuthMissingActivityForRecaptchaException -> GeneralError.ClientError().toUnsuccessful()
+                        is FirebaseAuthInvalidCredentialsException, is FirebaseTooManyRequestsException, is FirebaseAuthMissingActivityForRecaptchaException -> GeneralError.ClientError()
+                            .toUnsuccessful()
+
                         is FirebaseNetworkException -> GeneralError.NetworkError.toUnsuccessful()
                         else -> GeneralError.Unknown.toUnsuccessful()
                     }
