@@ -14,6 +14,15 @@ interface GamerRepository {
         gamerImage: String = ""
     ): Result<String, GeneralError>
 
+    suspend fun updateGamer(
+        userId: String,
+        gamerAlias: String,
+        gamerAge: Int,
+        gamerCountry: String,
+        gamerCountryFlag: String?,
+        gamerImage: String = ""
+    ): Result<String, GeneralError>
+
     suspend fun getGamerById(gamerId: String): Result<Gamer?, GeneralError>
     suspend fun updateGamerImage(gamerId: String, imageUrl: String): Result<Unit, GeneralError>
     suspend fun verifyGamerExists(gamerId: String): Result<Boolean, GeneralError>
