@@ -7,6 +7,7 @@ import com.asm.domain.entities.Result
 import com.asm.domain.entities.asSuccessful
 import com.asm.domain.errors.GeneralError
 import com.asm.domain.use_cases.GetCountriesInfoUC
+import com.asm.domain.use_cases.GetDefaultImageUC
 import com.asm.domain.use_cases.GetGamerUC
 import com.asm.taken.model.Country
 import com.asm.taken.model.CountryData
@@ -29,6 +30,7 @@ import javax.inject.Inject
 class EditGamerVM @Inject constructor(
     private val getGamerUC: GetGamerUC,
     private val getCountriesInfoUC: GetCountriesInfoUC,
+    private val getDefaultImageUC: GetDefaultImageUC,
     private val saveGamerUC: GetGamerUC
 ) : ViewModel() {
 
@@ -67,25 +69,33 @@ class EditGamerVM @Inject constructor(
 
                 val deferredGamerResult = async { getGamerUC.execute(gamerId) }
                 val deferredCountriesInfoResult = async { getCountriesInfoUC.execute(Unit) }
+                val deferredDefaultImageResult = async { getDefaultImageUC.execute(Unit) }
                 val socialNetworkResult = getCurrentUserSocialNetworkImage()
 
                 val gamerResult = deferredGamerResult.await()
                 val countriesResult = deferredCountriesInfoResult.await()
+                val defaultImageResult = deferredDefaultImageResult.await()
                 val gamerState = when {
                     gamerResult is Result.Unsuccessful -> EditGamerState.Failure(gamerResult.error)
                     socialNetworkResult is Result.Unsuccessful -> EditGamerState.Failure(
                         socialNetworkResult.error
                     )
+
                     countriesResult is Result.Unsuccessful -> EditGamerState.Failure(
                         countriesResult.error
+                    )
+
+                    defaultImageResult is Result.Unsuccessful -> EditGamerState.Failure(
+                        defaultImageResult.error
                     )
 
                     else -> {
                         val gamer = gamerResult.asSuccessful().data
                         if (gamer != null) EditGamerState.Success(
-                            gamer,
-                            socialNetworkResult.asSuccessful().data,
-                            countriesResult.asSuccessful().data.map {
+                            gamer = gamer,
+                            socialNetworkImage = socialNetworkResult.asSuccessful().data,
+                            defaultImageUrl = defaultImageResult.asSuccessful().data,
+                            countries = countriesResult.asSuccessful().data.map {
                                 Country(
                                     name = it.name,
                                     phoneCode = it.phoneCode,

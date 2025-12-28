@@ -8,6 +8,7 @@ sealed class EditGamerState {
     data class Success(
         val gamer: Gamer,
         val socialNetworkImage: String?,
+        val defaultImageUrl: String?,
         val countries: List<Country>
     ): EditGamerState()
     data class Failure(val error: GeneralError): EditGamerState()
