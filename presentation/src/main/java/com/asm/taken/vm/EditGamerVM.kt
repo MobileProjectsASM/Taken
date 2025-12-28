@@ -12,7 +12,6 @@ import com.asm.taken.model.Country
 import com.asm.taken.model.CountryData
 import com.asm.taken.model.EditGamerFormUiState
 import com.asm.taken.model.EditGamerState
-import com.asm.taken.model.ImageSelected
 import com.asm.taken.model.InputAgeError
 import com.asm.taken.model.InputAliasError
 import com.asm.taken.model.InputCountryError
@@ -42,7 +41,7 @@ class EditGamerVM @Inject constructor(
     private val _editGamerFormUiState: MutableStateFlow<EditGamerFormUiState> =
         MutableStateFlow(
             EditGamerFormUiState(
-                imageSelected = InputUiState(ImageSelected.Default),
+                imageURI = InputUiState(null),
                 aliasUiState = InputUiState(""),
                 ageUiState = InputUiState(""),
                 countryUiState = InputUiState(CountryData("", null))
@@ -112,7 +111,7 @@ class EditGamerVM @Inject constructor(
         alias: String,
         age: String,
         countryData: CountryData,
-        imageSelected: ImageSelected
+        imageURI: String?
     ) {
         val aliasErrors = validateAlias(alias)
         val ageErrors = validateAge(age)
@@ -131,7 +130,7 @@ class EditGamerVM @Inject constructor(
                     if (isEmpty()) InputUiState(countryData, InputState.Success)
                     else InputUiState(countryData, InputState.Error(this))
                 },
-                imageSelected = InputUiState(imageSelected)
+                imageURI = InputUiState(imageURI)
             )
         }
     }

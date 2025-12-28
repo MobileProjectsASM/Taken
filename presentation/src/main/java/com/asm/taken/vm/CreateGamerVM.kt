@@ -1,7 +1,5 @@
 package com.asm.taken.vm
 
-import android.app.Application
-import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -15,7 +13,6 @@ import com.asm.domain.use_cases.SaveSessionUC
 import com.asm.taken.mappers.CountryMapper
 import com.asm.taken.model.CountriesUiState
 import com.asm.taken.model.CountryData
-import com.asm.taken.model.ImageSelected
 import com.asm.taken.model.InputAgeError
 import com.asm.taken.model.InputAliasError
 import com.asm.taken.model.InputCountryError
@@ -28,10 +25,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import java.io.ByteArrayOutputStream
-import java.io.FileNotFoundException
-import java.io.IOException
-import java.io.InputStream
 import javax.inject.Inject
 
 @HiltViewModel
@@ -40,8 +33,7 @@ class CreateGamerVM @Inject constructor(
     private val getCountriesInfoUC: GetCountriesInfoUC,
     private val createGamerUC: CreateGamerUC,
     private val saveSessionUC: SaveSessionUC,
-    private val countryMapper: CountryMapper,
-    private val application: Application
+    private val countryMapper: CountryMapper
 ) : ViewModel() {
 
     companion object {
@@ -53,7 +45,7 @@ class CreateGamerVM @Inject constructor(
     private val _editGamerFormUiState: MutableStateFlow<EditGamerFormUiState> =
         MutableStateFlow(
             EditGamerFormUiState(
-                imageSelected = InputUiState(ImageSelected.Default),
+                imageURI = InputUiState(null),
                 aliasUiState = InputUiState(""),
                 ageUiState = InputUiState(""),
                 countryUiState = InputUiState(CountryData("", null))
@@ -97,34 +89,18 @@ class CreateGamerVM @Inject constructor(
         age: Int,
         country: String,
         countryFlag: String?,
-        imageSelected: ImageSelected
+        imageURI: String?
     ) {
         viewModelScope.launch {
             _navigationState.update { NavigationState.Loading }
             try {
-                val image = when (imageSelected) {
-                    ImageSelected.Default -> null
-                    is ImageSelected.Gallery -> {
-                        val bytes = getByteArrayFromUri(imageSelected.uri)
-                        val mimeType = application.contentResolver.getType(imageSelected.uri)
-                        if (bytes == null || mimeType == null) {
-                            _navigationState.update { NavigationState.Failure(GeneralError.Unknown) }
-                            return@launch
-                        }
-                        CreateGamerUC.ProfileImage.InfoImage(mimeType, bytes)
-                    }
-
-                    is ImageSelected.NetworkImage -> CreateGamerUC.ProfileImage.UrlImage(
-                        imageSelected.urlImage
-                    )
-                }
                 val params = CreateGamerUC.GamerParams(
                     gamerId = id,
                     nickName = alias,
                     age = age,
                     country = country,
                     countryFlag = countryFlag,
-                    image = image
+                    imageURI = imageURI
                 )
                 val navigationState = when (val createGamerResult = createGamerUC.execute(params)) {
                     is Result.Successful<String> -> when (val saveSessionResult =
@@ -147,34 +123,11 @@ class CreateGamerVM @Inject constructor(
         }
     }
 
-    private fun getByteArrayFromUri(uri: Uri): ByteArray? {
-        val byteArrayOutputStream = ByteArrayOutputStream()
-        var inputStream: InputStream? = null
-        return try {
-            inputStream = application.contentResolver.openInputStream(uri) ?: return null
-            val buffer = ByteArray(1024)
-            var length: Int
-            while (inputStream.read(buffer).also { length = it } != -1) {
-                byteArrayOutputStream.write(buffer, 0, length)
-            }
-            byteArrayOutputStream.toByteArray()
-        } catch (exception: FileNotFoundException) {
-            Log.e(TAG, exception.stackTraceToString())
-            null
-        } finally {
-            try {
-                inputStream?.close()
-            } catch (exception: IOException) {
-                Log.e(TAG, exception.stackTraceToString())
-            }
-        }
-    }
-
     fun validateCreateGamerForm(
         alias: String,
         age: String,
         countryData: CountryData,
-        imageSelected: ImageSelected
+        imageURI: String?
     ) {
         val aliasErrors = validateAlias(alias)
         val ageErrors = validateAge(age)
@@ -193,7 +146,7 @@ class CreateGamerVM @Inject constructor(
                     if (isEmpty()) InputUiState(countryData, InputState.Success)
                     else InputUiState(countryData, InputState.Error(this))
                 },
-                imageSelected = InputUiState(imageSelected)
+                imageURI = InputUiState(imageURI)
             )
         }
     }
