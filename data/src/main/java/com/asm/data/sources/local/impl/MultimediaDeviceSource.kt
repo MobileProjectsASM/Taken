@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.Log
 import androidx.core.net.toUri
 import com.asm.data.sources.local.interfaces.MultimediaLocalSource
+import com.asm.domain.entities.MetaDataImage
 import com.asm.domain.entities.Result
 import com.asm.domain.errors.GeneralError
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -19,10 +20,11 @@ class MultimediaDeviceSource @Inject constructor(
         const val TAG = "Multimedia_Device_Source"
     }
 
-    override suspend fun getFileContent(path: String): Result<ByteArray, GeneralError> {
+    override suspend fun getFileContent(path: String): Result<MetaDataImage, GeneralError> {
         return try {
+            val mimeType = context.contentResolver.getType(path.toUri())
             val byteArrayOutputStream = ByteArrayOutputStream()
-            context.contentResolver.openInputStream(path.toUri()).use { inStream ->
+            val content = context.contentResolver.openInputStream(path.toUri()).use { inStream ->
                 inStream?.let {
                     val buffer = ByteArray(1024)
                     var length: Int
@@ -31,7 +33,9 @@ class MultimediaDeviceSource @Inject constructor(
                     }
                     byteArrayOutputStream.toByteArray()
                 }
-            }?.let { Result.Successful(it) } ?: Result.Unsuccessful(GeneralError.ServerError())
+            }
+            if (content == null || mimeType == null) Result.Unsuccessful(GeneralError.ClientError())
+            else Result.Successful(MetaDataImage(content, mimeType))
         } catch (exception: FileNotFoundException) {
             Log.e(TAG, "get content file error", exception)
             Result.Unsuccessful(GeneralError.ClientError())

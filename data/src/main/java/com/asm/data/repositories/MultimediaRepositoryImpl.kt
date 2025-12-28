@@ -3,6 +3,7 @@ package com.asm.data.repositories
 import com.asm.data.sources.hardware.ConnectionSource
 import com.asm.data.sources.local.interfaces.MultimediaLocalSource
 import com.asm.data.sources.remote.abstract_remotes.MultimediaRemoteSource
+import com.asm.domain.entities.MetaDataImage
 import com.asm.domain.entities.Result
 import com.asm.domain.errors.GeneralError
 import com.asm.domain.errors.toUnsuccessful
@@ -61,7 +62,7 @@ class MultimediaRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun getFileContent(path: String): Result<ByteArray, GeneralError> {
+    override suspend fun getFileContent(path: String): Result<MetaDataImage, GeneralError> {
         return try {
             if (path.startsWith(REMOTE_RESOURCE)) TODO()
             else multimediaLocalSource.getFileContent(path)
