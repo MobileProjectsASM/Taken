@@ -1,6 +1,7 @@
 package com.asm.data.repositories
 
 import com.asm.data.sources.hardware.ConnectionSource
+import com.asm.data.sources.local.interfaces.MultimediaLocalSource
 import com.asm.data.sources.remote.abstract_remotes.MultimediaRemoteSource
 import com.asm.domain.entities.Result
 import com.asm.domain.errors.GeneralError
@@ -11,6 +12,7 @@ import javax.inject.Inject
 
 class MultimediaRepositoryImpl @Inject constructor(
     private val multimediaRemoteSource: MultimediaRemoteSource,
+    private val multimediaLocalSource: MultimediaLocalSource,
     private val connectionSource: ConnectionSource,
     private val logger: Logger
 ) : MultimediaRepository {
@@ -19,6 +21,7 @@ class MultimediaRepositoryImpl @Inject constructor(
         const val PROFILE_IMAGES_PATH = "images/profile"
         const val DEFAULT_PROFILE_IMAGE = "default_profile_image.png"
         const val TAG = "MultimediaRepositoryImpl"
+        const val REMOTE_RESOURCE = "http"
     }
 
     override suspend fun uploadUserImage(
@@ -52,6 +55,16 @@ class MultimediaRepositoryImpl @Inject constructor(
             val fullPath = "$PROFILE_IMAGES_PATH/$DEFAULT_PROFILE_IMAGE"
             if (!connectionSource.isNetworkAvailable()) return Result.Unsuccessful(GeneralError.NetworkError)
             multimediaRemoteSource.getUrlResource(fullPath)
+        } catch (exception: Exception) {
+            logger.logE(TAG, exception)
+            GeneralError.Unknown.toUnsuccessful()
+        }
+    }
+
+    override suspend fun getFileContent(path: String): Result<ByteArray, GeneralError> {
+        return try {
+            if (path.startsWith(REMOTE_RESOURCE)) TODO()
+            else multimediaLocalSource.getFileContent(path)
         } catch (exception: Exception) {
             logger.logE(TAG, exception)
             GeneralError.Unknown.toUnsuccessful()
