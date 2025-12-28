@@ -2,6 +2,7 @@ package com.asm.domain.use_cases
 
 import com.asm.domain.entities.Result
 import com.asm.domain.entities.asSuccessful
+import com.asm.domain.entities.getImageExtension
 import com.asm.domain.errors.GeneralError
 import com.asm.domain.errors.toUnsuccessful
 import com.asm.domain.repositories.GamerRepository
@@ -51,13 +52,15 @@ class CreateGamerUC @Inject constructor(
                         }
                     }
                 }
+
                 uri.startsWith(URL_IMAGE_PREFIX) -> uri
                 else -> {
                     val metaDataImageResult = multimediaRepository.getFileContent(uri)
                     if (metaDataImageResult is Result.Unsuccessful) return metaDataImageResult
                     val metaDataImage = metaDataImageResult.asSuccessful().data
 
-                    val imageName = getImageName(params.gamerId, metaDataImage.mimeType)
+                    val imageName =
+                        "${PROFILE_IMAGE}_${params.gamerId}.${metaDataImage.mimeType.getImageExtension()}"
                     val uploadImageResult = multimediaRepository.uploadUserImage(
                         userId = params.gamerId,
                         profileImageName = imageName,
@@ -98,8 +101,4 @@ class CreateGamerUC @Inject constructor(
         }
     }
 
-    private fun getImageName(gamerId: String, mimeType: String): String {
-        val extension = mimeType.split("/").let { it[it.size - 1] }
-        return "${PROFILE_IMAGE}_$gamerId.$extension"
-    }
 }
