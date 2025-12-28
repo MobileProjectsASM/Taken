@@ -37,7 +37,6 @@ import com.asm.taken.model.Country
 import com.asm.taken.model.CountryData
 import com.asm.taken.model.EditGamerFormUiState
 import com.asm.taken.model.EditGamerState
-import com.asm.taken.model.ImageSelected
 import com.asm.taken.model.InputState
 import com.asm.taken.ui.CircularProgressDialog
 import com.asm.taken.ui.PuzzleGeneralTitle
@@ -131,7 +130,7 @@ fun EditGamerSection(
                         gamerState.gamer.gamerCountry,
                         gamerState.gamer.gamerCountryFlag
                     ),
-                    imageSelected = ImageSelected.NetworkImage(gamerState.gamer.gamerImage)
+                    imageURI = gamerState.gamer.gamerImage
                 )
             }
 
@@ -158,7 +157,7 @@ fun PanelFormEditGamer(
     socialNetworkImage: String?,
     editGamerFormState: EditGamerFormUiState,
     countries: List<Country>?,
-    validateFormCreateGamer: (String, String, CountryData, ImageSelected) -> Unit,
+    validateFormCreateGamer: (String, String, CountryData, String?) -> Unit,
     saveGamer: () -> Unit,
     onBack: () -> Unit
 ) {

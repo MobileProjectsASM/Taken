@@ -1,6 +1,5 @@
 package com.asm.taken.model
 
-import android.net.Uri
 import com.asm.domain.entities.AuthUser
 import com.asm.domain.errors.GeneralError
 
@@ -56,17 +55,11 @@ data class LoginFormCreateAccountUiState(
 )
 
 data class EditGamerFormUiState(
-    val imageSelected: InputUiState<ImageSelected, InputImageError>,
+    val imageURI: InputUiState<String?, InputImageError>,
     val aliasUiState: InputUiState<String, InputAliasError>,
     val ageUiState: InputUiState<String, InputAgeError>,
     val countryUiState: InputUiState<CountryData, InputCountryError>
 )
-
-sealed class ImageSelected {
-    data object Default: ImageSelected()
-    data class NetworkImage(val urlImage: String): ImageSelected()
-    data class Gallery(val uri: Uri): ImageSelected()
-}
 
 data class CountryData(
     val name: String,

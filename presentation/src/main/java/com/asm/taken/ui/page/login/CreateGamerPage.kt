@@ -62,16 +62,15 @@ import coil.compose.AsyncImage
 import com.asm.domain.errors.GeneralError
 import com.asm.taken.R
 import com.asm.taken.model.CountriesUiState
-import com.asm.taken.model.CountryData
 import com.asm.taken.model.Country
-import com.asm.taken.model.NavigationState
-import com.asm.taken.model.ImageSelected
+import com.asm.taken.model.CountryData
+import com.asm.taken.model.EditGamerFormUiState
 import com.asm.taken.model.InputAgeError
 import com.asm.taken.model.InputAliasError
 import com.asm.taken.model.InputCountryError
 import com.asm.taken.model.InputImageError
 import com.asm.taken.model.InputState
-import com.asm.taken.model.EditGamerFormUiState
+import com.asm.taken.model.NavigationState
 import com.asm.taken.ui.CircularProgressDialog
 import com.asm.taken.ui.DefaultButton
 import com.asm.taken.ui.DefaultOutlinedTextFieldLI
@@ -141,7 +140,7 @@ fun CreateGamerSection(
                 editGamerFormState.ageUiState.value.toInt(),
                 editGamerFormState.countryUiState.value.name,
                 editGamerFormState.countryUiState.value.flag,
-                editGamerFormState.imageSelected.value
+                editGamerFormState.imageURI.value
             )
         },
         closeSession = {
@@ -228,7 +227,7 @@ fun PanelFormCreateGamer(
     socialNetworkImage: String?,
     editGamerFormState: EditGamerFormUiState,
     countries: List<Country>?,
-    validateFormCreateGamer: (String, String, CountryData, ImageSelected) -> Unit,
+    validateFormCreateGamer: (String, String, CountryData, String?) -> Unit,
     saveGamer: () -> Unit,
     closeSession: () -> Unit
 ) {
@@ -292,12 +291,12 @@ fun FormEditGamer(
     socialNetworkImage: String?,
     editGamerFormState: EditGamerFormUiState,
     countriesUiState: List<Country>?,
-    validateFormCreateGamer: (String, String, CountryData, ImageSelected) -> Unit,
+    validateFormCreateGamer: (String, String, CountryData, String?) -> Unit,
     enableActionButton: Boolean = editGamerFormState.aliasUiState.state is InputState.Success && editGamerFormState.ageUiState.state is InputState.Success && editGamerFormState.countryUiState.state is InputState.Success,
     saveGamer: () -> Unit
 ) {
     var showChangeProfileImageDialog: Boolean by rememberSaveable { mutableStateOf(false) }
-    when (val imageSelectedState = editGamerFormState.imageSelected.state) {
+    when (val imageSelectedState = editGamerFormState.imageURI.state) {
         is InputState.Error<InputImageError> -> imageSelectedState.errors.map { getErrorImage(it) }
         InputState.Init, InputState.Success -> listOf()
     }
@@ -309,7 +308,7 @@ fun FormEditGamer(
                 editGamerFormState.aliasUiState.value,
                 editGamerFormState.ageUiState.value,
                 editGamerFormState.countryUiState.value,
-                ImageSelected.Gallery(uri)
+                uri.toString()
             )
         }
     }
@@ -323,7 +322,7 @@ fun FormEditGamer(
                     editGamerFormState.aliasUiState.value,
                     editGamerFormState.ageUiState.value,
                     editGamerFormState.countryUiState.value,
-                    ImageSelected.Default
+                    null
                 )
 
                 OptionChosen.Gallery -> launcher.launch(
@@ -336,7 +335,7 @@ fun FormEditGamer(
                     editGamerFormState.aliasUiState.value,
                     editGamerFormState.ageUiState.value,
                     editGamerFormState.countryUiState.value,
-                    ImageSelected.NetworkImage(optionChosen.urlImage)
+                    optionChosen.urlImage
                 )
             }
         }
@@ -346,7 +345,7 @@ fun FormEditGamer(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         InputSelectImage(
-            imageSelected = editGamerFormState.imageSelected.value
+            imageURI = editGamerFormState.imageURI.value
         ) {
             showChangeProfileImageDialog = true
         }
@@ -370,7 +369,7 @@ fun FormEditGamer(
                 newAlias,
                 editGamerFormState.ageUiState.value,
                 editGamerFormState.countryUiState.value,
-                editGamerFormState.imageSelected.value
+                editGamerFormState.imageURI.value
             )
         }
         Spacer(modifier = Modifier.height(10.dp))
@@ -394,7 +393,7 @@ fun FormEditGamer(
                 editGamerFormState.aliasUiState.value,
                 newAge,
                 editGamerFormState.countryUiState.value,
-                editGamerFormState.imageSelected.value
+                editGamerFormState.imageURI.value
             )
         }
         Spacer(modifier = Modifier.height(10.dp))
@@ -418,7 +417,7 @@ fun FormEditGamer(
                 editGamerFormState.aliasUiState.value,
                 editGamerFormState.ageUiState.value,
                 it,
-                editGamerFormState.imageSelected.value
+                editGamerFormState.imageURI.value
             )
         }
         Spacer(modifier = Modifier.height(20.dp))
@@ -523,7 +522,8 @@ fun ChooseCountryDialog(
 
 @Composable
 fun InputSelectImage(
-    imageSelected: ImageSelected, onClick: () -> Unit
+    imageURI: String?,
+    onClick: () -> Unit
 ) {
     Box(
         modifier = Modifier.size(128.dp)
@@ -534,10 +534,9 @@ fun InputSelectImage(
                 .clip(CircleShape)
                 .border(width = 2.dp, color = Color.Black, shape = CircleShape),
             contentScale = ContentScale.Crop,
-            model = when (imageSelected) {
-                ImageSelected.Default -> R.drawable.gamer
-                is ImageSelected.Gallery -> imageSelected.uri
-                is ImageSelected.NetworkImage -> imageSelected.urlImage
+            model = when {
+                imageURI == null -> R.drawable.gamer
+                else -> imageURI
             },
             contentDescription = null
         )
