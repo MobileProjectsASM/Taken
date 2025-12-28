@@ -19,35 +19,7 @@ class CreateGamerUC @Inject constructor(
     companion object {
         const val PROFILE_IMAGE = "pi"
         const val TAG = "CreateGamerUc"
-    }
-
-    sealed class ProfileImage {
-        data class InfoImage(
-            val mimeType: String,
-            val byteArray: ByteArray
-        ) : ProfileImage() {
-            override fun equals(other: Any?): Boolean {
-                if (this === other) return true
-                if (javaClass != other?.javaClass) return false
-
-                other as InfoImage
-
-                if (mimeType != other.mimeType) return false
-                if (!byteArray.contentEquals(other.byteArray)) return false
-
-                return true
-            }
-
-            override fun hashCode(): Int {
-                var result = mimeType.hashCode()
-                result = 31 * result + byteArray.contentHashCode()
-                return result
-            }
-        }
-
-        data class UrlImage(
-            val urlImage: String
-        ) : ProfileImage()
+        const val URL_IMAGE_PREFIX = "http"
     }
 
     data class GamerParams(
@@ -56,28 +28,15 @@ class CreateGamerUC @Inject constructor(
         val age: Int,
         val country: String,
         val countryFlag: String?,
-        val image: ProfileImage?
+        val imageURI: String?
     )
 
     override suspend fun run(params: GamerParams): Result<String, GeneralError> {
         return try {
             //Update image
-            val imageUrl = when (params.image) {
-                is ProfileImage.InfoImage -> {
-                    val imageName = getImageName(params.gamerId, params.image)
-                    val uploadImageResult = multimediaRepository.uploadUserImage(
-                        userId = params.gamerId,
-                        profileImageName = imageName,
-                        byteArray = params.image.byteArray
-                    )
-                    when (uploadImageResult) {
-                        is Result.Successful<String> -> uploadImageResult.asSuccessful().data
-                        is Result.Unsuccessful<GeneralError> -> return uploadImageResult
-                    }
-                }
-
-                is ProfileImage.UrlImage -> params.image.urlImage
-                null -> {
+            val uri = params.imageURI
+            val imageUrl = when {
+                uri == null -> {
                     when (val defaultImageResult = multimediaRepository.getDefaultUserImage()) {
                         is Result.Successful<String?> -> {
                             if (defaultImageResult.data == null) {
@@ -90,6 +49,23 @@ class CreateGamerUC @Inject constructor(
                         is Result.Unsuccessful<GeneralError> -> {
                             return defaultImageResult
                         }
+                    }
+                }
+                uri.startsWith(URL_IMAGE_PREFIX) -> uri
+                else -> {
+                    val metaDataImageResult = multimediaRepository.getFileContent(uri)
+                    if (metaDataImageResult is Result.Unsuccessful) return metaDataImageResult
+                    val metaDataImage = metaDataImageResult.asSuccessful().data
+
+                    val imageName = getImageName(params.gamerId, metaDataImage.mimeType)
+                    val uploadImageResult = multimediaRepository.uploadUserImage(
+                        userId = params.gamerId,
+                        profileImageName = imageName,
+                        byteArray = metaDataImage.content
+                    )
+                    when (uploadImageResult) {
+                        is Result.Successful<String> -> uploadImageResult.asSuccessful().data
+                        is Result.Unsuccessful<GeneralError> -> return uploadImageResult
                     }
                 }
             }
@@ -106,8 +82,8 @@ class CreateGamerUC @Inject constructor(
             when (resultCreateGamer) {
                 is Result.Successful<String> -> Result.Successful(resultCreateGamer.data)
                 is Result.Unsuccessful<GeneralError> -> {
-                    if (params.image is ProfileImage.InfoImage) {
-                        val imageName = getImageName(params.gamerId, params.image)
+                    if (params.imageURI != null && !params.imageURI.startsWith(URL_IMAGE_PREFIX)) {
+                        val imageName = imageUrl.split("/").let { it[it.size - 1] }
                         val resultDeleteImage = multimediaRepository.deleteUserImage(imageName)
                         when (resultDeleteImage) {
                             is Result.Successful<Unit> -> resultCreateGamer
@@ -122,8 +98,8 @@ class CreateGamerUC @Inject constructor(
         }
     }
 
-    private fun getImageName(gamerId: String, infoImage: ProfileImage.InfoImage): String {
-        val extension = infoImage.mimeType.split("/").let { it[it.size - 1] }
+    private fun getImageName(gamerId: String, mimeType: String): String {
+        val extension = mimeType.split("/").let { it[it.size - 1] }
         return "${PROFILE_IMAGE}_$gamerId.$extension"
     }
 }
