@@ -39,6 +39,26 @@ class GamerRepositoryImpl @Inject constructor(
         )
     }
 
+    override suspend fun updateGamer(
+        userId: String,
+        gamerAlias: String,
+        gamerAge: Int,
+        gamerCountry: String,
+        gamerCountryFlag: String?,
+        gamerImage: String
+    ): Result<String, GeneralError> {
+        if (!connectionSource.isNetworkAvailable())
+            return GeneralError.NetworkError.toUnsuccessful()
+        return gamerRemoteSource.updateGamer(
+            userId,
+            gamerAlias,
+            gamerAge,
+            gamerCountry,
+            gamerCountryFlag,
+            gamerImage
+        )
+    }
+
     override suspend fun updateGamerImage(
         gamerId: String,
         imageUrl: String

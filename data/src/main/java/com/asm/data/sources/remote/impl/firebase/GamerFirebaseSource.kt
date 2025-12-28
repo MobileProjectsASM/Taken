@@ -12,6 +12,7 @@ import com.asm.domain.errors.GeneralError
 import com.asm.domain.errors.toUnsuccessful
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.FirebaseFirestoreException
+import com.google.firebase.firestore.SetOptions
 import com.google.firebase.functions.FirebaseFunctions
 import com.google.firebase.functions.FirebaseFunctionsException
 import com.google.gson.Gson
@@ -89,6 +90,37 @@ class GamerFirebaseSource @Inject constructor(
         }
     }
 
+    override suspend fun updateGamer(
+        userId: String,
+        gamerAlias: String,
+        gamerAge: Int,
+        gamerCountry: String,
+        gamerCountryFlag: String?,
+        gamerImage: String
+    ): Result<String, GeneralError> {
+        return try {
+            val gamerReference = fs.collection(GAMER_COLLECTION).document(userId)
+            val dataToUpdate = mapOf(
+                "gamerNickName" to gamerAlias,
+                "gamerAge" to gamerAge,
+                "gamerCountry" to gamerCountry,
+                "gamerCountryFlag" to gamerCountryFlag,
+                "gamerImage" to gamerImage
+            )
+            gamerReference.update(dataToUpdate).await()
+            Result.Successful(userId)
+        } catch (exception: Exception) {
+            Log.e(TAG, "Unexpected save gamer", exception)
+            when (exception) {
+                is IOException -> GeneralError.NetworkError.toUnsuccessful()
+                is FirebaseFirestoreException -> handleFirebaseFireStoreException(exception)
+                    .toUnsuccessful()
+
+                else -> GeneralError.Unknown.toUnsuccessful()
+            }
+        }
+    }
+
     override suspend fun checkGamerExists(gamerId: String): Result<Boolean, GeneralError> {
         return try {
             val snapshot = fs.collection(GAMER_COLLECTION).document(gamerId).get().await()
@@ -113,6 +145,16 @@ class GamerFirebaseSource @Inject constructor(
         } catch (exception: Exception) {
             Log.e(TAG, "Unexpected error to update gamer image", exception)
             GeneralError.Unknown.toUnsuccessful()
+        }
+    }
+
+    private fun handleFirebaseFireStoreException(firebaseFireStoreException: FirebaseFirestoreException): GeneralError {
+        return when (val code = firebaseFireStoreException.code) {
+            FirebaseFirestoreException.Code.NOT_FOUND, FirebaseFirestoreException.Code.PERMISSION_DENIED, FirebaseFirestoreException.Code.UNAVAILABLE, FirebaseFirestoreException.Code.ALREADY_EXISTS, FirebaseFirestoreException.Code.INVALID_ARGUMENT -> GeneralError.ClientError(
+                code.name
+            )
+
+            else -> GeneralError.ServerError(code.name)
         }
     }
 
