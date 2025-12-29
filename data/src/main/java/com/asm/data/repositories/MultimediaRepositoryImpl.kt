@@ -22,7 +22,7 @@ class MultimediaRepositoryImpl @Inject constructor(
         const val PROFILE_IMAGES_PATH = "images/profile"
         const val DEFAULT_PROFILE_IMAGE = "default_profile_image.png"
         const val TAG = "MultimediaRepositoryImpl"
-        const val REMOTE_RESOURCE = "http"
+        const val URL_PREFIX = "http"
     }
 
     override suspend fun uploadUserImage(
@@ -40,11 +40,13 @@ class MultimediaRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun deleteUserImage(imageName: String): Result<Unit, GeneralError> {
+    override suspend fun deleteResourceByUrl(uri: String): Result<Boolean, GeneralError> {
         return try {
-            if (!connectionSource.isNetworkAvailable()) return Result.Unsuccessful(GeneralError.NetworkError)
-            val imagePath = "$PROFILE_IMAGES_PATH/$imageName"
-            multimediaRemoteSource.deleteResource(imagePath)
+            if (uri.startsWith(URL_PREFIX)) {
+                if (!connectionSource.isNetworkAvailable()) Result.Unsuccessful(GeneralError.NetworkError)
+                else multimediaRemoteSource.deleteResourceByUrl(uri)
+            }
+            else TODO()
         } catch (exception: Exception) {
             logger.logE(TAG, exception)
             GeneralError.Unknown.toUnsuccessful()
@@ -64,7 +66,7 @@ class MultimediaRepositoryImpl @Inject constructor(
 
     override suspend fun getFileContent(path: String): Result<MetaDataImage, GeneralError> {
         return try {
-            if (path.startsWith(REMOTE_RESOURCE)) TODO()
+            if (path.startsWith(URL_PREFIX)) TODO()
             else multimediaLocalSource.getFileContent(path)
         } catch (exception: Exception) {
             logger.logE(TAG, exception)
