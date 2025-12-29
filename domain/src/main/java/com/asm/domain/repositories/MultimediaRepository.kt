@@ -6,7 +6,7 @@ import com.asm.domain.errors.GeneralError
 
 interface MultimediaRepository {
     suspend fun uploadUserImage(userId: String, profileImageName: String, byteArray: ByteArray): Result<String, GeneralError>
-    suspend fun deleteUserImage(imageName: String): Result<Unit, GeneralError>
+    suspend fun deleteResourceByUrl(uri: String): Result<Boolean, GeneralError>
     suspend fun getDefaultUserImage(): Result<String?, GeneralError>
     suspend fun getFileContent(path: String): Result<MetaDataImage, GeneralError>
 }
