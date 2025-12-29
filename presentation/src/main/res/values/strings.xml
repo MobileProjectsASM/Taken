@@ -12,6 +12,7 @@
     <string name="txt_ttl_choose_option">Choose option</string>
     <string name="txt_ttl_client_error">Request Error</string>
     <string name="txt_ttl_service_error">Service Error</string>
+    <string name="txt_ttl_success_operation">Success operation</string>
     <string name="txt_ttl_unexpected_error">Unexpected Error</string>
     <string name="txt_ttl_welcome">Welcome!!</string>
     <string name="txt_label_default_image">Default Image</string>
@@ -29,6 +30,8 @@
     <string name="txt_label_country">Country</string>
     <string name="txt_label_retry">Retry</string>
     <string name="txt_label_age">Age</string>
+    <string name="txt_label_gamer_updated">Gamer updated</string>
+    <string name="txt_label_image_url_not_found">Image Url not found</string>
     <string name="txt_cd_ti_password">Password visibility</string>
     <string name="txt_cd_btn_choose_image">Where fetch image?</string>
     <string name="txt_cd_btn_logout">Logout button</string>
@@ -44,6 +47,7 @@
     <string name="txt_btn_show_ranking">Show Ranking</string>
     <string name="txt_btn_help">Help</string>
     <string name="txt_btn_logout">Log out</string>
+    <string name="txt_btn_accept">Aceptar</string>
     
     <!-- Errors -->
     <string name="err_get_session_data">Error to get session data</string>
