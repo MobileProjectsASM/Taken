@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.asm.domain.entities.Result
 import com.asm.domain.entities.asSuccessful
 import com.asm.domain.errors.GeneralError
+import com.asm.domain.use_cases.DeleteGamerUC
 import com.asm.domain.use_cases.GetCountriesInfoUC
 import com.asm.domain.use_cases.GetDefaultImageUC
 import com.asm.domain.use_cases.GetGamerUC
@@ -33,7 +34,8 @@ class EditGamerVM @Inject constructor(
     private val getGamerUC: GetGamerUC,
     private val getCountriesInfoUC: GetCountriesInfoUC,
     private val getDefaultImageUC: GetDefaultImageUC,
-    private val saveChangesGamerUC: SaveChangesGamerUC
+    private val saveChangesGamerUC: SaveChangesGamerUC,
+    private val deleteGamerUC: DeleteGamerUC
 ) : ViewModel() {
 
     companion object {
@@ -78,17 +80,40 @@ class EditGamerVM @Inject constructor(
                     countryFlag = countryFlag,
                     imageURI = imageURI
                 )
-                val navigationState = when (val gamerUpdatedResult = saveChangesGamerUC.execute(params)) {
-                    is Result.Successful<String> -> EditGamerOperationsState.GamerUpdated
-                    is Result.Unsuccessful<GeneralError> -> EditGamerOperationsState.Failure(
-                        gamerUpdatedResult.error
-                    )
-                }
+                val navigationState =
+                    when (val gamerUpdatedResult = saveChangesGamerUC.execute(params)) {
+                        is Result.Successful<String> -> EditGamerOperationsState.GamerUpdated
+                        is Result.Unsuccessful<GeneralError> -> EditGamerOperationsState.Failure(
+                            gamerUpdatedResult.error
+                        )
+                    }
                 _editGamerOperationsState.update { navigationState }
             } catch (exception: Exception) {
                 Log.e(CreateGamerVM.TAG, exception.stackTraceToString())
                 _editGamerOperationsState.update { EditGamerOperationsState.Failure(GeneralError.Unknown) }
             }
+        }
+    }
+
+    fun deleteGamer(
+        gamerId: String,
+        signOutThirdProvider: suspend () -> Result<Unit, GeneralError>
+    ) {
+        viewModelScope.launch {
+            _editGamerOperationsState.update { EditGamerOperationsState.Loading }
+            val deleteGamerResult = deleteGamerUC.execute(
+                DeleteGamerUC.DeleteGamerParams(
+                    gamerId = gamerId,
+                    signOutThirdProvider = signOutThirdProvider
+                )
+            )
+            val operationState = when (deleteGamerResult) {
+                is Result.Successful<Unit> -> EditGamerOperationsState.GamerDeleted
+                is Result.Unsuccessful<GeneralError> -> EditGamerOperationsState.Failure(
+                    deleteGamerResult.error
+                )
+            }
+            _editGamerOperationsState.update { operationState }
         }
     }
 
