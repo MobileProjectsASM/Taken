@@ -350,6 +350,8 @@ fun FormEditGamer(
                     editGamerFormState.countryUiState.value,
                     optionChosen.urlImage
                 )
+
+                null -> return@ChangeProfileImageDialog
             }
         }
     }
@@ -590,10 +592,10 @@ fun InputSelectImage(
 @Composable
 fun ChangeProfileImageDialog(
     socialNetworkImage: String?,
-    onOptionSelected: (OptionChosen) -> Unit
+    onOptionSelected: (OptionChosen?) -> Unit
 ) {
     Dialog(
-        onDismissRequest = { onOptionSelected(OptionChosen.Default) }) {
+        onDismissRequest = { onOptionSelected(null) }) {
         Card(
             modifier = Modifier.fillMaxWidth()
         ) {
