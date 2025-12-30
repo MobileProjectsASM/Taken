@@ -62,7 +62,7 @@ class SaveChangesGamerUC @Inject constructor(
                 is Result.Unsuccessful<GeneralError> -> return gamerResult
             }
 
-            if (currentImage != defaultImage) {
+            if (currentImage != params.imageURI && currentImage != defaultImage) {
                 val deleteResourceResult = multimediaRepository.deleteResourceByUrl(currentImage)
                 if (deleteResourceResult is Result.Unsuccessful) return deleteResourceResult
             }
