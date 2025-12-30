@@ -26,4 +26,5 @@ interface GamerRepository {
     suspend fun getGamerById(gamerId: String): Result<Gamer?, GeneralError>
     suspend fun updateGamerImage(gamerId: String, imageUrl: String): Result<Unit, GeneralError>
     suspend fun verifyGamerExists(gamerId: String): Result<Boolean, GeneralError>
+    suspend fun deleteGamer(gamerId: String): Result<Unit, GeneralError>
 }
