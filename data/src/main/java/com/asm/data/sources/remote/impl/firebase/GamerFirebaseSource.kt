@@ -148,6 +148,17 @@ class GamerFirebaseSource @Inject constructor(
         }
     }
 
+    override suspend fun deleteGamer(gamerId: String): Result<Unit, GeneralError> {
+        return try {
+            val gamerReference = fs.collection(GAMER_COLLECTION).document(gamerId)
+            gamerReference.delete().await()
+            Result.Successful(Unit)
+        } catch (exception: Exception) {
+            Log.e(TAG, "Unexpected error to delete gamer", exception)
+            GeneralError.Unknown.toUnsuccessful()
+        }
+    }
+
     private fun handleFirebaseFireStoreException(firebaseFireStoreException: FirebaseFirestoreException): GeneralError {
         return when (val code = firebaseFireStoreException.code) {
             FirebaseFirestoreException.Code.NOT_FOUND, FirebaseFirestoreException.Code.PERMISSION_DENIED, FirebaseFirestoreException.Code.UNAVAILABLE, FirebaseFirestoreException.Code.ALREADY_EXISTS, FirebaseFirestoreException.Code.INVALID_ARGUMENT -> GeneralError.ClientError(

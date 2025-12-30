@@ -26,4 +26,5 @@ interface GamerRemoteSource {
 
     suspend fun checkGamerExists(gamerId: String): Result<Boolean, GeneralError>
     suspend fun updateGamerImage(gamerId: String, gamerImage: String): Result<Unit, GeneralError>
+    suspend fun deleteGamer(gamerId: String): Result<Unit, GeneralError>
 }

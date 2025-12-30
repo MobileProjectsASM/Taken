@@ -67,7 +67,7 @@ class GamerRepositoryImpl @Inject constructor(
             if (!connectionSource.isNetworkAvailable()) GeneralError.NetworkError.toUnsuccessful()
             else gamerRemoteSource.updateGamerImage(gamerId, imageUrl)
         } catch (e: Exception) {
-            logger.logE(MultimediaRepositoryImpl.TAG, e)
+            logger.logE(TAG, e)
             GeneralError.Unknown.toUnsuccessful()
         }
     }
@@ -77,7 +77,17 @@ class GamerRepositoryImpl @Inject constructor(
             if (!connectionSource.isNetworkAvailable()) GeneralError.NetworkError.toUnsuccessful()
             else gamerRemoteSource.checkGamerExists(gamerId)
         } catch (e: Exception) {
-            logger.logE(MultimediaRepositoryImpl.TAG, e)
+            logger.logE(TAG, e)
+            GeneralError.Unknown.toUnsuccessful()
+        }
+    }
+
+    override suspend fun deleteGamer(gamerId: String): Result<Unit, GeneralError> {
+        return try {
+            if (!connectionSource.isNetworkAvailable()) GeneralError.NetworkError.toUnsuccessful()
+            else gamerRemoteSource.deleteGamer(gamerId)
+        } catch (e: Exception) {
+            logger.logE(TAG, e)
             GeneralError.Unknown.toUnsuccessful()
         }
     }
@@ -87,7 +97,7 @@ class GamerRepositoryImpl @Inject constructor(
             if (!connectionSource.isNetworkAvailable()) GeneralError.NetworkError.toUnsuccessful()
             else gamerRemoteSource.getGamerById(gamerId)
         } catch (e: Exception) {
-            logger.logE(MultimediaRepositoryImpl.TAG, e)
+            logger.logE(TAG, e)
             GeneralError.Unknown.toUnsuccessful()
         }
     }
