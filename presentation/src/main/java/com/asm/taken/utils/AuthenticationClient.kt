@@ -137,7 +137,8 @@ class AuthenticationClient @Inject constructor(
 
     fun getCurrentUserSocialNetworkImage(): Result<String?, GeneralError> = try {
         val socialNetworkImage = auth.currentUser?.photoUrl?.toString()?.let { baseUrl ->
-            AccessToken.getCurrentAccessToken()?.token?.let { "$baseUrl?access_token=$it" }
+            AccessToken.getCurrentAccessToken()?.token?.let { "$baseUrl?height=500&access_token=$it" }
+                ?: baseUrl
         }
         Result.Successful(socialNetworkImage)
     } catch (exception: Exception) {

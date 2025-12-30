@@ -207,7 +207,7 @@ fun ResultOperationsSection(
 
             GeneralError.Unknown -> SnackBarError(
                 snackBarHostState = snackBarHostState,
-                message = stringResource(R.string.err_auth),
+                message = stringResource(R.string.err_process_gamer),
                 withDismissAction = true,
                 onDismiss = { }
             )
