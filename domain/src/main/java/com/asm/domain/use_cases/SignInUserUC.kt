@@ -5,6 +5,7 @@ import com.asm.domain.entities.Result
 import com.asm.domain.entities.Session
 import com.asm.domain.errors.GeneralError
 import com.asm.domain.errors.toUnsuccessful
+import com.asm.domain.repositories.AuthRepository
 import com.asm.domain.repositories.GamerRepository
 import com.asm.domain.repositories.SessionRepository
 import com.asm.domain.use_cases.base.UseCaseSync
@@ -20,17 +21,22 @@ class SignInUserUC(
         const val TAG = "SignInUser"
     }
 
-    sealed class CredentialType {
+    sealed class CredentialType(
+        private val authRepository: AuthRepository
+    ) {
         data class EmailAndPassword(
             val email: String,
             val password: String,
-            val authMethod: suspend (String, String) -> Result<AuthUser, GeneralError>
-        ) : CredentialType()
+            val authRepository: AuthRepository
+        ) : CredentialType(authRepository)
 
-        data class Token(
-            val token: String,
-            val authMethod: suspend (String) -> Result<AuthUser, GeneralError>
-        ) : CredentialType()
+        data class Google(
+            val authRepository: AuthRepository
+        ) : CredentialType(authRepository)
+
+        data class Facebook(
+            val authRepository: AuthRepository
+        ) : CredentialType(authRepository)
     }
 
     sealed class User {
@@ -77,11 +83,12 @@ class SignInUserUC(
 
     private suspend fun authUser(credentialType: CredentialType): Result<AuthUser, GeneralError> =
         when (credentialType) {
-            is CredentialType.EmailAndPassword -> credentialType.authMethod(
+            is CredentialType.EmailAndPassword -> credentialType.authRepository.authWithEmailAndPassword(
                 credentialType.email,
                 credentialType.password
             )
 
-            is CredentialType.Token -> credentialType.authMethod(credentialType.token)
+            is CredentialType.Google -> credentialType.authRepository.authWithGoogle()
+            is CredentialType.Facebook -> credentialType.authRepository.authWithFacebook()
         }
 }
