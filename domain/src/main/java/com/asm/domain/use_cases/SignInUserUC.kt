@@ -10,8 +10,9 @@ import com.asm.domain.repositories.GamerRepository
 import com.asm.domain.repositories.SessionRepository
 import com.asm.domain.use_cases.base.UseCaseSync
 import com.asm.domain.utils.Logger
+import javax.inject.Inject
 
-class SignInUserUC(
+class SignInUserUC @Inject constructor(
     private val logger: Logger,
     private val gamerRepository: GamerRepository,
     private val sessionRepository: SessionRepository
