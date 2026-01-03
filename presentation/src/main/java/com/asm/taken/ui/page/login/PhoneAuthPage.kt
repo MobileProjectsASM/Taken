@@ -383,14 +383,14 @@ fun SessionSection(
                 title = stringResource(R.string.txt_ttl_client_error),
                 image = painterResource(R.drawable.ic_warning),
                 message = stringResource(R.string.err_client),
-                onDismissDialog = { loginVM.resetLoginUiState() }
+                onDismissedDialog = { loginVM.resetLoginUiState() }
             )
 
             GeneralError.ConnectionError -> DialogError(
                 title = stringResource(R.string.txt_ttl_unexpected_error),
                 image = painterResource(R.drawable.ic_warning),
                 message = stringResource(R.string.err_server_connection),
-                onDismissDialog = loginVM::resetLoginUiState
+                onDismissedDialog = loginVM::resetLoginUiState
             )
 
             GeneralError.NetworkError -> SnackBarError(
@@ -398,21 +398,21 @@ fun SessionSection(
                 actionLabel = stringResource(R.string.txt_label_retry),
                 duration = SnackbarDuration.Long,
                 message = stringResource(R.string.err_network_connection),
-                onDismiss = loginVM::resetLoginUiState
+                onDismissed = loginVM::resetLoginUiState
             )
 
             is GeneralError.ServerError -> DialogError(
                 title = stringResource(R.string.txt_ttl_service_error),
                 image = painterResource(R.drawable.ic_error),
                 message = stringResource(R.string.err_server),
-                onDismissDialog = loginVM::resetLoginUiState
+                onDismissedDialog = loginVM::resetLoginUiState
             )
 
             GeneralError.Unknown -> SnackBarError(
                 snackBarHostState = snackBarHostState,
                 message = stringResource(R.string.err_auth),
                 withDismissAction = true,
-                onDismiss = loginVM::resetLoginUiState
+                onDismissed = loginVM::resetLoginUiState
             )
         }
 

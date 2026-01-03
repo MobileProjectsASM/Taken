@@ -1,6 +1,5 @@
 package com.asm.taken.ui.page.login
 
-import androidx.activity.ComponentActivity
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,15 +15,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Mail
 import androidx.compose.material3.Card
-import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
@@ -34,9 +30,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.asm.domain.entities.AuthUser
 import com.asm.domain.errors.GeneralError
 import com.asm.taken.R
+import com.asm.taken.model.AuthState
+import com.asm.taken.model.AuthTypeState
 import com.asm.taken.model.InputState
 import com.asm.taken.model.EmailAndPasswordFormState
-import com.asm.taken.model.LoginUiState
+import com.asm.taken.model.LoginUIState2
 import com.asm.taken.ui.CircularProgressDialog
 import com.asm.taken.ui.DefaultButton
 import com.asm.taken.ui.DefaultImageButton
@@ -47,49 +45,74 @@ import com.asm.taken.ui.DialogError
 import com.asm.taken.ui.PasswordOutlinedTextField
 import com.asm.taken.ui.PuzzleGeneralTitle
 import com.asm.taken.ui.SnackBarError
-import com.asm.taken.utils.AuthenticationClient
 import com.asm.taken.utils.getErrorEmail
 import com.asm.taken.utils.getErrorPassword
-import com.asm.taken.vm.LoginVM
-import kotlinx.coroutines.launch
+import com.asm.taken.vm.LoginVM2
 
 @Composable
 fun MainAuthPage(
-    loginVM: LoginVM,
-    authenticationClient: AuthenticationClient,
+    loginVM2: LoginVM2,
     snackBarHostState: SnackbarHostState,
     onNavigateToCreateAccount: () -> Unit,
     onNavigateToAuthWithPhone: () -> Unit,
     onNavigateToMainPage: (String) -> Unit,
-    onNavigateToCreateGamer: (String, String?) -> Unit
+    onNavigateToCreateGamer: (AuthUser) -> Unit
 ) {
+    val loginUIState2: LoginUIState2 by loginVM2.loginUIState2.collectAsStateWithLifecycle()
+
     AuthenticationSection(
-        loginVM = loginVM,
-        authenticationClient = authenticationClient,
+        emailAndPasswordFormState = loginUIState2.emailAndPasswordFormState,
         onNavigateToCreateAccount = onNavigateToCreateAccount,
-        onNavigateToAuthWithPhone = onNavigateToAuthWithPhone
+        onNavigateToAuthWithPhone = onNavigateToAuthWithPhone,
+        validateFormLogin = loginVM2::validateLoginForm,
+        loginWithEmailAndPassword = loginVM2::signInWithEmailAndPassword,
+        loginWithGoogle = loginVM2::signInWithGoogle,
+        loginWithFacebook = loginVM2::signInWithFacebook
     )
-    SessionSection(
-        loginVM = loginVM,
-        snackBarHostState = snackBarHostState,
-        onNavigateToMainPage = onNavigateToMainPage,
-        onNavigateToCreateGamer = {
-            onNavigateToCreateGamer(it.userId, it.profilePictureUrl)
-        }
-    )
+    when (val authType = loginUIState2.authTypeState) {
+        is AuthTypeState.EmailAndPasswordAuthType -> ProcessSection(
+            authState = authType.authState,
+            snackBarHostState = snackBarHostState,
+            retryProcess = {
+                loginVM2.signInWithEmailAndPassword(
+                    email = loginUIState2.emailAndPasswordFormState.emailUiState.value,
+                    password = loginUIState2.emailAndPasswordFormState.passwordUiState.value
+                )
+            },
+            onNavigateToMainPage = onNavigateToMainPage,
+            onNavigateToCreateGamer = onNavigateToCreateGamer,
+            resetProcessState = loginVM2::resetProcessState
+        )
+        is AuthTypeState.FacebookAuthType -> ProcessSection(
+            authState = authType.authState,
+            snackBarHostState = snackBarHostState,
+            retryProcess = loginVM2::signInWithFacebook,
+            onNavigateToMainPage = onNavigateToMainPage,
+            onNavigateToCreateGamer = onNavigateToCreateGamer,
+            resetProcessState = loginVM2::resetProcessState
+        )
+        is AuthTypeState.GoogleAuthType -> ProcessSection(
+            authState = authType.authState,
+            snackBarHostState = snackBarHostState,
+            retryProcess = loginVM2::signInWithGoogle,
+            onNavigateToMainPage = onNavigateToMainPage,
+            onNavigateToCreateGamer = onNavigateToCreateGamer,
+            resetProcessState = loginVM2::resetProcessState
+        )
+        AuthTypeState.Idle -> return
+    }
 }
 
 @Composable
 fun AuthenticationSection(
-    loginVM: LoginVM,
-    authenticationClient: AuthenticationClient,
+    emailAndPasswordFormState: EmailAndPasswordFormState,
     onNavigateToCreateAccount: () -> Unit,
     onNavigateToAuthWithPhone: () -> Unit,
+    validateFormLogin: (String, String) -> Unit,
+    loginWithEmailAndPassword: (email: String, password: String) -> Unit,
+    loginWithGoogle: () -> Unit,
+    loginWithFacebook: () -> Unit
 ) {
-    val loginFormState: EmailAndPasswordFormState by loginVM.loginFormUiState.collectAsStateWithLifecycle()
-    val coroutineScope = rememberCoroutineScope()
-    val context = LocalContext.current
-
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -97,32 +120,14 @@ fun AuthenticationSection(
     ) {
         Box(modifier = Modifier.height(250.dp))
         PanelFormLogin(
-            loginFormState = loginFormState,
-            validateFormLogin = loginVM::validateLoginForm,
-        ) { email, password ->
-            coroutineScope.launch {
-                loginVM.updateLoginState(LoginUiState.Loading)
-                val authResult = authenticationClient.signInWithEmailAndPassword(email, password)
-                loginVM.updateLoginState(authResult)
-            }
-        }
+            emailAndPasswordFormState = emailAndPasswordFormState,
+            validateFormLogin = validateFormLogin,
+            signInWithEmailAndPassword = loginWithEmailAndPassword
+        )
         PanelSocialMedia(
-            signInWithGoogle = {
-                coroutineScope.launch {
-                    loginVM.updateLoginState(LoginUiState.Loading)
-                    val authResult = authenticationClient.signInWithGoogle(context)
-                    loginVM.updateLoginState(authResult)
-                }
-            },
+            signInWithGoogle = loginWithGoogle,
             signInWithPhoneNumber = onNavigateToAuthWithPhone,
-            signInWithFacebook = {
-                authenticationClient.signInWithFacebook(
-                    activityResultRegistryOwner = context as ComponentActivity,
-                    coroutineScope = coroutineScope,
-                    onFacebookLoginLoading = { loginVM.updateLoginState(LoginUiState.Loading) },
-                    onAuthResult = loginVM::updateLoginState
-                )
-            },
+            signInWithFacebook =  loginWithFacebook,
             createAccount = onNavigateToCreateAccount
         )
         Box(modifier = Modifier.height(250.dp))
@@ -131,7 +136,7 @@ fun AuthenticationSection(
 
 @Composable
 fun PanelFormLogin(
-    loginFormState: EmailAndPasswordFormState,
+    emailAndPasswordFormState: EmailAndPasswordFormState,
     validateFormLogin: (String, String) -> Unit,
     signInWithEmailAndPassword: (String, String) -> Unit,
 ) {
@@ -156,7 +161,7 @@ fun PanelFormLogin(
             )
             Spacer(modifier = Modifier.height(50.dp))
             FormLogin(
-                loginFormState = loginFormState,
+                emailAndPasswordFormState = emailAndPasswordFormState,
                 validateFormLogin = validateFormLogin,
                 signInWithEmailAndPassword = signInWithEmailAndPassword
             )
@@ -165,63 +170,77 @@ fun PanelFormLogin(
 }
 
 @Composable
-fun SessionSection(
-    loginVM: LoginVM,
+fun ProcessSection(
+    authState: AuthState,
     snackBarHostState: SnackbarHostState,
+    retryProcess: () -> Unit,
+    resetProcessState: () -> Unit,
     onNavigateToMainPage: (gamerId: String) -> Unit,
     onNavigateToCreateGamer: (AuthUser) -> Unit
 ) {
-    val loginUiState: LoginUiState by loginVM.loginUiState.collectAsStateWithLifecycle()
-    when (val state = loginUiState) {
-        is LoginUiState.Error -> when (state.generalError) {
-            is GeneralError.ClientError -> DialogError(
-                title = stringResource(R.string.txt_ttl_client_error),
-                image = painterResource(R.drawable.ic_warning),
-                message = stringResource(R.string.err_client),
-                onDismissDialog = loginVM::resetLoginUiState
-            )
-            GeneralError.ConnectionError -> DialogError(
-                title = stringResource(R.string.txt_ttl_unexpected_error),
-                image = painterResource(R.drawable.ic_warning),
-                message = stringResource(R.string.err_server_connection),
-                onDismissDialog = loginVM::resetLoginUiState
-            )
-            GeneralError.NetworkError -> SnackBarError(
-                snackBarHostState = snackBarHostState,
-                actionLabel = stringResource(R.string.txt_label_retry),
-                duration = SnackbarDuration.Long,
-                message = stringResource(R.string.err_network_connection),
-                onDismiss = loginVM::resetLoginUiState
-            )
-            is GeneralError.ServerError -> DialogError(
-                title = stringResource(R.string.txt_ttl_service_error),
-                image = painterResource(R.drawable.ic_error),
-                message = stringResource(R.string.err_server),
-                onDismissDialog = loginVM::resetLoginUiState
-            )
-            GeneralError.Unknown -> SnackBarError(
-                snackBarHostState = snackBarHostState,
-                message = stringResource(R.string.err_auth),
-                withDismissAction = true,
-                onDismiss = loginVM::resetLoginUiState
-            )
+    when (authState) {
+        is AuthState.Error -> ErrorComponent(
+            generalError = authState.generalError,
+            retryProcess = retryProcess,
+            snackBarHostState = snackBarHostState,
+            resetProcessState = resetProcessState
+        )
+        AuthState.Loading -> CircularProgressDialog()
+        is AuthState.RegisteredUser -> LaunchedEffect(true) {
+            onNavigateToMainPage(authState.gamerId)
         }
-        is LoginUiState.Loading -> CircularProgressDialog()
-        is LoginUiState.RegisteredUser -> LaunchedEffect(true) {
-            onNavigateToMainPage(state.gamerId)
+        is AuthState.UnregisteredUser -> LaunchedEffect(true) {
+            onNavigateToCreateGamer(authState.authUser)
         }
+        AuthState.Idle -> return
+    }
+}
 
-        is LoginUiState.UnregisteredUser -> LaunchedEffect(true) {
-            onNavigateToCreateGamer(state.authUser)
-        }
-
-        else -> return
+@Composable
+fun ErrorComponent(
+    generalError: GeneralError,
+    snackBarHostState: SnackbarHostState,
+    retryProcess: () -> Unit,
+    resetProcessState: () -> Unit
+) {
+    when (generalError) {
+        is GeneralError.ClientError -> DialogError(
+            title = stringResource(R.string.txt_ttl_client_error),
+            image = painterResource(R.drawable.ic_warning),
+            message = stringResource(R.string.err_client),
+            onDismissedDialog = resetProcessState
+        )
+        GeneralError.ConnectionError -> DialogError(
+            title = stringResource(R.string.txt_ttl_unexpected_error),
+            image = painterResource(R.drawable.ic_warning),
+            message = stringResource(R.string.err_server_connection),
+            onDismissedDialog = resetProcessState
+        )
+        GeneralError.NetworkError -> DialogError(
+            title = stringResource(R.string.txt_ttl_service_error),
+            image = painterResource(R.drawable.ic_sin_internet),
+            message = stringResource(R.string.err_server),
+            onDismissedDialog = resetProcessState,
+            onClickAction = retryProcess
+        )
+        is GeneralError.ServerError -> DialogError(
+            title = stringResource(R.string.txt_ttl_service_error),
+            image = painterResource(R.drawable.ic_error),
+            message = stringResource(R.string.err_server),
+            onDismissedDialog = resetProcessState
+        )
+        GeneralError.Unknown -> SnackBarError(
+            snackBarHostState = snackBarHostState,
+            message = stringResource(R.string.err_auth),
+            withDismissAction = true,
+            onDismissed = resetProcessState
+        )
     }
 }
 
 @Composable
 fun FormLogin(
-    loginFormState: EmailAndPasswordFormState,
+    emailAndPasswordFormState: EmailAndPasswordFormState,
     validateFormLogin: (String, String) -> Unit,
     signInWithEmailAndPassword: (String, String) -> Unit,
 ) {
@@ -230,19 +249,19 @@ fun FormLogin(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 10.dp),
-            value = loginFormState.emailUiState.value,
+            value = emailAndPasswordFormState.emailUiState.value,
             label = R.string.txt_label_email,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
             leadingIcon = Icons.Default.Mail,
             cdLeadingIcon = null,
-            errors = loginFormState.emailUiState.state.let {
-                when (val emailUiState = loginFormState.emailUiState.state) {
+            errors = emailAndPasswordFormState.emailUiState.state.let {
+                when (val emailUiState = emailAndPasswordFormState.emailUiState.state) {
                     is InputState.Error -> emailUiState.errors.map { getErrorEmail(it) }
                     InputState.Idle, InputState.Success -> listOf()
                 }
             }
         ) {
-            validateFormLogin(it, loginFormState.passwordUiState.value)
+            validateFormLogin(it, emailAndPasswordFormState.passwordUiState.value)
         }
         Spacer(modifier = Modifier.height(10.dp))
         PasswordOutlinedTextField(
@@ -250,16 +269,16 @@ fun FormLogin(
                 .fillMaxWidth()
                 .padding(horizontal = 10.dp),
             label = R.string.txt_label_password,
-            password = loginFormState.passwordUiState.value,
+            password = emailAndPasswordFormState.passwordUiState.value,
             leadingIcon = Icons.Default.Lock,
-            errors = loginFormState.passwordUiState.state.let {
-                when (val passwordUiState = loginFormState.passwordUiState.state) {
+            errors = emailAndPasswordFormState.passwordUiState.state.let {
+                when (val passwordUiState = emailAndPasswordFormState.passwordUiState.state) {
                     is InputState.Error -> passwordUiState.errors.map { getErrorPassword(it) }
                     InputState.Idle, InputState.Success -> listOf()
                 }
             },
         ) {
-            validateFormLogin(loginFormState.emailUiState.value, it)
+            validateFormLogin(emailAndPasswordFormState.emailUiState.value, it)
         }
         Spacer(modifier = Modifier.height(20.dp))
         Column(
@@ -268,11 +287,11 @@ fun FormLogin(
         ) {
             DefaultButton(
                 text = stringResource(id = R.string.txt_btn_login),
-                enable = loginFormState.emailUiState.state is InputState.Success && loginFormState.passwordUiState.state is InputState.Success,
+                enable = emailAndPasswordFormState.emailUiState.state is InputState.Success && emailAndPasswordFormState.passwordUiState.state is InputState.Success,
                 onClickButton = {
                     signInWithEmailAndPassword(
-                        loginFormState.emailUiState.value,
-                        loginFormState.passwordUiState.value
+                        emailAndPasswordFormState.emailUiState.value,
+                        emailAndPasswordFormState.passwordUiState.value
                     )
                 }
             )

@@ -7,6 +7,7 @@ import com.asm.domain.entities.Session
 import com.asm.domain.errors.GeneralError
 import com.asm.domain.use_cases.GetSessionUC
 import com.asm.taken.model.InitRouteUiState
+import com.asm.taken.ui.navigation.Authentication
 import com.asm.taken.ui.navigation.CreateGamer
 import com.asm.taken.ui.navigation.Login
 import com.asm.taken.ui.navigation.MainPage
@@ -40,7 +41,7 @@ class SessionVM @Inject constructor(
                             InitRouteUiState.Success(it)
                         }
 
-                    null -> InitRouteUiState.Success(Login)
+                    null -> InitRouteUiState.Success(Authentication)
                 }
 
                 is Result.Unsuccessful<GeneralError> -> InitRouteUiState.Fail(resultSession.error)

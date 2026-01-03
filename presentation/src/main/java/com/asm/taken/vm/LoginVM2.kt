@@ -13,23 +13,31 @@ import com.asm.taken.model.InputEmailError
 import com.asm.taken.model.InputPasswordError
 import com.asm.taken.model.InputState
 import com.asm.taken.model.InputUiState
-import com.asm.taken.model.LoginUIState
+import com.asm.taken.model.LoginUIState2
+import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.scopes.ViewModelScoped
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class LoginVM2(
+@HiltViewModel
+class LoginVM2 @Inject constructor(
     private val signInUserUC: SignInUserUC
 ) : ViewModel() {
 
     private lateinit var authRepository: AuthRepository
-    private val _loginUIState: MutableStateFlow<LoginUIState> = MutableStateFlow(LoginUIState())
+    private val _loginUIState2: MutableStateFlow<LoginUIState2> = MutableStateFlow(LoginUIState2())
 
-    val loginUIState: StateFlow<LoginUIState> = _loginUIState
+    val loginUIState2: StateFlow<LoginUIState2> = _loginUIState2
 
     fun setAuthRepository(authRepository: AuthRepository) {
         this.authRepository = authRepository
+    }
+
+    fun resetProcessState() {
+        _loginUIState2.update { it.copy(authTypeState = AuthTypeState.Idle) }
     }
 
     fun validateLoginForm(email: String, password: String) {
@@ -47,7 +55,7 @@ class LoginVM2(
             emailUiState = emailUiState,
             passwordUiState = passwordUiState
         )
-        _loginUIState.update { it.copy(emailAndPasswordFormState = emailAndPasswordFormState) }
+        _loginUIState2.update { it.copy(emailAndPasswordFormState = emailAndPasswordFormState) }
     }
 
     fun signInWithEmailAndPassword(
@@ -56,7 +64,7 @@ class LoginVM2(
     ) {
         viewModelScope.launch {
             val authTypeState = AuthTypeState.EmailAndPasswordAuthType(AuthState.Loading)
-            _loginUIState.update { it.copy(authTypeState = authTypeState) }
+            _loginUIState2.update { it.copy(authTypeState = authTypeState) }
 
             val credentials = SignInUserUC.CredentialType.EmailAndPassword(
                 email = email,
@@ -76,14 +84,14 @@ class LoginVM2(
                     AuthState.Error(result.error)
                 )
             }
-            _loginUIState.update { it.copy(authTypeState = authEmailAndPasswordState) }
+            _loginUIState2.update { it.copy(authTypeState = authEmailAndPasswordState) }
         }
     }
 
     fun signInWithGoogle() {
         viewModelScope.launch {
             val authTypeState = AuthTypeState.GoogleAuthType(AuthState.Loading)
-            _loginUIState.update { it.copy(authTypeState = authTypeState) }
+            _loginUIState2.update { it.copy(authTypeState = authTypeState) }
 
             val credentials = SignInUserUC.CredentialType.Google(
                 authRepository = authRepository
@@ -101,14 +109,14 @@ class LoginVM2(
                     AuthState.Error(result.error)
                 )
             }
-            _loginUIState.update { it.copy(authTypeState = authGoogleState) }
+            _loginUIState2.update { it.copy(authTypeState = authGoogleState) }
         }
     }
 
     fun signInWithFacebook() {
         viewModelScope.launch {
             val authTypeState = AuthTypeState.FacebookAuthType(AuthState.Loading)
-            _loginUIState.update { it.copy(authTypeState = authTypeState) }
+            _loginUIState2.update { it.copy(authTypeState = authTypeState) }
 
             val credentials = SignInUserUC.CredentialType.Facebook(
                 authRepository = authRepository
@@ -126,7 +134,7 @@ class LoginVM2(
                     AuthState.Error(result.error)
                 )
             }
-            _loginUIState.update { it.copy(authTypeState = authFacebookState) }
+            _loginUIState2.update { it.copy(authTypeState = authFacebookState) }
         }
     }
 

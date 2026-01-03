@@ -38,7 +38,7 @@ data class LoginFormPhoneUiState(
     val phoneNumberUiState: InputUiState<String, InputPhoneNumberError>
 )
 
-data class LoginUIState(
+data class LoginUIState2(
     val emailAndPasswordFormState: EmailAndPasswordFormState = EmailAndPasswordFormState(),
     val authTypeState: AuthTypeState = AuthTypeState.Idle
 )

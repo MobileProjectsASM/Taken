@@ -7,7 +7,6 @@ import androidx.annotation.StringRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
@@ -78,7 +77,6 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -656,7 +654,7 @@ fun DialogError(
     title: String,
     image: Painter,
     message: String,
-    onDismissDialog: () -> Unit,
+    onDismissedDialog: () -> Unit,
     onClickAction: (() -> Unit)? = null
 ) {
     var showErrorDialog by rememberSaveable { mutableStateOf(true) }
@@ -667,11 +665,11 @@ fun DialogError(
             message = message,
             onDismissRequest = {
                 showErrorDialog = false
-                onDismissDialog()
+                onDismissedDialog()
             },
             onCloseDialog = {
                 showErrorDialog = false
-                onDismissDialog()
+                onDismissedDialog()
             },
             contentButtons = onClickAction?.let {
                 {
@@ -680,7 +678,7 @@ fun DialogError(
                         onClickButton = {
                             onClickAction()
                             showErrorDialog = false
-                            onDismissDialog()
+                            onDismissedDialog()
                         }
                     )
                 }
@@ -696,7 +694,7 @@ fun SnackBarError(
     actionLabel: String? = null,
     withDismissAction: Boolean = false,
     duration: SnackbarDuration = if (actionLabel == null) SnackbarDuration.Short else SnackbarDuration.Long,
-    onDismiss: () -> Unit,
+    onDismissed: () -> Unit,
     onActionPerformed: (() -> Unit)? = null
 ) = LaunchedEffect(true) {
     val snackBarResult = snackBarHostState.showSnackbar(
@@ -705,7 +703,7 @@ fun SnackBarError(
         withDismissAction = withDismissAction,
         duration = duration
     )
-    if (snackBarResult == SnackbarResult.Dismissed) onDismiss()
+    if (snackBarResult == SnackbarResult.Dismissed) onDismissed()
     else if (onActionPerformed != null) onActionPerformed()
 }
 
@@ -721,7 +719,7 @@ fun ErrorCountries(
             title = stringResource(R.string.txt_ttl_client_error),
             image = painterResource(R.drawable.ic_warning),
             message = stringResource(R.string.err_client),
-            onDismissDialog = resetState
+            onDismissedDialog = resetState
         )
 
         GeneralError.NetworkError -> SnackBarError(
@@ -729,7 +727,7 @@ fun ErrorCountries(
             actionLabel = stringResource(R.string.txt_label_retry),
             duration = SnackbarDuration.Long,
             message = stringResource(R.string.err_network_connection),
-            onDismiss = resetState,
+            onDismissed = resetState,
             onActionPerformed = retryProcess
         )
 
@@ -737,21 +735,21 @@ fun ErrorCountries(
             title = stringResource(R.string.txt_ttl_service_error),
             image = painterResource(R.drawable.ic_error),
             message = stringResource(R.string.err_server),
-            onDismissDialog = resetState
+            onDismissedDialog = resetState
         )
 
         GeneralError.Unknown -> SnackBarError(
             snackBarHostState = snackBarHostState,
             message = stringResource(R.string.err_get_countries),
             withDismissAction = true,
-            onDismiss = resetState
+            onDismissed = resetState
         )
 
         GeneralError.ConnectionError -> DialogError(
             title = stringResource(R.string.txt_ttl_unexpected_error),
             image = painterResource(R.drawable.ic_warning),
             message = stringResource(R.string.err_server_connection),
-            onDismissDialog = resetState,
+            onDismissedDialog = resetState,
             onClickAction = retryProcess
         )
     }

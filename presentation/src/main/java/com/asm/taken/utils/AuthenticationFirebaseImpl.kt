@@ -39,8 +39,8 @@ import kotlin.coroutines.resume
 
 class AuthenticationFirebaseImpl(
     private val context: Context,
-    private val credentialManager: CredentialManager,
     private val loginManager: LoginManager,
+    private val callbackManager: CallbackManager,
     private val metaAuthLauncher: ActivityResultLauncher<Collection<String>>,
     private val auth: FirebaseAuth
 ) : AuthRepository {
@@ -69,7 +69,7 @@ class AuthenticationFirebaseImpl(
     }
 
     override suspend fun authWithGoogle(): Result<AuthUser, GeneralError> =
-        signInWithCredentialManager(context, true)
+        signInWithCredentialManager(true)
 
     override suspend fun authWithFacebook(): Result<AuthUser, GeneralError> {
         val authWithFacebookResult =
@@ -90,7 +90,6 @@ class AuthenticationFirebaseImpl(
                     }
                 }
 
-                val callbackManager = CallbackManager.Factory.create()
                 loginManager.registerCallback(callbackManager, callback)
 
                 metaAuthLauncher.launch(listOf("email", "public_profile"))
@@ -110,12 +109,11 @@ class AuthenticationFirebaseImpl(
     }
 
     private suspend fun signInWithCredentialManager(
-        context: Context,
         authorizedAccounts: Boolean
     ): Result<AuthUser, GeneralError> {
         return try {
             val credentialRequest = buildCredentialRequest(authorizedAccounts)
-            val credentialResponse = credentialManager.getCredential(context, credentialRequest)
+            val credentialResponse = CredentialManager.create(context).getCredential(context, credentialRequest)
             try {
                 val authCredential = handleCredentialResponse(credentialResponse)
                 signInWithFirebase(authCredential)
@@ -125,7 +123,7 @@ class AuthenticationFirebaseImpl(
             }
         } catch (exception: GetCredentialException) {
             Log.e(TAG, "Unexpected exception to get credentials", exception)
-            if (authorizedAccounts) signInWithCredentialManager(context, false)
+            if (authorizedAccounts) signInWithCredentialManager(false)
             else GeneralError.ClientError().toUnsuccessful()
         } catch (exception: Exception) {
             Log.e(TAG, "Unexpected exception to get credentials", exception)
