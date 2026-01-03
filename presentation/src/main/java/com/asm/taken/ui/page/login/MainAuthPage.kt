@@ -35,7 +35,7 @@ import com.asm.domain.entities.AuthUser
 import com.asm.domain.errors.GeneralError
 import com.asm.taken.R
 import com.asm.taken.model.InputState
-import com.asm.taken.model.LoginFormUiState
+import com.asm.taken.model.EmailAndPasswordFormState
 import com.asm.taken.model.LoginUiState
 import com.asm.taken.ui.CircularProgressDialog
 import com.asm.taken.ui.DefaultButton
@@ -86,7 +86,7 @@ fun AuthenticationSection(
     onNavigateToCreateAccount: () -> Unit,
     onNavigateToAuthWithPhone: () -> Unit,
 ) {
-    val loginFormState: LoginFormUiState by loginVM.loginFormUiState.collectAsStateWithLifecycle()
+    val loginFormState: EmailAndPasswordFormState by loginVM.loginFormUiState.collectAsStateWithLifecycle()
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
 
@@ -131,7 +131,7 @@ fun AuthenticationSection(
 
 @Composable
 fun PanelFormLogin(
-    loginFormState: LoginFormUiState,
+    loginFormState: EmailAndPasswordFormState,
     validateFormLogin: (String, String) -> Unit,
     signInWithEmailAndPassword: (String, String) -> Unit,
 ) {
@@ -221,7 +221,7 @@ fun SessionSection(
 
 @Composable
 fun FormLogin(
-    loginFormState: LoginFormUiState,
+    loginFormState: EmailAndPasswordFormState,
     validateFormLogin: (String, String) -> Unit,
     signInWithEmailAndPassword: (String, String) -> Unit,
 ) {
@@ -238,7 +238,7 @@ fun FormLogin(
             errors = loginFormState.emailUiState.state.let {
                 when (val emailUiState = loginFormState.emailUiState.state) {
                     is InputState.Error -> emailUiState.errors.map { getErrorEmail(it) }
-                    InputState.Init, InputState.Success -> listOf()
+                    InputState.Idle, InputState.Success -> listOf()
                 }
             }
         ) {
@@ -255,7 +255,7 @@ fun FormLogin(
             errors = loginFormState.passwordUiState.state.let {
                 when (val passwordUiState = loginFormState.passwordUiState.state) {
                     is InputState.Error -> passwordUiState.errors.map { getErrorPassword(it) }
-                    InputState.Init, InputState.Success -> listOf()
+                    InputState.Idle, InputState.Success -> listOf()
                 }
             },
         ) {

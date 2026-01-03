@@ -205,7 +205,7 @@ fun FormCreateAccount(
             errors = loginFormCreateAccountState.emailUiState.state.let { emailState ->
                 when (emailState) {
                     is InputState.Error -> emailState.errors.map { getErrorEmail(it) }
-                    InputState.Init, InputState.Success -> listOf()
+                    InputState.Idle, InputState.Success -> listOf()
                 }
             }
         ) {
@@ -226,7 +226,7 @@ fun FormCreateAccount(
             errors = loginFormCreateAccountState.passwordUiState.state.let { passwordState ->
                 when (passwordState) {
                     is InputState.Error -> passwordState.errors.map { getErrorPassword(it) }
-                    InputState.Init, InputState.Success -> listOf()
+                    InputState.Idle, InputState.Success -> listOf()
                 }
             }
         ) {
@@ -250,7 +250,7 @@ fun FormCreateAccount(
                         stringResource(R.string.err_password_is_not_same)
                     }
 
-                    InputState.Init, InputState.Success -> listOf()
+                    InputState.Idle, InputState.Success -> listOf()
                 }
             }
         ) {

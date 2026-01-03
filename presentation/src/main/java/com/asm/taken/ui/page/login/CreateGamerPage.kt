@@ -298,7 +298,7 @@ fun FormEditGamer(
     var showChangeProfileImageDialog: Boolean by rememberSaveable { mutableStateOf(false) }
     when (val imageSelectedState = editGamerFormState.imageURI.state) {
         is InputState.Error<InputImageError> -> imageSelectedState.errors.map { getErrorImage(it) }
-        InputState.Init, InputState.Success -> listOf()
+        InputState.Idle, InputState.Success -> listOf()
     }
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia()
@@ -361,7 +361,7 @@ fun FormEditGamer(
             errors = editGamerFormState.aliasUiState.state.let { aliasState ->
                 when (aliasState) {
                     is InputState.Error<InputAliasError> -> aliasState.errors.map { getErrorAlias(it) }
-                    InputState.Init, InputState.Success -> listOf()
+                    InputState.Idle, InputState.Success -> listOf()
                 }
             }
         ) { newAlias ->
@@ -385,7 +385,7 @@ fun FormEditGamer(
             errors = editGamerFormState.ageUiState.state.let { ageState ->
                 when (ageState) {
                     is InputState.Error<InputAgeError> -> ageState.errors.map { getErrorAge(it) }
-                    InputState.Init, InputState.Success -> listOf()
+                    InputState.Idle, InputState.Success -> listOf()
                 }
             }
         ) { newAge ->
@@ -409,7 +409,7 @@ fun FormEditGamer(
                         getErrorCountry(it)
                     }
 
-                    InputState.Init, InputState.Success -> listOf()
+                    InputState.Idle, InputState.Success -> listOf()
                 }
             }
         ) {

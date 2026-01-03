@@ -206,7 +206,7 @@ fun FormPhoneNumber(
                 when (phoneCodeState) {
                     is InputState.Error -> phoneCodeState.errors.map { getErrorPhoneCode(it) }
 
-                    InputState.Init, InputState.Success -> listOf()
+                    InputState.Idle, InputState.Success -> listOf()
                 }
             },
             onChageCode = {
@@ -227,7 +227,7 @@ fun FormPhoneNumber(
                 when (phoneNumberState) {
                     is InputState.Error -> phoneNumberState.errors.map { getErrorPhoneNumber(it) }
 
-                    InputState.Init, InputState.Success -> listOf()
+                    InputState.Idle, InputState.Success -> listOf()
                 }
             }
         ) {
@@ -508,7 +508,7 @@ fun OtpDialog(
                     errors = otpFormState.state.let { otpFormState ->
                         when (otpFormState) {
                             is InputState.Error -> otpFormState.errors.map { getErrorVerifyOtp(it) }
-                            InputState.Init, InputState.Success -> listOf()
+                            InputState.Idle, InputState.Success -> listOf()
                         }
                     },
                     onChange = validateForm

@@ -3,18 +3,18 @@ package com.asm.taken.model
 import com.asm.domain.entities.AuthUser
 import com.asm.domain.errors.GeneralError
 
-data class LoginFormUiState(
-    val emailUiState: InputUiState<String, InputEmailError>,
-    val passwordUiState: InputUiState<String, InputPasswordError>
+data class EmailAndPasswordFormState(
+    val emailUiState: InputUiState<String, InputEmailError> = InputUiState(""),
+    val passwordUiState: InputUiState<String, InputPasswordError> = InputUiState("")
 )
 
 data class InputUiState<out Value, out InputError>(
     val value: Value,
-    val state: InputState<InputError> = InputState.Init
+    val state: InputState<InputError> = InputState.Idle
 )
 
 sealed class InputState<out InputError> {
-    data object Init: InputState<Nothing>()
+    data object Idle: InputState<Nothing>()
     data object Success: InputState<Nothing>()
     data class Error<out InputError>(
         val errors: List<InputError>
@@ -37,6 +37,26 @@ data class LoginFormPhoneUiState(
     val phoneCodeUiState: InputUiState<String, InputPhoneCodeError>,
     val phoneNumberUiState: InputUiState<String, InputPhoneNumberError>
 )
+
+data class LoginUIState(
+    val emailAndPasswordFormState: EmailAndPasswordFormState = EmailAndPasswordFormState(),
+    val authTypeState: AuthTypeState = AuthTypeState.Idle
+)
+
+sealed class AuthTypeState {
+    data object Idle: AuthTypeState()
+    data class EmailAndPasswordAuthType(val authState: AuthState): AuthTypeState()
+    data class GoogleAuthType(val authState: AuthState): AuthTypeState()
+    data class FacebookAuthType(val authState: AuthState): AuthTypeState()
+}
+
+sealed class AuthState {
+    data object Idle: AuthState()
+    data object Loading: AuthState()
+    data class RegisteredUser(val gamerId: String): AuthState()
+    data class UnregisteredUser(val authUser: AuthUser): AuthState()
+    data class Error(val generalError: GeneralError): AuthState()
+}
 
 sealed class LoginUiState {
     data object Loading: LoginUiState()

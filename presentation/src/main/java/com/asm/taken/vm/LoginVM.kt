@@ -22,7 +22,7 @@ import com.asm.taken.model.InputState
 import com.asm.taken.model.InputUiState
 import com.asm.taken.model.LoginFormCreateAccountUiState
 import com.asm.taken.model.LoginFormPhoneUiState
-import com.asm.taken.model.LoginFormUiState
+import com.asm.taken.model.EmailAndPasswordFormState
 import com.asm.taken.model.LoginUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -45,7 +45,7 @@ class LoginVM @Inject constructor(
 
     //region MutableStateFlows
     private val _loginFormUiState = MutableStateFlow(
-        LoginFormUiState(
+        EmailAndPasswordFormState(
             emailUiState = InputUiState(""),
             passwordUiState = InputUiState("")
         )
@@ -77,7 +77,7 @@ class LoginVM @Inject constructor(
 
     //region StateFlows
 
-    val loginFormUiState: StateFlow<LoginFormUiState> = _loginFormUiState
+    val loginFormUiState: StateFlow<EmailAndPasswordFormState> = _loginFormUiState
     val countriesUiState: StateFlow<CountriesUiState?> = _countriesUiState
     val loginFormPhoneUiState: StateFlow<LoginFormPhoneUiState> = _loginFormPhoneUiState
     val loginFormCreateAccountState: StateFlow<LoginFormCreateAccountUiState> =
