@@ -708,6 +708,48 @@ fun SnackBarError(
 }
 
 @Composable
+fun ErrorComponent(
+    generalError: GeneralError,
+    snackBarHostState: SnackbarHostState,
+    retryProcess: () -> Unit,
+    resetProcessState: () -> Unit
+) {
+    when (generalError) {
+        is GeneralError.ClientError -> DialogError(
+            title = stringResource(R.string.txt_ttl_client_error),
+            image = painterResource(R.drawable.ic_warning),
+            message = stringResource(R.string.err_client),
+            onDismissedDialog = resetProcessState
+        )
+        GeneralError.ConnectionError -> DialogError(
+            title = stringResource(R.string.txt_ttl_unexpected_error),
+            image = painterResource(R.drawable.ic_warning),
+            message = stringResource(R.string.err_server_connection),
+            onDismissedDialog = resetProcessState
+        )
+        GeneralError.NetworkError -> DialogError(
+            title = stringResource(R.string.txt_ttl_service_error),
+            image = painterResource(R.drawable.ic_sin_internet),
+            message = stringResource(R.string.err_server),
+            onDismissedDialog = resetProcessState,
+            onClickAction = retryProcess
+        )
+        is GeneralError.ServerError -> DialogError(
+            title = stringResource(R.string.txt_ttl_service_error),
+            image = painterResource(R.drawable.ic_error),
+            message = stringResource(R.string.err_server),
+            onDismissedDialog = resetProcessState
+        )
+        GeneralError.Unknown -> SnackBarError(
+            snackBarHostState = snackBarHostState,
+            message = stringResource(R.string.err_auth),
+            withDismissAction = true,
+            onDismissed = resetProcessState
+        )
+    }
+}
+
+@Composable
 fun ErrorCountries(
     generalError: GeneralError,
     snackBarHostState: SnackbarHostState,

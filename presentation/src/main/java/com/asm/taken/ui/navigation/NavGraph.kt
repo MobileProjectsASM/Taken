@@ -26,6 +26,7 @@ import com.asm.taken.ui.page.main_menu.EditGamerPage
 import com.asm.taken.ui.page.main_menu.MainMenuPage
 import com.asm.taken.utils.AuthenticationClient
 import com.asm.taken.utils.AuthenticationProviders
+import com.asm.taken.vm.CreateAccountVM
 import com.asm.taken.vm.CreateGamerVM
 import com.asm.taken.vm.EditGamerVM
 import com.asm.taken.vm.LoginVM
@@ -33,7 +34,6 @@ import com.asm.taken.vm.LoginVM2
 import com.asm.taken.vm.MainVM
 import com.facebook.CallbackManager
 import com.facebook.login.LoginManager
-import com.google.firebase.auth.FirebaseAuth
 
 @Composable
 fun MainNavigation(
@@ -93,6 +93,18 @@ fun MainNavigation(
                             }
                         }
                     }
+                )
+            }
+        }
+        composable<CreateAccount> { navBackStackEntry ->
+
+            val createAccountVM = hiltViewModel<CreateAccountVM>(navBackStackEntry)
+
+            BackgroundLogin {
+                CreateAccountPage(
+                    createAccountVM = createAccountVM,
+                    snackBarHostState = snackBarHostState,
+                    popBackStack = navigationController::popBackStack
                 )
             }
         }
@@ -171,20 +183,6 @@ fun NavGraphBuilder.navigationLogin(
                             }
                         }
                     }
-                )
-            }
-        }
-        composable<CreateAccount> { navBackStackEntry ->
-            val parentEntry = remember(navBackStackEntry) {
-                navController.getBackStackEntry(Login)
-            }
-            val loginVM = hiltViewModel<LoginVM>(parentEntry)
-            BackgroundLogin {
-                CreateAccountPage(
-                    loginVM = loginVM,
-                    authenticationClient = authenticationClient,
-                    snackBarHostState = snackBarHostState,
-                    popBackStack = navController::popBackStack
                 )
             }
         }

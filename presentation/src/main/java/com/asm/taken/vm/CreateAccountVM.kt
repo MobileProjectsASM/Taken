@@ -35,6 +35,18 @@ class CreateAccountVM @Inject constructor(
 
     val createAccountUIState: StateFlow<CreateAccountUIState> = _createAccountUIState
 
+    fun resetProcessState() {
+        _createAccountUIState.update {
+            it.copy(createAccountProcessState = CreateAccountProcessState.Idle)
+        }
+    }
+
+    fun resetFormState() {
+        _createAccountUIState.update {
+            it.copy(createAccountFormState = CreateAccountFormState())
+        }
+    }
+
     fun createAccount(email: String, password: String) {
         viewModelScope.launch {
             val createAccountProcessState = CreateAccountProcessState.Loading

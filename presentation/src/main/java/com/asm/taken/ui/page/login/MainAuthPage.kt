@@ -22,7 +22,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
@@ -43,10 +42,9 @@ import com.asm.taken.ui.DefaultImageButton
 import com.asm.taken.ui.DefaultOutlinedTextFieldLI
 import com.asm.taken.ui.DefaultText
 import com.asm.taken.ui.DefaultTextButton
-import com.asm.taken.ui.DialogError
+import com.asm.taken.ui.ErrorComponent
 import com.asm.taken.ui.PasswordOutlinedTextField
 import com.asm.taken.ui.PuzzleGeneralTitle
-import com.asm.taken.ui.SnackBarError
 import com.asm.taken.utils.AuthenticationProviders
 import com.asm.taken.utils.getErrorEmail
 import com.asm.taken.utils.getErrorPassword
@@ -236,48 +234,6 @@ fun ProcessSection(
             onNavigateToCreateGamer(authState.authUser)
         }
         AuthState.Idle -> return
-    }
-}
-
-@Composable
-fun ErrorComponent(
-    generalError: GeneralError,
-    snackBarHostState: SnackbarHostState,
-    retryProcess: () -> Unit,
-    resetProcessState: () -> Unit
-) {
-    when (generalError) {
-        is GeneralError.ClientError -> DialogError(
-            title = stringResource(R.string.txt_ttl_client_error),
-            image = painterResource(R.drawable.ic_warning),
-            message = stringResource(R.string.err_client),
-            onDismissedDialog = resetProcessState
-        )
-        GeneralError.ConnectionError -> DialogError(
-            title = stringResource(R.string.txt_ttl_unexpected_error),
-            image = painterResource(R.drawable.ic_warning),
-            message = stringResource(R.string.err_server_connection),
-            onDismissedDialog = resetProcessState
-        )
-        GeneralError.NetworkError -> DialogError(
-            title = stringResource(R.string.txt_ttl_service_error),
-            image = painterResource(R.drawable.ic_sin_internet),
-            message = stringResource(R.string.err_server),
-            onDismissedDialog = resetProcessState,
-            onClickAction = retryProcess
-        )
-        is GeneralError.ServerError -> DialogError(
-            title = stringResource(R.string.txt_ttl_service_error),
-            image = painterResource(R.drawable.ic_error),
-            message = stringResource(R.string.err_server),
-            onDismissedDialog = resetProcessState
-        )
-        GeneralError.Unknown -> SnackBarError(
-            snackBarHostState = snackBarHostState,
-            message = stringResource(R.string.err_auth),
-            withDismissAction = true,
-            onDismissed = resetProcessState
-        )
     }
 }
 
