@@ -34,6 +34,11 @@ class SignInUserUC @Inject constructor(
             val token: String,
             val providerId: ProviderId
         ) : CredentialType()
+
+        data class OTP(
+            val sessionId: String,
+            val otp: String
+        ): CredentialType()
     }
 
     sealed class User {
@@ -86,5 +91,6 @@ class SignInUserUC @Inject constructor(
             )
 
             is CredentialType.Token -> authRepository.authWithToken(credentialType.token, credentialType.providerId)
+            is CredentialType.OTP -> authRepository.authWithOTP(credentialType.sessionId, credentialType.otp)
         }
 }
