@@ -68,10 +68,22 @@ sealed class LoginUiState {
     data class Error(val generalError: GeneralError): LoginUiState()
 }
 
-data class LoginFormCreateAccountUiState(
-    val emailUiState: InputUiState<String, InputEmailError>,
-    val passwordUiState: InputUiState<String, InputPasswordError>,
-    val passwordRepeatUiState: InputUiState<String, InputRepeatValueError>
+data class CreateAccountUIState(
+    val createAccountFormState: CreateAccountFormState = CreateAccountFormState(),
+    val createAccountProcessState: CreateAccountProcessState = CreateAccountProcessState.Idle
+)
+
+sealed class CreateAccountProcessState {
+    data object Idle: CreateAccountProcessState()
+    data object Loading: CreateAccountProcessState()
+    data object AccountProcessCreated: CreateAccountProcessState()
+    data class Error(val generalError: GeneralError): CreateAccountProcessState()
+}
+
+data class CreateAccountFormState(
+    val emailUiState: InputUiState<String, InputEmailError> = InputUiState(""),
+    val passwordUiState: InputUiState<String, InputPasswordError> = InputUiState(""),
+    val passwordRepeatUiState: InputUiState<String, InputRepeatValueError> = InputUiState("")
 )
 
 data class EditGamerFormUiState(
