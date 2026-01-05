@@ -11,7 +11,7 @@ import javax.inject.Inject
 class CreateAccountUC @Inject constructor(
     private val logger: Logger,
     private val authRepository: AuthRepository
-): UseCaseSync<Result<String, GeneralError>, CreateAccountUC.CreateAccountParams>() {
+): UseCaseSync<Result<Unit, GeneralError>, CreateAccountUC.CreateAccountParams>() {
 
     companion object {
         const val TAG = "create_account_use_case"
@@ -22,7 +22,7 @@ class CreateAccountUC @Inject constructor(
         val password: String
     )
 
-    override suspend fun run(params: CreateAccountParams): Result<String, GeneralError> {
+    override suspend fun run(params: CreateAccountParams): Result<Unit, GeneralError> {
         return try {
             authRepository.createAccount(params.email, params.password)
         } catch (exception: Exception) {
