@@ -20,9 +20,8 @@ import com.asm.taken.model.InputPhoneNumberError
 import com.asm.taken.model.InputRepeatValueError
 import com.asm.taken.model.InputState
 import com.asm.taken.model.InputUiState
-import com.asm.taken.model.LoginFormCreateAccountUiState
+import com.asm.taken.model.CreateAccountFormState
 import com.asm.taken.model.LoginFormPhoneUiState
-import com.asm.taken.model.EmailAndPasswordFormState
 import com.asm.taken.model.LoginUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -44,12 +43,6 @@ class LoginVM @Inject constructor(
     }
 
     //region MutableStateFlows
-    private val _loginFormUiState = MutableStateFlow(
-        EmailAndPasswordFormState(
-            emailUiState = InputUiState(""),
-            passwordUiState = InputUiState("")
-        )
-    )
     private val _countriesUiState: MutableStateFlow<CountriesUiState?> =
         MutableStateFlow(null)
     private val _loginFormPhoneUiState: MutableStateFlow<LoginFormPhoneUiState> = MutableStateFlow(
@@ -58,9 +51,9 @@ class LoginVM @Inject constructor(
             phoneNumberUiState = InputUiState("")
         )
     )
-    private val _loginFormCreateAccountUiState: MutableStateFlow<LoginFormCreateAccountUiState> =
+    private val _CreateAccountFormState: MutableStateFlow<CreateAccountFormState> =
         MutableStateFlow(
-            LoginFormCreateAccountUiState(
+            CreateAccountFormState(
                 emailUiState = InputUiState(""),
                 passwordUiState = InputUiState(""),
                 passwordRepeatUiState = InputUiState("")
@@ -77,11 +70,10 @@ class LoginVM @Inject constructor(
 
     //region StateFlows
 
-    val loginFormUiState: StateFlow<EmailAndPasswordFormState> = _loginFormUiState
     val countriesUiState: StateFlow<CountriesUiState?> = _countriesUiState
     val loginFormPhoneUiState: StateFlow<LoginFormPhoneUiState> = _loginFormPhoneUiState
-    val loginFormCreateAccountState: StateFlow<LoginFormCreateAccountUiState> =
-        _loginFormCreateAccountUiState
+    val createAccountFormState: StateFlow<CreateAccountFormState> =
+        _CreateAccountFormState
     val loginUiState: StateFlow<LoginUiState> = _loginUiState
     val otpFormUiState: StateFlow<InputUiState<String, InputOtpError>> = _otpFormUiState
 
@@ -93,24 +85,6 @@ class LoginVM @Inject constructor(
     }
 
     //region LoginForm
-    fun validateLoginForm(email: String, password: String) {
-        val emailErrors = validateEmail(email)
-        val passwordErrors = validatePasswordEmpty(password)
-        _loginFormUiState.update {
-            val emailUiState = emailErrors.run {
-                if (isEmpty()) InputUiState(email, InputState.Success)
-                else InputUiState(email, InputState.Error(emailErrors))
-            }
-            val passwordUiState = passwordErrors.run {
-                if (isEmpty()) InputUiState(password, InputState.Success)
-                else InputUiState(password, InputState.Error(passwordErrors))
-            }
-            it.copy(
-                emailUiState = emailUiState,
-                passwordUiState = passwordUiState,
-            )
-        }
-    }
 
     fun getCountriesInfo() {
         viewModelScope.launch {
@@ -174,12 +148,6 @@ class LoginVM @Inject constructor(
         if (!password.contains("[A-Z]".toRegex())) errors.add(InputPasswordError.LEAST_ONE_UPPERCASE)
         if (!password.contains("\\d".toRegex())) errors.add(InputPasswordError.LEAST_ONE_NUMBER)
         if (!password.contains("[@$!%*?&#]".toRegex())) errors.add(InputPasswordError.LEAST_ONE_SPECIAL_CHARACTER)
-        return errors
-    }
-
-    private fun validatePasswordEmpty(password: String): List<InputPasswordError> {
-        val errors = mutableListOf<InputPasswordError>()
-        if (password.isEmpty()) errors.add(InputPasswordError.EMPTY)
         return errors
     }
     //endregion
@@ -268,7 +236,7 @@ class LoginVM @Inject constructor(
         val emailErrors = validateEmail(email)
         val passwordErrors = validatePassword(password)
         val passwordRepeatErrors = validatePasswordRepeat(password, passwordRepeat)
-        _loginFormCreateAccountUiState.update {
+        _CreateAccountFormState.update {
             val emailUiState: InputUiState<String, InputEmailError> = emailErrors.run {
                 when {
                     isEmpty() -> InputUiState(email, InputState.Success)
@@ -297,7 +265,7 @@ class LoginVM @Inject constructor(
     }
 
     fun cleanLoginFormCreateAccount() {
-        _loginFormCreateAccountUiState.update {
+        _CreateAccountFormState.update {
             it.copy(
                 emailUiState = InputUiState(""),
                 passwordUiState = InputUiState(""),
