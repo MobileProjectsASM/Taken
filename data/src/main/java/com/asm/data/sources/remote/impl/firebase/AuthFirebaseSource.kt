@@ -16,6 +16,7 @@ import com.google.firebase.auth.FirebaseAuthException
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.google.firebase.auth.FirebaseAuthInvalidUserException
 import com.google.firebase.auth.GoogleAuthProvider
+import com.google.firebase.auth.PhoneAuthProvider
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
@@ -69,7 +70,32 @@ class AuthFirebaseSource @Inject constructor(
             }
             Result.Successful(AuthUser(firebaseUser.uid, photoUrl))
         } catch (exception: Exception) {
-            Log.e(TAG, "Unexpected exception to sign in with firebase", exception)
+            Log.e(TAG, "Unexpected exception to sign in with token", exception)
+            when (exception) {
+                is FirebaseAuthInvalidUserException -> GeneralError.ClientError("")
+                is FirebaseAuthInvalidCredentialsException -> GeneralError.ClientError("")
+                is FirebaseNetworkException -> GeneralError.NetworkError
+                is FirebaseException -> GeneralError.ClientError("")
+                else -> GeneralError.Unknown
+            }.toUnsuccessful()
+        }
+    }
+
+    override suspend fun authWithOtp(
+        sessionId: String,
+        otp: String
+    ): Result<AuthUser, GeneralError> {
+        return try {
+            val phoneAuthCredential = PhoneAuthProvider.getCredential(sessionId, otp)
+            val authResult = firebaseAuth.signInWithCredential(phoneAuthCredential).await()
+            val firebaseUser = authResult.user
+            if (firebaseUser == null) {
+                Log.e(TAG, "FirebaseUser is null")
+                return GeneralError.ServerError().toUnsuccessful()
+            }
+            Result.Successful(AuthUser(firebaseUser.uid, null))
+        } catch (exception: Exception) {
+            Log.e(TAG, "Unexpected exception to sign in with otp", exception)
             when (exception) {
                 is FirebaseAuthInvalidUserException -> GeneralError.ClientError("")
                 is FirebaseAuthInvalidCredentialsException -> GeneralError.ClientError("")

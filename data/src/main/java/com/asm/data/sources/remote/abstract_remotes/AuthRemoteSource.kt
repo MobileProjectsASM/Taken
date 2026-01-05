@@ -8,5 +8,6 @@ import com.asm.domain.errors.GeneralError
 interface AuthRemoteSource {
     suspend fun authWithEmailAndPassword(email: String, password: String): Result<AuthUser, GeneralError>
     suspend fun authWithToken(token: String, providerId: ProviderId): Result<AuthUser, GeneralError>
+    suspend fun authWithOtp(sessionId: String, otp: String): Result<AuthUser, GeneralError>
     suspend fun createAccount(email: String, password: String): Result<Unit, GeneralError>
 }

@@ -40,6 +40,18 @@ class AuthRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun authWithOTP(
+        sessionId: String,
+        otp: String
+    ): Result<AuthUser, GeneralError> {
+        return try {
+            authRemoteSource.authWithOtp(sessionId, otp)
+        } catch (exception: Exception) {
+            logger.logE(TAG, exception)
+            return GeneralError.Unknown.toUnsuccessful()
+        }
+    }
+
     override suspend fun createAccount(
         email: String,
         password: String
