@@ -25,7 +25,7 @@ import com.asm.taken.ui.page.main_menu.BackgroundMainSection
 import com.asm.taken.ui.page.main_menu.EditGamerPage
 import com.asm.taken.ui.page.main_menu.MainMenuPage
 import com.asm.taken.utils.AuthenticationClient
-import com.asm.taken.utils.AuthenticationFirebaseImpl
+import com.asm.taken.utils.AuthenticationProviders
 import com.asm.taken.vm.CreateGamerVM
 import com.asm.taken.vm.EditGamerVM
 import com.asm.taken.vm.LoginVM
@@ -54,20 +54,18 @@ fun MainNavigation(
             val loginManager = LoginManager.getInstance()
             val callbackManager = CallbackManager.Factory.create()
             val metaLauncher = rememberLauncherForActivityResult(loginManager.createLogInActivityResultContract(callbackManager)) {}
-            val authClient = AuthenticationFirebaseImpl(
+            val authProviders = AuthenticationProviders(
                 context = LocalContext.current,
                 loginManager = loginManager,
                 callbackManager = callbackManager,
-                metaAuthLauncher = metaLauncher,
-                auth = FirebaseAuth.getInstance()
+                metaAuthLauncher = metaLauncher
             )
 
             val loginVM2 = hiltViewModel<LoginVM2>(navBackStackEntry)
 
-            loginVM2.setAuthRepository(authClient)
-
             BackgroundLogin {
                 MainAuthPage(
+                    authProvider = authProviders,
                     loginVM2 = loginVM2,
                     snackBarHostState = snackBarHostState,
                     onNavigateToCreateAccount = {

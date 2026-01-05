@@ -13,11 +13,13 @@ import com.asm.data.sources.local.interfaces.GamerLocalSource
 import com.asm.data.sources.local.interfaces.LevelLocalSource
 import com.asm.data.sources.local.interfaces.MultimediaLocalSource
 import com.asm.data.sources.local.interfaces.SessionLocalSource
+import com.asm.data.sources.remote.abstract_remotes.AuthRemoteSource
 import com.asm.data.sources.remote.abstract_remotes.CountryInfoRemoteSource
 import com.asm.data.sources.remote.abstract_remotes.GameRemoteSource
 import com.asm.data.sources.remote.abstract_remotes.GamerRemoteSource
 import com.asm.data.sources.remote.abstract_remotes.LevelRemoteSource
 import com.asm.data.sources.remote.abstract_remotes.MultimediaRemoteSource
+import com.asm.data.sources.remote.impl.firebase.AuthFirebaseSource
 import com.asm.data.sources.remote.impl.firebase.GameFireStoreSource
 import com.asm.data.sources.remote.impl.firebase.GamerFirebaseSource
 import com.asm.data.sources.remote.impl.firebase.LevelFireStoreSource
@@ -80,5 +82,9 @@ abstract class SourcesModule {
     @ViewModelScoped
     @Binds
     abstract fun getSessionLocalSource(sessionSharedPreferencesSource: SessionSharedPreferencesSource): SessionLocalSource
+
+    @ViewModelScoped
+    @Binds
+    abstract fun getAuthRemoteSource(authFirebaseSource: AuthFirebaseSource): AuthRemoteSource
 
 }

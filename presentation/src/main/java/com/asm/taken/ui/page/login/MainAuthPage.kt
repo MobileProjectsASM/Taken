@@ -19,6 +19,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -28,6 +29,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.asm.domain.entities.AuthUser
+import com.asm.domain.entities.Result
 import com.asm.domain.errors.GeneralError
 import com.asm.taken.R
 import com.asm.taken.model.AuthState
@@ -45,12 +47,15 @@ import com.asm.taken.ui.DialogError
 import com.asm.taken.ui.PasswordOutlinedTextField
 import com.asm.taken.ui.PuzzleGeneralTitle
 import com.asm.taken.ui.SnackBarError
+import com.asm.taken.utils.AuthenticationProviders
 import com.asm.taken.utils.getErrorEmail
 import com.asm.taken.utils.getErrorPassword
 import com.asm.taken.vm.LoginVM2
+import kotlinx.coroutines.launch
 
 @Composable
 fun MainAuthPage(
+    authProvider: AuthenticationProviders,
     loginVM2: LoginVM2,
     snackBarHostState: SnackbarHostState,
     onNavigateToCreateAccount: () -> Unit,
@@ -58,6 +63,8 @@ fun MainAuthPage(
     onNavigateToMainPage: (String) -> Unit,
     onNavigateToCreateGamer: (AuthUser) -> Unit
 ) {
+    val coroutineScope = rememberCoroutineScope()
+
     val loginUIState2: LoginUIState2 by loginVM2.loginUIState2.collectAsStateWithLifecycle()
 
     AuthenticationSection(
@@ -66,8 +73,26 @@ fun MainAuthPage(
         onNavigateToAuthWithPhone = onNavigateToAuthWithPhone,
         validateFormLogin = loginVM2::validateLoginForm,
         loginWithEmailAndPassword = loginVM2::signInWithEmailAndPassword,
-        loginWithGoogle = loginVM2::signInWithGoogle,
-        loginWithFacebook = loginVM2::signInWithFacebook
+        loginWithGoogle = {
+            coroutineScope.launch {
+                when (val result = authProvider.authWithGoogle()) {
+                    is Result.Successful<String> -> loginVM2.signInWithGoogle(result.data)
+                    is Result.Unsuccessful<GeneralError> -> loginVM2.updateAuthGoogleErrorState(
+                        result.error
+                    )
+                }
+            }
+        },
+        loginWithFacebook = {
+            coroutineScope.launch {
+                when (val result = authProvider.authWithFacebook()) {
+                    is Result.Successful<String> -> loginVM2.signInWithFacebook(result.data)
+                    is Result.Unsuccessful<GeneralError> -> loginVM2.updateAuthFacebookErrorState(
+                        result.error
+                    )
+                }
+            }
+        }
     )
     when (val authType = loginUIState2.authTypeState) {
         is AuthTypeState.EmailAndPasswordAuthType -> ProcessSection(
@@ -86,7 +111,16 @@ fun MainAuthPage(
         is AuthTypeState.FacebookAuthType -> ProcessSection(
             authState = authType.authState,
             snackBarHostState = snackBarHostState,
-            retryProcess = loginVM2::signInWithFacebook,
+            retryProcess = {
+                coroutineScope.launch {
+                    when (val result = authProvider.authWithFacebook()) {
+                        is Result.Successful<String> -> loginVM2.signInWithFacebook(result.data)
+                        is Result.Unsuccessful<GeneralError> -> loginVM2.updateAuthFacebookErrorState(
+                            result.error
+                        )
+                    }
+                }
+            },
             onNavigateToMainPage = onNavigateToMainPage,
             onNavigateToCreateGamer = onNavigateToCreateGamer,
             resetProcessState = loginVM2::resetProcessState
@@ -94,7 +128,16 @@ fun MainAuthPage(
         is AuthTypeState.GoogleAuthType -> ProcessSection(
             authState = authType.authState,
             snackBarHostState = snackBarHostState,
-            retryProcess = loginVM2::signInWithGoogle,
+            retryProcess = {
+                coroutineScope.launch {
+                    when (val result = authProvider.authWithGoogle()) {
+                        is Result.Successful<String> -> loginVM2.signInWithGoogle(result.data)
+                        is Result.Unsuccessful<GeneralError> -> loginVM2.updateAuthGoogleErrorState(
+                            result.error
+                        )
+                    }
+                }
+            },
             onNavigateToMainPage = onNavigateToMainPage,
             onNavigateToCreateGamer = onNavigateToCreateGamer,
             resetProcessState = loginVM2::resetProcessState

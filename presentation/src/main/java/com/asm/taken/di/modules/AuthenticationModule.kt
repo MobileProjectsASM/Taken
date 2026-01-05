@@ -14,7 +14,4 @@ import dagger.hilt.components.SingletonComponent
 object AuthenticationModule {
     @Provides
     fun provideCredentialManager(@ApplicationContext context: Context): CredentialManager = CredentialManager.create(context)
-
-    @Provides
-    fun provideFirebaseAuth(): FirebaseAuth = FirebaseAuth.getInstance()
 }

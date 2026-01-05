@@ -9,6 +9,7 @@ import com.asm.data.sources.remote.impl.rest.api_service.CountryInfoClient
 import com.asm.data.sources.remote.impl.rest.interceptors.CountryInfoInterceptor
 import com.asm.taken.R
 import com.asm.taken.di.CountryInfoRetrofit
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.functions.FirebaseFunctions
 import com.google.firebase.storage.FirebaseStorage
@@ -53,6 +54,10 @@ class UtilsModule {
     @Singleton
     @Provides
     fun providesFirebaseFunctions(): FirebaseFunctions = FirebaseFunctions.getInstance()
+
+    @Singleton
+    @Provides
+    fun providesFirebaseAuth(): FirebaseAuth = FirebaseAuth.getInstance()
 
     @Singleton
     @Provides
