@@ -12,6 +12,7 @@ import com.google.firebase.FirebaseNetworkException
 import com.google.firebase.auth.AuthCredential
 import com.google.firebase.auth.FacebookAuthProvider
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseAuthException
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.google.firebase.auth.FirebaseAuthInvalidUserException
 import com.google.firebase.auth.GoogleAuthProvider
@@ -72,6 +73,29 @@ class AuthFirebaseSource @Inject constructor(
             when (exception) {
                 is FirebaseAuthInvalidUserException -> GeneralError.ClientError("")
                 is FirebaseAuthInvalidCredentialsException -> GeneralError.ClientError("")
+                is FirebaseNetworkException -> GeneralError.NetworkError
+                is FirebaseException -> GeneralError.ClientError("")
+                else -> GeneralError.Unknown
+            }.toUnsuccessful()
+        }
+    }
+
+    override suspend fun createAccount(
+        email: String,
+        password: String
+    ): Result<Unit, GeneralError> {
+        return try {
+            val createAccountResult = firebaseAuth.createUserWithEmailAndPassword(email, password).await()
+            val firebaseUser = createAccountResult.user
+            if (firebaseUser == null) {
+                Log.e(TAG, "FirebaseUser is null")
+                return GeneralError.ServerError().toUnsuccessful()
+            }
+            Result.Successful(Unit)
+        } catch (exception: Exception) {
+            Log.e(TAG, "Unexpected exception to create account", exception)
+            when (exception) {
+                is FirebaseAuthException -> GeneralError.ClientError("")
                 is FirebaseNetworkException -> GeneralError.NetworkError
                 is FirebaseException -> GeneralError.ClientError("")
                 else -> GeneralError.Unknown

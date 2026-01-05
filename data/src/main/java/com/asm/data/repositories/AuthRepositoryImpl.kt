@@ -39,4 +39,16 @@ class AuthRepositoryImpl @Inject constructor(
             return GeneralError.Unknown.toUnsuccessful()
         }
     }
+
+    override suspend fun createAccount(
+        email: String,
+        password: String
+    ): Result<Unit, GeneralError> {
+        return try {
+            authRemoteSource.createAccount(email, password)
+        } catch (exception: Exception) {
+            logger.logE(TAG, exception)
+            return GeneralError.Unknown.toUnsuccessful()
+        }
+    }
 }
