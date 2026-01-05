@@ -13,3 +13,8 @@ data class AuthUser(
     val userId: String,
     val profilePictureUrl: String?
 )
+
+enum class ProviderId {
+    FACEBOOK,
+    GOOGLE
+}
