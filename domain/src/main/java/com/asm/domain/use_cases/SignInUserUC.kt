@@ -1,6 +1,7 @@
 package com.asm.domain.use_cases
 
 import com.asm.domain.entities.AuthUser
+import com.asm.domain.entities.ProviderId
 import com.asm.domain.entities.Result
 import com.asm.domain.entities.Session
 import com.asm.domain.errors.GeneralError
@@ -15,29 +16,24 @@ import javax.inject.Inject
 class SignInUserUC @Inject constructor(
     private val logger: Logger,
     private val gamerRepository: GamerRepository,
-    private val sessionRepository: SessionRepository
+    private val sessionRepository: SessionRepository,
+    private val authRepository: AuthRepository
 ) : UseCaseSync<Result<SignInUserUC.User, GeneralError>, SignInUserUC.CredentialType>() {
 
     companion object {
         const val TAG = "SignInUser"
     }
 
-    sealed class CredentialType(
-        private val authRepository: AuthRepository
-    ) {
+    sealed class CredentialType {
         data class EmailAndPassword(
             val email: String,
-            val password: String,
-            val authRepository: AuthRepository
-        ) : CredentialType(authRepository)
+            val password: String
+        ) : CredentialType()
 
-        data class Google(
-            val authRepository: AuthRepository
-        ) : CredentialType(authRepository)
-
-        data class Facebook(
-            val authRepository: AuthRepository
-        ) : CredentialType(authRepository)
+        data class Token(
+            val token: String,
+            val providerId: ProviderId
+        ) : CredentialType()
     }
 
     sealed class User {
@@ -84,12 +80,11 @@ class SignInUserUC @Inject constructor(
 
     private suspend fun authUser(credentialType: CredentialType): Result<AuthUser, GeneralError> =
         when (credentialType) {
-            is CredentialType.EmailAndPassword -> credentialType.authRepository.authWithEmailAndPassword(
+            is CredentialType.EmailAndPassword -> authRepository.authWithEmailAndPassword(
                 credentialType.email,
                 credentialType.password
             )
 
-            is CredentialType.Google -> credentialType.authRepository.authWithGoogle()
-            is CredentialType.Facebook -> credentialType.authRepository.authWithFacebook()
+            is CredentialType.Token -> authRepository.authWithToken(credentialType.token, credentialType.providerId)
         }
 }
