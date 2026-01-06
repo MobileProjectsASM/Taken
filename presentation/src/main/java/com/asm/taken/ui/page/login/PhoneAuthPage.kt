@@ -27,7 +27,6 @@ import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -41,7 +40,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
@@ -50,109 +48,119 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.asm.domain.entities.AuthUser
-import com.asm.domain.errors.GeneralError
+import com.asm.domain.entities.CountryInfo
 import com.asm.taken.R
-import com.asm.taken.model.CountriesUiState
-import com.asm.taken.model.Country
+import com.asm.taken.model.AuthPhoneProcessState
+import com.asm.taken.model.GetDataProcessState
 import com.asm.taken.model.InputOtpError
 import com.asm.taken.model.InputPhoneCodeError
 import com.asm.taken.model.InputPhoneNumberError
 import com.asm.taken.model.InputState
-import com.asm.taken.model.InputUiState
-import com.asm.taken.model.LoginFormPhoneUiState
-import com.asm.taken.model.LoginUiState
+import com.asm.taken.model.PhoneAuthFormState
+import com.asm.taken.model.OtpFormState
+import com.asm.taken.model.PhoneAuthUIState
 import com.asm.taken.ui.CircularProgressDialog
 import com.asm.taken.ui.DefaultButton
 import com.asm.taken.ui.DefaultOutlinedTextFieldLI
 import com.asm.taken.ui.DefaultText
-import com.asm.taken.ui.DialogError
-import com.asm.taken.ui.ErrorCountries
+import com.asm.taken.ui.ErrorComponent
 import com.asm.taken.ui.OtpMultiple
 import com.asm.taken.ui.PuzzleGeneralTitle
-import com.asm.taken.ui.SnackBarError
-import com.asm.taken.utils.AuthenticationClient
-import com.asm.taken.vm.LoginVM
+import com.asm.taken.utils.AuthenticationProviders
+import com.asm.taken.vm.AuthPhoneVM
 import kotlinx.coroutines.launch
 
 @Composable
 fun PhoneAuthPage(
-    loginVM: LoginVM,
-    authenticationClient: AuthenticationClient,
+    authenticationProviders: AuthenticationProviders,
+    authPhoneVM: AuthPhoneVM,
     snackBarHostState: SnackbarHostState,
     popBackStack: () -> Unit,
     onNavigateToMainPage: (String) -> Unit,
     onNavigateToCreateGamer: (String, String?) -> Unit
 ) {
+    val croutineScope = rememberCoroutineScope()
+    val context = LocalContext.current
+    val phoneAuthUIState: PhoneAuthUIState by authPhoneVM.phoneAuthUIState.collectAsStateWithLifecycle()
+
     LaunchedEffect(true) {
-        loginVM.getCountriesInfo()
+        authPhoneVM.getCountriesInfo()
     }
     BackHandler {
-        loginVM.cleanLoginPhoneForm()
+        authPhoneVM.cleanPhoneForm()
         popBackStack()
     }
     AuthWithPhone(
-        loginVM = loginVM,
-        authenticationClient = authenticationClient,
-        snackBarHostState = snackBarHostState
+        phoneAuthFormState = phoneAuthUIState.phoneAuthFormState,
+        snackBarHostState = snackBarHostState,
+        validateForm = authPhoneVM::validatePhoneNumberForm,
+        phoneNumberSent = { code, phoneNumber ->
+            croutineScope.launch {
+                authPhoneVM.updateToLoading()
+                val result = authenticationProviders.authWithPhoneNumber(
+                    activity = context as Activity,
+                    phoneNumber = "+$code$phoneNumber"
+                )
+                when (result) {
+                    is AuthenticationProviders.AuthWithPhone.Authenticated -> authPhoneVM.verifyGamerExists(result.authUser.userId)
+                    is AuthenticationProviders.AuthWithPhone.Error -> authPhoneVM.updateToError(
+                        generalError = result.generalError
+                    )
+                    is AuthenticationProviders.AuthWithPhone.OtpSend -> authPhoneVM.updateToSentOtp(
+                        verificationId = result.verificationId,
+                        phoneNumber = phoneNumber
+                    )
+                }
+            }
+        },
+        retryGetDataForm = authPhoneVM::getCountriesInfo,
+        resetProcessState = authPhoneVM::resetDataProcess
     )
     SessionSection(
-        loginVM = loginVM,
-        authenticationClient = authenticationClient,
+        authPhoneProcessState = authPhoneVM.phoneAuthUIState.value.phoneAuthProcessState,
         snackBarHostState = snackBarHostState,
         onNavigateToMainPage = onNavigateToMainPage,
         onNavigateToCreateGamer = { authUser ->
             onNavigateToCreateGamer(authUser.userId, authUser.profilePictureUrl)
-        }
+        },
+        validateForm = authPhoneVM::validateOtpForm,
+        verifyOtp = authPhoneVM::verifyOtp,
+        retryProcessAuth = {
+
+        },
+        resetProcessState = authPhoneVM::resetAuthProcessState,
     )
 }
 
 @Composable
 fun AuthWithPhone(
-    loginVM: LoginVM,
-    authenticationClient: AuthenticationClient,
-    snackBarHostState: SnackbarHostState
+    phoneAuthFormState: PhoneAuthFormState,
+    snackBarHostState: SnackbarHostState,
+    validateForm: (String, String) -> Unit,
+    phoneNumberSent: (String, String) -> Unit,
+    retryGetDataForm: () -> Unit,
+    resetProcessState: () -> Unit
 ) {
-    val countriesUiState: CountriesUiState? by loginVM.countriesUiState.collectAsStateWithLifecycle()
-    val loginPhoneFormState by loginVM.loginFormPhoneUiState.collectAsStateWithLifecycle()
-    val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
-
     PanelFormPhoneNumber(
-        countriesUiState = (countriesUiState as? CountriesUiState.Successful)?.countriesInfo,
-        loginPhoneFormState = loginPhoneFormState,
-        validateForm = loginVM::validatePhoneNumberForm,
-        onSentPhone = { code, phoneNumber ->
-            authenticationClient.authWithPhoneNumber(
-                context as Activity,
-                coroutineScope = coroutineScope,
-                phoneNumber = "+$code$phoneNumber",
-                onPhoneLoginLoading = { loginVM.updateLoginState(LoginUiState.Loading) },
-                onOtpSend = { verificationId, _ ->
-                    loginVM.updateLoginState(
-                        LoginUiState.SentOtp(verificationId, phoneNumber)
-                    )
-                },
-                onAuthResult = loginVM::updateLoginState
-            )
-        }
+        phoneAuthFormState = phoneAuthFormState,
+        validateForm = validateForm,
+        onSentPhone = phoneNumberSent
     )
-    when (val currentState = countriesUiState) {
-        is CountriesUiState.Failure -> ErrorCountries(
-            generalError = currentState.generalFailure,
+    when (val currentState = phoneAuthFormState.dataFormProcess) {
+        is GetDataProcessState.Error -> ErrorComponent(
+            generalError = currentState.generalError,
             snackBarHostState = snackBarHostState,
-            resetState = loginVM::resetCountriesUiState,
-            retryProcess = loginVM::getCountriesInfo
+            retryProcess = retryGetDataForm,
+            resetProcessState = resetProcessState
         )
-
-        CountriesUiState.Loading -> CircularProgressDialog()
+        GetDataProcessState.Loading -> CircularProgressDialog()
         else -> return
     }
 }
 
 @Composable
 fun PanelFormPhoneNumber(
-    countriesUiState: List<Country>?,
-    loginPhoneFormState: LoginFormPhoneUiState,
+    phoneAuthFormState: PhoneAuthFormState,
     validateForm: (String, String) -> Unit,
     onSentPhone: (String, String) -> Unit
 ) {
@@ -177,8 +185,7 @@ fun PanelFormPhoneNumber(
                 )
                 Spacer(modifier = Modifier.height(50.dp))
                 FormPhoneNumber(
-                    countriesUiState = countriesUiState,
-                    loginPhoneFormState = loginPhoneFormState,
+                    phoneAuthFormState = phoneAuthFormState,
                     validateForm = validateForm,
                     onSentPhone = onSentPhone
                 )
@@ -190,8 +197,7 @@ fun PanelFormPhoneNumber(
 
 @Composable
 fun FormPhoneNumber(
-    countriesUiState: List<Country>?,
-    loginPhoneFormState: LoginFormPhoneUiState,
+    phoneAuthFormState: PhoneAuthFormState,
     validateForm: (String, String) -> Unit,
     onSentPhone: (String, String) -> Unit
 ) {
@@ -200,9 +206,9 @@ fun FormPhoneNumber(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 10.dp),
-            countriesUiState = countriesUiState,
-            codeValue = loginPhoneFormState.phoneCodeUiState.value,
-            phoneCodeErrors = loginPhoneFormState.phoneCodeUiState.state.let { phoneCodeState ->
+            countries = (phoneAuthFormState.dataFormProcess as? GetDataProcessState.CountriesLoaded)?.countriesInfo,
+            codeValue = phoneAuthFormState.phoneCodeUiState.value,
+            phoneCodeErrors = phoneAuthFormState.phoneCodeUiState.state.let { phoneCodeState ->
                 when (phoneCodeState) {
                     is InputState.Error -> phoneCodeState.errors.map { getErrorPhoneCode(it) }
 
@@ -210,7 +216,7 @@ fun FormPhoneNumber(
                 }
             },
             onChageCode = {
-                validateForm(it, loginPhoneFormState.phoneNumberUiState.value)
+                validateForm(it, phoneAuthFormState.phoneNumberUiState.value)
             }
         )
         Spacer(modifier = Modifier.height(10.dp))
@@ -218,12 +224,12 @@ fun FormPhoneNumber(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 10.dp),
-            value = loginPhoneFormState.phoneNumberUiState.value,
+            value = phoneAuthFormState.phoneNumberUiState.value,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             label = R.string.txt_label_pn,
             leadingIcon = Icons.Default.Phone,
             cdLeadingIcon = null,
-            errors = loginPhoneFormState.phoneNumberUiState.state.let { phoneNumberState ->
+            errors = phoneAuthFormState.phoneNumberUiState.state.let { phoneNumberState ->
                 when (phoneNumberState) {
                     is InputState.Error -> phoneNumberState.errors.map { getErrorPhoneNumber(it) }
 
@@ -231,7 +237,7 @@ fun FormPhoneNumber(
                 }
             }
         ) {
-            validateForm(loginPhoneFormState.phoneCodeUiState.value, it)
+            validateForm(phoneAuthFormState.phoneCodeUiState.value, it)
         }
         Spacer(modifier = Modifier.height(20.dp))
         Column(
@@ -240,11 +246,11 @@ fun FormPhoneNumber(
         ) {
             DefaultButton(
                 text = stringResource(id = R.string.txt_btn_send),
-                enable = loginPhoneFormState.phoneNumberUiState.state is InputState.Success && loginPhoneFormState.phoneCodeUiState.state is InputState.Success,
+                enable = phoneAuthFormState.phoneNumberUiState.state is InputState.Success && phoneAuthFormState.phoneCodeUiState.state is InputState.Success,
             ) {
                 onSentPhone(
-                    loginPhoneFormState.phoneCodeUiState.value,
-                    loginPhoneFormState.phoneNumberUiState.value
+                    phoneAuthFormState.phoneCodeUiState.value,
+                    phoneAuthFormState.phoneNumberUiState.value
                 )
             }
         }
@@ -254,12 +260,12 @@ fun FormPhoneNumber(
 @Composable
 fun PhoneCodeInput(
     modifier: Modifier = Modifier,
-    countriesUiState: List<Country>?,
+    countries: List<CountryInfo>?,
     codeValue: String,
     phoneCodeErrors: List<String>,
     onChageCode: (String) -> Unit
 ) {
-    if (countriesUiState == null) {
+    if (countries == null) {
         DefaultOutlinedTextFieldLI(
             modifier = modifier,
             value = codeValue,
@@ -278,7 +284,7 @@ fun PhoneCodeInput(
         if (showChosePhoneCodeDialog) {
             ChoosePhoneCodeDialog(
                 codeValue = codeValue,
-                countriesUiState = countriesUiState
+                countries = countries
             ) {
                 showChosePhoneCodeDialog = false
                 onChageCode(it)
@@ -302,7 +308,7 @@ fun PhoneCodeInput(
 @Composable
 fun ChoosePhoneCodeDialog(
     codeValue: String,
-    countriesUiState: List<Country>,
+    countries: List<CountryInfo>,
     onPhoneCodeSelected: (String) -> Unit
 ) {
     Dialog(onDismissRequest = {
@@ -321,7 +327,7 @@ fun ChoosePhoneCodeDialog(
                 )
                 Spacer(modifier = Modifier.height(10.dp))
                 LazyColumn {
-                    items(countriesUiState) {
+                    items(countries) {
                         ItemCountry(country = it) { countryUiState ->
                             onPhoneCodeSelected(countryUiState.phoneCode)
                         }
@@ -333,7 +339,7 @@ fun ChoosePhoneCodeDialog(
 }
 
 @Composable
-fun ItemCountry(country: Country, onClick: (Country) -> Unit) {
+fun ItemCountry(country: CountryInfo, onClick: (CountryInfo) -> Unit) {
     Row(
         modifier = Modifier
             .clickable { onClick(country) }
@@ -359,87 +365,46 @@ fun ItemCountry(country: Country, onClick: (Country) -> Unit) {
 
 @Composable
 fun SessionSection(
-    loginVM: LoginVM,
-    authenticationClient: AuthenticationClient,
+    authPhoneProcessState: AuthPhoneProcessState,
     snackBarHostState: SnackbarHostState,
     onNavigateToMainPage: (String) -> Unit,
-    onNavigateToCreateGamer: (AuthUser) -> Unit
+    onNavigateToCreateGamer: (AuthUser) -> Unit,
+    validateForm: (String) -> Unit,
+    verifyOtp: (String, String) -> Unit,
+    retryProcessAuth: () -> Unit,
+    resetProcessState: () -> Unit
 ) {
-    val loginUiState: LoginUiState by loginVM.loginUiState.collectAsStateWithLifecycle()
-
-    val scope = rememberCoroutineScope()
-    when (val loginState = loginUiState) {
-        LoginUiState.Loading -> CircularProgressDialog()
-        is LoginUiState.RegisteredUser -> LaunchedEffect(true) {
-            onNavigateToMainPage(loginState.gamerId)
-        }
-
-        is LoginUiState.UnregisteredUser -> LaunchedEffect(true) {
-            onNavigateToCreateGamer(loginState.authUser)
-        }
-
-        is LoginUiState.Error -> when (loginState.generalError) {
-            is GeneralError.ClientError -> DialogError(
-                title = stringResource(R.string.txt_ttl_client_error),
-                image = painterResource(R.drawable.ic_warning),
-                message = stringResource(R.string.err_client),
-                onDismissedDialog = { loginVM.resetLoginUiState() }
-            )
-
-            GeneralError.ConnectionError -> DialogError(
-                title = stringResource(R.string.txt_ttl_unexpected_error),
-                image = painterResource(R.drawable.ic_warning),
-                message = stringResource(R.string.err_server_connection),
-                onDismissedDialog = loginVM::resetLoginUiState
-            )
-
-            GeneralError.NetworkError -> SnackBarError(
-                snackBarHostState = snackBarHostState,
-                actionLabel = stringResource(R.string.txt_label_retry),
-                duration = SnackbarDuration.Long,
-                message = stringResource(R.string.err_network_connection),
-                onDismissed = loginVM::resetLoginUiState
-            )
-
-            is GeneralError.ServerError -> DialogError(
-                title = stringResource(R.string.txt_ttl_service_error),
-                image = painterResource(R.drawable.ic_error),
-                message = stringResource(R.string.err_server),
-                onDismissedDialog = loginVM::resetLoginUiState
-            )
-
-            GeneralError.Unknown -> SnackBarError(
-                snackBarHostState = snackBarHostState,
-                message = stringResource(R.string.err_auth),
-                withDismissAction = true,
-                onDismissed = loginVM::resetLoginUiState
-            )
-        }
-
-        is LoginUiState.SentOtp -> {
-            val otpFormState by loginVM.otpFormUiState.collectAsStateWithLifecycle()
-
-            OtpDialog(
-                otpFormState = otpFormState,
-                onCloseDialog = loginVM::resetLoginUiState,
-                phoneNumber = loginState.phoneNumber,
-                validateForm = loginVM::validateOtpForm
-            ) { otp ->
-                scope.launch {
-                    loginVM.updateLoginState(LoginUiState.Loading)
-                    val authResult = authenticationClient.verifyOtp(loginState.verificationId, otp)
-                    loginVM.updateLoginState(authResult)
-                }
+    when (authPhoneProcessState) {
+        is AuthPhoneProcessState.Error -> ErrorComponent(
+            generalError = authPhoneProcessState.generalError,
+            snackBarHostState = snackBarHostState,
+            retryProcess = retryProcessAuth,
+            resetProcessState = resetProcessState
+        )
+        AuthPhoneProcessState.Loading -> CircularProgressDialog()
+        is AuthPhoneProcessState.SentOtp -> OtpDialog(
+            otpFormState = authPhoneProcessState.otpFormState,
+            onCloseDialog = resetProcessState,
+            phoneNumber = authPhoneProcessState.phoneNumber,
+            validateForm = validateForm,
+            verifyOtp = {
+                verifyOtp(authPhoneProcessState.verificationId, it)
             }
+        )
+        is AuthPhoneProcessState.RegisteredUser -> LaunchedEffect(true) {
+            onNavigateToMainPage(authPhoneProcessState.gamerId)
+        }
+        is AuthPhoneProcessState.UnregisteredUser -> LaunchedEffect(true) {
+            onNavigateToCreateGamer(authPhoneProcessState.authUser)
         }
 
-        else -> return
+        AuthPhoneProcessState.Idle -> return
     }
 }
 
 @Composable
 fun OtpDialog(
-    otpFormState: InputUiState<String, InputOtpError>,
+    otpFormState: OtpFormState,
     phoneNumber: String,
     onCloseDialog: () -> Unit,
     validateForm: (String) -> Unit,
@@ -505,7 +470,7 @@ fun OtpDialog(
                         .padding(horizontal = 16.dp),
                     size = 40.dp,
                     numberInputs = 6,
-                    errors = otpFormState.state.let { otpFormState ->
+                    errors = otpFormState.otpInputState.state.let { otpFormState ->
                         when (otpFormState) {
                             is InputState.Error -> otpFormState.errors.map { getErrorVerifyOtp(it) }
                             InputState.Idle, InputState.Success -> listOf()
@@ -522,9 +487,9 @@ fun OtpDialog(
                 ) {
                     DefaultButton(
                         text = stringResource(id = R.string.txt_btn_verify),
-                        enable = otpFormState.state is InputState.Success,
+                        enable = otpFormState.otpInputState.state is InputState.Success,
                     ) {
-                        verifyOtp(otpFormState.value)
+                        verifyOtp(otpFormState.otpInputState.value)
                     }
                 }
                 Spacer(modifier = Modifier.height(20.dp))

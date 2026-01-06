@@ -510,9 +510,9 @@ fun ChooseCountryDialog(
                 Spacer(modifier = Modifier.height(10.dp))
                 LazyColumn {
                     items(countriesUiState) {
-                        ItemCountry(country = it) { countryUiState ->
+                        /*ItemCountry(country = it) { countryUiState ->
                             onCountrySelected(countryUiState.name, countryUiState.flag)
-                        }
+                        }*/
                     }
                 }
             }

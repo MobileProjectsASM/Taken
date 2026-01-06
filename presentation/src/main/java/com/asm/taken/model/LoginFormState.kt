@@ -1,6 +1,7 @@
 package com.asm.taken.model
 
 import com.asm.domain.entities.AuthUser
+import com.asm.domain.entities.CountryInfo
 import com.asm.domain.errors.GeneralError
 
 data class EmailAndPasswordFormState(
@@ -14,15 +15,15 @@ data class InputUiState<out Value, out InputError>(
 )
 
 sealed class InputState<out InputError> {
-    data object Idle: InputState<Nothing>()
-    data object Success: InputState<Nothing>()
+    data object Idle : InputState<Nothing>()
+    data object Success : InputState<Nothing>()
     data class Error<out InputError>(
         val errors: List<InputError>
-    ): InputState<InputError>()
+    ) : InputState<InputError>()
 }
 
 sealed class CountriesUiState {
-    data object Loading: CountriesUiState()
+    data object Loading : CountriesUiState()
     data class Successful(val countriesInfo: List<Country>) : CountriesUiState()
     data class Failure(val generalFailure: GeneralError) : CountriesUiState()
 }
@@ -33,10 +34,41 @@ data class Country(
     val flag: String
 )
 
-data class LoginFormPhoneUiState(
-    val phoneCodeUiState: InputUiState<String, InputPhoneCodeError>,
-    val phoneNumberUiState: InputUiState<String, InputPhoneNumberError>
+data class PhoneAuthFormState(
+    val phoneCodeUiState: InputUiState<String, InputPhoneCodeError> = InputUiState(""),
+    val phoneNumberUiState: InputUiState<String, InputPhoneNumberError> = InputUiState(""),
+    val dataFormProcess: GetDataProcessState = GetDataProcessState.Idle
 )
+
+data class OtpFormState(
+    val otpInputState: InputUiState<String, InputOtpError> = InputUiState("")
+)
+
+data class PhoneAuthUIState(
+    val phoneAuthFormState: PhoneAuthFormState = PhoneAuthFormState(),
+    val phoneAuthProcessState: AuthPhoneProcessState = AuthPhoneProcessState.Idle
+)
+
+sealed class GetDataProcessState {
+    data object Idle : GetDataProcessState()
+    data object Loading : GetDataProcessState()
+    data class CountriesLoaded(val countriesInfo: List<CountryInfo>) : GetDataProcessState()
+    data class Error(val generalError: GeneralError) : GetDataProcessState()
+}
+
+sealed class AuthPhoneProcessState {
+    data object Idle : AuthPhoneProcessState()
+    data object Loading : AuthPhoneProcessState()
+    data class SentOtp(
+        val verificationId: String,
+        val phoneNumber: String,
+        val otpFormState: OtpFormState = OtpFormState()
+    ) : AuthPhoneProcessState()
+
+    data class RegisteredUser(val gamerId: String) : AuthPhoneProcessState()
+    data class UnregisteredUser(val authUser: AuthUser) : AuthPhoneProcessState()
+    data class Error(val generalError: GeneralError) : AuthPhoneProcessState()
+}
 
 data class LoginUIState2(
     val emailAndPasswordFormState: EmailAndPasswordFormState = EmailAndPasswordFormState(),
@@ -44,28 +76,31 @@ data class LoginUIState2(
 )
 
 sealed class AuthTypeState {
-    data object Idle: AuthTypeState()
-    data class EmailAndPasswordAuthType(val authState: AuthState): AuthTypeState()
-    data class GoogleAuthType(val authState: AuthState): AuthTypeState()
-    data class FacebookAuthType(val authState: AuthState): AuthTypeState()
+    data object Idle : AuthTypeState()
+    data class EmailAndPasswordAuthType(val authState: AuthState) : AuthTypeState()
+    data class GoogleAuthType(val authState: AuthState) : AuthTypeState()
+    data class FacebookAuthType(val authState: AuthState) : AuthTypeState()
 }
 
 sealed class AuthState {
-    data object Idle: AuthState()
-    data object Loading: AuthState()
-    data class RegisteredUser(val gamerId: String): AuthState()
-    data class UnregisteredUser(val authUser: AuthUser): AuthState()
-    data class Error(val generalError: GeneralError): AuthState()
+    data object Idle : AuthState()
+    data object Loading : AuthState()
+    data class RegisteredUser(val gamerId: String) : AuthState()
+    data class UnregisteredUser(val authUser: AuthUser) : AuthState()
+    data class Error(val generalError: GeneralError) : AuthState()
 }
 
 sealed class LoginUiState {
-    data object Loading: LoginUiState()
-    data class SentOtp(val verificationId: String, val phoneNumber: String): LoginUiState()
-    data class RegisteredUser(val gamerId: String): LoginUiState()
-    data class UnregisteredUser(val authUser: AuthUser): LoginUiState()
-    data object AccountCreated: LoginUiState()
-    data object Logout: LoginUiState()
-    data class Error(val generalError: GeneralError): LoginUiState()
+    data object Loading : LoginUiState()
+    data class SentOtp(
+        val verificationId: String,
+        val phoneNumber: String
+    ) : LoginUiState()
+
+    data class RegisteredUser(val gamerId: String) : LoginUiState()
+    data class UnregisteredUser(val authUser: AuthUser) : LoginUiState()
+    data object Logout : LoginUiState()
+    data class Error(val generalError: GeneralError) : LoginUiState()
 }
 
 data class CreateAccountUIState(
@@ -74,10 +109,10 @@ data class CreateAccountUIState(
 )
 
 sealed class CreateAccountProcessState {
-    data object Idle: CreateAccountProcessState()
-    data object Loading: CreateAccountProcessState()
-    data object AccountProcessCreated: CreateAccountProcessState()
-    data class Error(val generalError: GeneralError): CreateAccountProcessState()
+    data object Idle : CreateAccountProcessState()
+    data object Loading : CreateAccountProcessState()
+    data object AccountProcessCreated : CreateAccountProcessState()
+    data class Error(val generalError: GeneralError) : CreateAccountProcessState()
 }
 
 data class CreateAccountFormState(

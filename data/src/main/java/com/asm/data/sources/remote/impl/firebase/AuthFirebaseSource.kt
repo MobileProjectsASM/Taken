@@ -106,6 +106,27 @@ class AuthFirebaseSource @Inject constructor(
         }
     }
 
+    override suspend fun authWithCredential(authCredential: AuthCredential): Result<AuthUser, GeneralError> {
+        return try {
+            val authResult = firebaseAuth.signInWithCredential(authCredential).await()
+            val firebaseUser = authResult.user
+            if (firebaseUser == null) {
+                Log.e(TAG, "FirebaseUser is null")
+                return GeneralError.ServerError().toUnsuccessful()
+            }
+            Result.Successful(AuthUser(firebaseUser.uid, null))
+        } catch (exception: Exception) {
+            Log.e(TAG, "Unexpected exception to sign in with otp", exception)
+            when (exception) {
+                is FirebaseAuthInvalidUserException -> GeneralError.ClientError("")
+                is FirebaseAuthInvalidCredentialsException -> GeneralError.ClientError("")
+                is FirebaseNetworkException -> GeneralError.NetworkError
+                is FirebaseException -> GeneralError.ClientError("")
+                else -> GeneralError.Unknown
+            }.toUnsuccessful()
+        }
+    }
+
     override suspend fun createAccount(
         email: String,
         password: String

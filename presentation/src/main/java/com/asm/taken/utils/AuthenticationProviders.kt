@@ -1,5 +1,6 @@
 package com.asm.taken.utils
 
+import android.app.Activity
 import android.content.Context
 import android.util.Log
 import androidx.activity.result.ActivityResultLauncher
@@ -8,11 +9,12 @@ import androidx.credentials.CustomCredential
 import androidx.credentials.GetCredentialRequest
 import androidx.credentials.GetCredentialResponse
 import androidx.credentials.exceptions.GetCredentialException
+import com.asm.data.sources.remote.abstract_remotes.AuthRemoteSource
+import com.asm.domain.entities.AuthUser
 import com.asm.domain.entities.Result
 import com.asm.domain.errors.GeneralError
 import com.asm.domain.errors.toUnsuccessful
 import com.asm.taken.R
-import com.asm.taken.utils.AuthenticationClient.Companion.TAG
 import com.facebook.CallbackManager
 import com.facebook.FacebookCallback
 import com.facebook.FacebookException
@@ -20,17 +22,51 @@ import com.facebook.login.LoginManager
 import com.facebook.login.LoginResult
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
+import com.google.firebase.FirebaseException
+import com.google.firebase.FirebaseNetworkException
+import com.google.firebase.FirebaseTooManyRequestsException
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
+import com.google.firebase.auth.FirebaseAuthMissingActivityForRecaptchaException
+import com.google.firebase.auth.PhoneAuthCredential
+import com.google.firebase.auth.PhoneAuthOptions
+import com.google.firebase.auth.PhoneAuthProvider
+import com.google.firebase.auth.PhoneAuthProvider.OnVerificationStateChangedCallbacks
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
 import java.security.MessageDigest
 import java.util.UUID
+import java.util.concurrent.TimeUnit
 import kotlin.coroutines.resume
 
 class AuthenticationProviders(
+    private val firebaseAuth: FirebaseAuth,
+    private val authRemoteSource: AuthRemoteSource,
     private val context: Context,
     private val loginManager: LoginManager,
     private val callbackManager: CallbackManager,
     private val metaAuthLauncher: ActivityResultLauncher<Collection<String>>,
 ) {
+
+    companion object {
+        const val TAG: String = "auth_providers"
+    }
+
+    sealed class AuthWithPhoneResult {
+        data class OtpSend(val verificationId: String) : AuthWithPhoneResult()
+        data class AuthenticatedWithCredential(val authCredential: PhoneAuthCredential) :
+            AuthWithPhoneResult()
+
+        data class Error(val generalError: GeneralError) : AuthWithPhoneResult()
+    }
+
+    sealed class AuthWithPhone {
+        data class OtpSend(val verificationId: String) : AuthWithPhone()
+        data class Authenticated(val authUser: AuthUser): AuthWithPhone()
+        data class Error(val generalError: GeneralError) : AuthWithPhone()
+    }
+
     suspend fun authWithGoogle(): Result<String, GeneralError> =
         signInWithCredentialManager(true)
 
@@ -67,6 +103,64 @@ class AuthenticationProviders(
             }
 
             is Result.Unsuccessful<GeneralError> -> authWithFacebookResult
+        }
+    }
+
+    suspend fun authWithPhoneNumber(
+        activity: Activity,
+        phoneNumber: String,
+    ): AuthWithPhone {
+        val authWithPhoneResult: AuthWithPhoneResult = suspendCancellableCoroutine {
+            val callback = object : OnVerificationStateChangedCallbacks() {
+                override fun onVerificationCompleted(phoneAuthCredential: PhoneAuthCredential) {
+                    Log.d(TAG, "onVerificationCompleted")
+                    it.resume(AuthWithPhoneResult.AuthenticatedWithCredential(phoneAuthCredential))
+                }
+
+                override fun onVerificationFailed(firebaseException: FirebaseException) {
+                    Log.e(TAG, "Unexpected Exception to auth with phone number", firebaseException)
+                    val phonesSendOtpError = when (firebaseException) {
+                        is FirebaseAuthInvalidCredentialsException, is FirebaseTooManyRequestsException, is FirebaseAuthMissingActivityForRecaptchaException -> GeneralError.ClientError()
+                        is FirebaseNetworkException -> GeneralError.NetworkError
+                        else -> GeneralError.Unknown
+                    }
+                    it.resume(AuthWithPhoneResult.Error(phonesSendOtpError))
+                }
+
+                override fun onCodeSent(
+                    verificationId: String,
+                    token: PhoneAuthProvider.ForceResendingToken
+                ) {
+                    Log.d(TAG, "onCodeSent")
+                    val credential = PhoneAuthProvider.getCredential(verificationId, "123456")
+
+                    onVerificationCompleted(credential)
+                    //it.resume(AuthWithPhoneResult.OtpSend(verificationId))
+                }
+
+                override fun onCodeAutoRetrievalTimeOut(p0: String) {
+
+                }
+            }
+
+            val phoneAuthOptions = getPhoneAuthOptions(activity, phoneNumber, callback)
+
+            PhoneAuthProvider.verifyPhoneNumber(phoneAuthOptions)
+
+            it.invokeOnCancellation {
+
+            }
+        }
+        return when (authWithPhoneResult) {
+            is AuthWithPhoneResult.AuthenticatedWithCredential -> withContext(Dispatchers.IO) {
+                val authResult = authRemoteSource.authWithCredential(authWithPhoneResult.authCredential)
+                when (authResult) {
+                    is Result.Successful<AuthUser> -> AuthWithPhone.Authenticated(authResult.data)
+                    is Result.Unsuccessful<GeneralError> -> AuthWithPhone.Error(authResult.error)
+                }
+            }
+            is AuthWithPhoneResult.Error -> AuthWithPhone.Error(authWithPhoneResult.generalError)
+            is AuthWithPhoneResult.OtpSend -> AuthWithPhone.OtpSend(authWithPhoneResult.verificationId)
         }
     }
 
@@ -130,4 +224,16 @@ class AuthenticationProviders(
         }
     }
 
+    private fun getPhoneAuthOptions(
+        activity: Activity,
+        phoneNumber: String,
+        onVerificationStateChangedCallbacks: OnVerificationStateChangedCallbacks
+    ): PhoneAuthOptions {
+        return PhoneAuthOptions.newBuilder(firebaseAuth)
+            .setPhoneNumber(phoneNumber)
+            .setTimeout(60L, TimeUnit.SECONDS)
+            .setActivity(activity)
+            .setCallbacks(onVerificationStateChangedCallbacks)
+            .build()
+    }
 }

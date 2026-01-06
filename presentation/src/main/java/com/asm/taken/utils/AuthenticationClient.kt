@@ -30,7 +30,6 @@ import javax.inject.Inject
 class AuthenticationClient @Inject constructor(
     private val auth: FirebaseAuth,
     private val credentialManager: CredentialManager,
-    private val resourceResolver: ResourceResolver,
 ) {
     companion object {
         const val TAG: String = "AuthenticationClient"
@@ -45,7 +44,7 @@ class AuthenticationClient @Inject constructor(
         Result.Unsuccessful(GeneralError.Unknown)
     }
 
-    fun authWithPhoneNumber(
+    fun validateOtp(
         activity: Activity,
         coroutineScope: CoroutineScope,
         phoneNumber: String,

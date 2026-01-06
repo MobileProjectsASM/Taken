@@ -12,16 +12,12 @@ import com.asm.domain.use_cases.GetCountriesInfoUC
 import com.asm.domain.use_cases.SaveSessionUC
 import com.asm.taken.mappers.CountryMapper
 import com.asm.taken.model.CountriesUiState
-import com.asm.taken.model.InputEmailError
 import com.asm.taken.model.InputOtpError
-import com.asm.taken.model.InputPasswordError
 import com.asm.taken.model.InputPhoneCodeError
 import com.asm.taken.model.InputPhoneNumberError
-import com.asm.taken.model.InputRepeatValueError
 import com.asm.taken.model.InputState
 import com.asm.taken.model.InputUiState
-import com.asm.taken.model.CreateAccountFormState
-import com.asm.taken.model.LoginFormPhoneUiState
+import com.asm.taken.model.PhoneAuthFormState
 import com.asm.taken.model.LoginUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -45,20 +41,12 @@ class LoginVM @Inject constructor(
     //region MutableStateFlows
     private val _countriesUiState: MutableStateFlow<CountriesUiState?> =
         MutableStateFlow(null)
-    private val _loginFormPhoneUiState: MutableStateFlow<LoginFormPhoneUiState> = MutableStateFlow(
-        LoginFormPhoneUiState(
+    private val _PhoneAuthFormState: MutableStateFlow<PhoneAuthFormState> = MutableStateFlow(
+        PhoneAuthFormState(
             phoneCodeUiState = InputUiState(""),
             phoneNumberUiState = InputUiState("")
         )
     )
-    private val _CreateAccountFormState: MutableStateFlow<CreateAccountFormState> =
-        MutableStateFlow(
-            CreateAccountFormState(
-                emailUiState = InputUiState(""),
-                passwordUiState = InputUiState(""),
-                passwordRepeatUiState = InputUiState("")
-            )
-        )
     private val _loginUiState: MutableStateFlow<LoginUiState> =
         MutableStateFlow(LoginUiState.Logout)
     private val _otpFormUiState: MutableStateFlow<InputUiState<String, InputOtpError>> =
@@ -71,9 +59,7 @@ class LoginVM @Inject constructor(
     //region StateFlows
 
     val countriesUiState: StateFlow<CountriesUiState?> = _countriesUiState
-    val loginFormPhoneUiState: StateFlow<LoginFormPhoneUiState> = _loginFormPhoneUiState
-    val createAccountFormState: StateFlow<CreateAccountFormState> =
-        _CreateAccountFormState
+    val phoneAuthFormState: StateFlow<PhoneAuthFormState> = _PhoneAuthFormState
     val loginUiState: StateFlow<LoginUiState> = _loginUiState
     val otpFormUiState: StateFlow<InputUiState<String, InputOtpError>> = _otpFormUiState
 
@@ -124,7 +110,7 @@ class LoginVM @Inject constructor(
     }
 
     fun cleanLoginPhoneForm() {
-        _loginFormPhoneUiState.update {
+        _PhoneAuthFormState.update {
             it.copy(
                 phoneCodeUiState = InputUiState(""),
                 phoneNumberUiState = InputUiState("")
@@ -132,31 +118,13 @@ class LoginVM @Inject constructor(
         }
     }
 
-    private fun validateEmail(email: String): List<InputEmailError> {
-        val errors = mutableListOf<InputEmailError>()
-        if (email.isEmpty()) errors.add(InputEmailError.EMPTY)
-        if (!email.contains("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}\$".toRegex())) errors.add(
-            InputEmailError.EMAIL_INVALID
-        )
-        return errors
-    }
-
-    private fun validatePassword(password: String): List<InputPasswordError> {
-        val errors = mutableListOf<InputPasswordError>()
-        if (password.isEmpty()) errors.add(InputPasswordError.EMPTY)
-        if (password.count() < 8) errors.add(InputPasswordError.LEAST_THAN_8_CHARACTERS)
-        if (!password.contains("[A-Z]".toRegex())) errors.add(InputPasswordError.LEAST_ONE_UPPERCASE)
-        if (!password.contains("\\d".toRegex())) errors.add(InputPasswordError.LEAST_ONE_NUMBER)
-        if (!password.contains("[@$!%*?&#]".toRegex())) errors.add(InputPasswordError.LEAST_ONE_SPECIAL_CHARACTER)
-        return errors
-    }
     //endregion
 
     //region LoginPhoneForm
     fun validatePhoneNumberForm(phoneCode: String, phoneNumber: String) {
         val phoneCodeErrors = validatePhoneCode(phoneCode)
         val phoneNumberErrors = validatePhoneNumber(phoneNumber)
-        _loginFormPhoneUiState.update {
+        _PhoneAuthFormState.update {
             val phoneCodeUiState = phoneCodeErrors.run {
                 if (isEmpty()) InputUiState(phoneCode, InputState.Success)
                 else InputUiState(phoneCode, InputState.Error(phoneCodeErrors))
@@ -206,7 +174,7 @@ class LoginVM @Inject constructor(
     }
 
     private suspend fun updateSession(authUser: AuthUser): LoginUiState {
-        return when (val gamerExistsResult = gamerExistsUC.execute(authUser.userId)) {
+        return when (val gamerExistsResult =  gamerExistsUC.execute(authUser.userId)) {
             is Result.Successful<Boolean> -> {
                 val session = when (gamerExistsResult.data) {
                     true -> Session.UserRegister(authUser.userId)
@@ -225,63 +193,5 @@ class LoginVM @Inject constructor(
             is Result.Unsuccessful<GeneralError> -> LoginUiState.Error(gamerExistsResult.error)
         }
     }
-    //endregion
-
-    //region LoginFormCreateAccount
-    fun validateFormCreateAccount(
-        email: String,
-        password: String,
-        passwordRepeat: String
-    ) {
-        val emailErrors = validateEmail(email)
-        val passwordErrors = validatePassword(password)
-        val passwordRepeatErrors = validatePasswordRepeat(password, passwordRepeat)
-        _CreateAccountFormState.update {
-            val emailUiState: InputUiState<String, InputEmailError> = emailErrors.run {
-                when {
-                    isEmpty() -> InputUiState(email, InputState.Success)
-                    else -> InputUiState(email, InputState.Error(this))
-                }
-            }
-            val passwordUiState: InputUiState<String, InputPasswordError> = passwordErrors.run {
-                when {
-                    isEmpty() -> InputUiState(password, InputState.Success)
-                    else -> InputUiState(password, InputState.Error(this))
-                }
-            }
-            val passwordRepeatUiState: InputUiState<String, InputRepeatValueError> =
-                passwordRepeatErrors.run {
-                    when {
-                        isEmpty() -> InputUiState(passwordRepeat, InputState.Success)
-                        else -> InputUiState(passwordRepeat, InputState.Error(this))
-                    }
-                }
-            it.copy(
-                emailUiState = emailUiState,
-                passwordUiState = passwordUiState,
-                passwordRepeatUiState = passwordRepeatUiState
-            )
-        }
-    }
-
-    fun cleanLoginFormCreateAccount() {
-        _CreateAccountFormState.update {
-            it.copy(
-                emailUiState = InputUiState(""),
-                passwordUiState = InputUiState(""),
-                passwordRepeatUiState = InputUiState("")
-            )
-        }
-    }
-
-    private fun validatePasswordRepeat(
-        password: String,
-        passwordRepeat: String
-    ): List<InputRepeatValueError> {
-        val errors = mutableListOf<InputRepeatValueError>()
-        if (password != passwordRepeat) errors.add(InputRepeatValueError.IS_NOT_SAME_VALUE)
-        return errors
-    }
-
     //endregion
 }
