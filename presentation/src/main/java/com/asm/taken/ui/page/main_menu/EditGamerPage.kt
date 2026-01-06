@@ -36,9 +36,12 @@ import com.asm.taken.R
 import com.asm.taken.model.Country
 import com.asm.taken.model.CountryData
 import com.asm.taken.model.EditGamerFormUiState
+import com.asm.taken.model.EditGamerOperationsState
 import com.asm.taken.model.EditGamerState
 import com.asm.taken.model.InputState
 import com.asm.taken.ui.CircularProgressDialog
+import com.asm.taken.ui.DefaultButton
+import com.asm.taken.ui.ImageDialog
 import com.asm.taken.ui.PuzzleGeneralTitle
 import com.asm.taken.ui.SnackBarError
 import com.asm.taken.ui.page.login.FormEditGamer
@@ -53,15 +56,18 @@ fun EditGamerPage(
     authenticationClient: AuthenticationClient,
     navigateToMainMenu: () -> Unit
 ) {
-    BackgroundMainSection {
-        EditGamerSection(
-            gamerId = gamerId,
-            editGamerVM = editGamerVM,
-            navigateToMainMenu = navigateToMainMenu,
-            authenticationClient = authenticationClient,
-            snackBarHostState = snackBarHostState
-        )
-    }
+    EditGamerSection(
+        gamerId = gamerId,
+        editGamerVM = editGamerVM,
+        navigateToMainMenu = navigateToMainMenu,
+        authenticationClient = authenticationClient,
+        snackBarHostState = snackBarHostState
+    )
+    ResultOperationsSection(
+        editGamerVM = editGamerVM,
+        snackBarHostState = snackBarHostState,
+        navigateToMainMenu = navigateToMainMenu
+    )
 }
 
 @Composable
@@ -115,11 +121,12 @@ fun EditGamerSection(
 
             GeneralError.Unknown -> SnackBarError(
                 snackBarHostState = snackBarHostState,
-                message = stringResource(R.string.err_auth),
+                message = stringResource(R.string.err_process_gamer),
                 withDismissAction = true,
                 onDismissed = {  }
             )
         }
+
         EditGamerState.Loading -> CircularProgressDialog()
         is EditGamerState.Success -> {
             LaunchedEffect(true) {
@@ -135,14 +142,23 @@ fun EditGamerSection(
             }
 
             PanelFormEditGamer(
+                snackBarHostState = snackBarHostState,
                 currentGamer = gamerState.gamer,
+                defaultImageUrl = gamerState.defaultImageUrl,
                 editGamerFormState = editGamerFormState,
                 labelButtonSaveGamer = stringResource(R.string.txt_btn_save_changes),
                 socialNetworkImage = gamerState.socialNetworkImage,
                 countries = gamerState.countries,
                 validateFormCreateGamer = editGamerVM::validateEditGamerForm,
                 saveGamer = {
-
+                    editGamerVM.saveGamer(
+                        id = gamerState.gamer.gamerId,
+                        alias = editGamerFormState.aliasUiState.value,
+                        age = editGamerFormState.ageUiState.value.toInt(),
+                        country = editGamerFormState.countryUiState.value.name,
+                        countryFlag = editGamerFormState.countryUiState.value.flag,
+                        imageURI = editGamerFormState.imageURI.value
+                    )
                 },
                 onBack = navigateToMainMenu
             )
@@ -151,8 +167,77 @@ fun EditGamerSection(
 }
 
 @Composable
+fun ResultOperationsSection(
+    editGamerVM: EditGamerVM,
+    snackBarHostState: SnackbarHostState,
+    navigateToMainMenu: () -> Unit
+) {
+    val editGamerOperationState: EditGamerOperationsState? by editGamerVM.editGamerOperationsState.collectAsStateWithLifecycle()
+
+    when (val state = editGamerOperationState) {
+        is EditGamerOperationsState.Failure -> when (state.error) {
+            is GeneralError.ClientError -> com.asm.taken.ui.DialogError(
+                title = stringResource(R.string.txt_ttl_client_error),
+                image = painterResource(R.drawable.ic_warning),
+                message = stringResource(R.string.err_client),
+                onDismissDialog = { }
+            )
+
+            GeneralError.ConnectionError -> com.asm.taken.ui.DialogError(
+                title = stringResource(R.string.txt_ttl_unexpected_error),
+                image = painterResource(R.drawable.ic_warning),
+                message = stringResource(R.string.err_server_connection),
+                onDismissDialog = { }
+            )
+
+            GeneralError.NetworkError -> SnackBarError(
+                snackBarHostState = snackBarHostState,
+                actionLabel = stringResource(R.string.txt_label_retry),
+                duration = SnackbarDuration.Long,
+                message = stringResource(R.string.err_network_connection),
+                onDismiss = { }
+            )
+
+            is GeneralError.ServerError -> com.asm.taken.ui.DialogError(
+                title = stringResource(R.string.txt_ttl_service_error),
+                image = painterResource(R.drawable.ic_error),
+                message = stringResource(R.string.err_server),
+                onDismissDialog = { }
+            )
+
+            GeneralError.Unknown -> SnackBarError(
+                snackBarHostState = snackBarHostState,
+                message = stringResource(R.string.err_process_gamer),
+                withDismissAction = true,
+                onDismiss = { }
+            )
+        }
+
+        EditGamerOperationsState.GamerDeleted -> TODO()
+        EditGamerOperationsState.GamerUpdated -> ImageDialog(
+            title = stringResource(R.string.txt_ttl_success_operation),
+            image = painterResource(R.drawable.ic_success),
+            message = stringResource(R.string.txt_label_gamer_updated)
+        ) {
+            DefaultButton(
+                text = stringResource(R.string.txt_btn_accept),
+                onClickButton = {
+                    editGamerVM.resetEditGamerOperationsState()
+                    navigateToMainMenu()
+                }
+            )
+        }
+
+        EditGamerOperationsState.Loading -> CircularProgressDialog()
+        null -> return
+    }
+}
+
+@Composable
 fun PanelFormEditGamer(
+    snackBarHostState: SnackbarHostState,
     currentGamer: Gamer,
+    defaultImageUrl: String? = null,
     labelButtonSaveGamer: String,
     socialNetworkImage: String?,
     editGamerFormState: EditGamerFormUiState,
@@ -201,7 +286,9 @@ fun PanelFormEditGamer(
                 )
                 Spacer(modifier = Modifier.height(50.dp))
                 FormEditGamer(
+                    snackBarHostState = snackBarHostState,
                     labelButtonSaveGamer = labelButtonSaveGamer,
+                    errorImageUrlNotFound = stringResource(R.string.txt_label_image_url_not_found),
                     socialNetworkImage = socialNetworkImage,
                     editGamerFormState = editGamerFormState,
                     countriesUiState = countries,
@@ -210,6 +297,10 @@ fun PanelFormEditGamer(
                         it.gamerNickName != editGamerFormState.aliasUiState.value
                                 || it.gamerAge.toString() != editGamerFormState.ageUiState.value
                                 || it.gamerCountry != editGamerFormState.countryUiState.value.name
+                                || (it.gamerImage == defaultImageUrl
+                                && editGamerFormState.imageURI.value != null
+                                && editGamerFormState.imageURI.value != defaultImageUrl)
+                                || (it.gamerImage != defaultImageUrl && editGamerFormState.imageURI.value != it.gamerImage)
                     },
                     saveGamer = saveGamer
                 )

@@ -3,6 +3,7 @@ package com.asm.taken.ui.page.login
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.SurfaceCoroutineScope
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -41,12 +42,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
@@ -59,6 +62,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
+import coil.compose.AsyncImagePainter
 import com.asm.domain.errors.GeneralError
 import com.asm.taken.R
 import com.asm.taken.model.CountriesUiState
@@ -87,6 +91,8 @@ import com.asm.taken.utils.getErrorAlias
 import com.asm.taken.utils.getErrorCountry
 import com.asm.taken.utils.getErrorImage
 import com.asm.taken.vm.CreateGamerVM
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 
 @Composable
 fun CreateGamerPage(
@@ -128,6 +134,7 @@ fun CreateGamerSection(
     }
 
     PanelFormCreateGamer(
+        snackBarHostState = snackBarHostState,
         labelButtonSaveGamer = stringResource(R.string.txt_btn_create_gamer),
         socialNetworkImage = socialNetworkImage,
         editGamerFormState = editGamerFormState,
@@ -223,6 +230,7 @@ fun NavigationSection(
 
 @Composable
 fun PanelFormCreateGamer(
+    snackBarHostState: SnackbarHostState,
     labelButtonSaveGamer: String,
     socialNetworkImage: String?,
     editGamerFormState: EditGamerFormUiState,
@@ -272,8 +280,10 @@ fun PanelFormCreateGamer(
                 )
                 Spacer(modifier = Modifier.height(50.dp))
                 FormEditGamer(
+                    snackBarHostState = snackBarHostState,
                     labelButtonSaveGamer = labelButtonSaveGamer,
                     socialNetworkImage = socialNetworkImage,
+                    errorImageUrlNotFound = stringResource(R.string.txt_label_image_url_not_found),
                     editGamerFormState = editGamerFormState,
                     countriesUiState = countries,
                     validateFormCreateGamer = validateFormCreateGamer,
@@ -287,6 +297,8 @@ fun PanelFormCreateGamer(
 
 @Composable
 fun FormEditGamer(
+    snackBarHostState: SnackbarHostState,
+    errorImageUrlNotFound: String,
     labelButtonSaveGamer: String,
     socialNetworkImage: String?,
     editGamerFormState: EditGamerFormUiState,
@@ -295,6 +307,7 @@ fun FormEditGamer(
     enableActionButton: Boolean = editGamerFormState.aliasUiState.state is InputState.Success && editGamerFormState.ageUiState.state is InputState.Success && editGamerFormState.countryUiState.state is InputState.Success,
     saveGamer: () -> Unit
 ) {
+    val coroutineScope = rememberCoroutineScope()
     var showChangeProfileImageDialog: Boolean by rememberSaveable { mutableStateOf(false) }
     when (val imageSelectedState = editGamerFormState.imageURI.state) {
         is InputState.Error<InputImageError> -> imageSelectedState.errors.map { getErrorImage(it) }
@@ -337,6 +350,8 @@ fun FormEditGamer(
                     editGamerFormState.countryUiState.value,
                     optionChosen.urlImage
                 )
+
+                null -> return@ChangeProfileImageDialog
             }
         }
     }
@@ -345,7 +360,17 @@ fun FormEditGamer(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         InputSelectImage(
-            imageURI = editGamerFormState.imageURI.value
+            imageURI = editGamerFormState.imageURI.value,
+            error = painterResource(R.drawable.gamer),
+            onError = {
+                coroutineScope.launch {
+                    snackBarHostState.showSnackbar(
+                        message = errorImageUrlNotFound,
+                        withDismissAction = true,
+                        duration = SnackbarDuration.Long
+                    )
+                }
+            }
         ) {
             showChangeProfileImageDialog = true
         }
@@ -523,6 +548,8 @@ fun ChooseCountryDialog(
 @Composable
 fun InputSelectImage(
     imageURI: String?,
+    error: Painter? = null,
+    onError: ((AsyncImagePainter.State.Error) -> Unit)? = null,
     onClick: () -> Unit
 ) {
     Box(
@@ -538,6 +565,8 @@ fun InputSelectImage(
                 imageURI == null -> R.drawable.gamer
                 else -> imageURI
             },
+            error = error,
+            onError = onError,
             contentDescription = null
         )
         Button(
@@ -563,10 +592,10 @@ fun InputSelectImage(
 @Composable
 fun ChangeProfileImageDialog(
     socialNetworkImage: String?,
-    onOptionSelected: (OptionChosen) -> Unit
+    onOptionSelected: (OptionChosen?) -> Unit
 ) {
     Dialog(
-        onDismissRequest = { onOptionSelected(OptionChosen.Default) }) {
+        onDismissRequest = { onOptionSelected(null) }) {
         Card(
             modifier = Modifier.fillMaxWidth()
         ) {

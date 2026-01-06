@@ -20,11 +20,13 @@ import androidx.compose.material.icons.filled.Replay
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -52,6 +54,7 @@ import com.asm.taken.ui.ImageDialog
 import com.asm.taken.ui.PuzzleGeneralTitle
 import com.asm.taken.utils.AuthenticationClient
 import com.asm.taken.vm.MainVM
+import kotlinx.coroutines.launch
 
 @Composable
 fun MainMenuPage(
@@ -93,8 +96,8 @@ fun MainSection(
             contentAlignment = Alignment.Center
         ) {
             ContentMainMenu(
+                snackBarHostState = snackBarHostState,
                 successfulGamer = state,
-                onEdit = {},
                 onCloseSession = {
                     mainVM.closeSession(authenticationClient::signOut)
                 },
@@ -166,8 +169,8 @@ fun MainSection(
 
 @Composable
 fun ContentMainMenu(
+    snackBarHostState: SnackbarHostState,
     successfulGamer: GamerState.Successful,
-    onEdit: (String) -> Unit,
     onCloseSession: () -> Unit,
     onCreateNewGame: (Boolean) -> Unit,
     onContinueGame: () -> Unit,
@@ -179,8 +182,9 @@ fun ContentMainMenu(
         modifier = Modifier.fillMaxWidth()
     ) {
         PanelGamerProfile(
+            snackBarHostState = snackBarHostState,
+            errorMessageImageUrlNotFound = stringResource(R.string.txt_label_image_url_not_found),
             gamer = successfulGamer.gamer,
-            onEdit = onEdit,
             closeSession = onCloseSession
         )
         PanelMenu(
@@ -221,10 +225,12 @@ fun NavigateSection(
 
 @Composable
 fun PanelGamerProfile(
+    snackBarHostState: SnackbarHostState,
+    errorMessageImageUrlNotFound: String,
     gamer: Gamer,
-    onEdit: (String) -> Unit,
     closeSession: () -> Unit,
 ) {
+    val coroutineScope = rememberCoroutineScope()
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -236,7 +242,9 @@ fun PanelGamerProfile(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Row(
-                modifier = Modifier.fillMaxWidth().padding(10.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(10.dp),
                 horizontalArrangement = Arrangement.End
             ) {
                 IconButton(
@@ -263,7 +271,17 @@ fun PanelGamerProfile(
                     .clip(CircleShape)
                     .border(width = 2.dp, color = Color.Black, shape = CircleShape),
                 contentScale = ContentScale.Crop,
+                error = painterResource(R.drawable.gamer),
                 model = gamer.gamerImage,
+                onError = {
+                    coroutineScope.launch {
+                        snackBarHostState.showSnackbar(
+                            errorMessageImageUrlNotFound,
+                            withDismissAction = true,
+                            duration = SnackbarDuration.Long
+                        )
+                    }
+                },
                 contentDescription = null
             )
             Spacer(Modifier.height(10.dp))
@@ -353,10 +371,7 @@ fun DialogError(
         ImageDialog(
             title = title,
             image = image,
-            message = message,
-            onDismissRequest = {
-
-            }
+            message = message
         ) {
             retryProcess?.also {
                 DefaultIconButton(
@@ -397,25 +412,5 @@ fun PreviewMainMenu() {
     val successfulGamer = GamerState.Successful(
         gamer = gamer,
         itHasProgress = true
-    )
-    ContentMainMenu(
-        successfulGamer = successfulGamer,
-        onEdit = {},
-        onCloseSession = {},
-        onCreateNewGame = {
-
-        },
-        onContinueGame = {
-
-        },
-        onEditGamer = {
-
-        },
-        onShowRanking = {
-
-        },
-        onShowHelp = {
-
-        }
     )
 }

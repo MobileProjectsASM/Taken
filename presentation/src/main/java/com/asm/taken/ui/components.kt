@@ -576,11 +576,11 @@ fun ImageDialog(
     title: String,
     image: Painter,
     message: String,
-    onDismissRequest: () -> Unit,
+    onDismissRequest: (() -> Unit)? = null,
     onCloseDialog: (() -> Unit)? = null,
     contentButtons: @Composable (ColumnScope.() -> Unit)? = null,
 ) {
-    Dialog(onDismissRequest = onDismissRequest) {
+    Dialog(onDismissRequest = onDismissRequest ?: {}) {
         Card(modifier = Modifier.fillMaxWidth()) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally

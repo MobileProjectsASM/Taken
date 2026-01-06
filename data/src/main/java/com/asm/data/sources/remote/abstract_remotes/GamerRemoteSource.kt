@@ -15,6 +15,16 @@ interface GamerRemoteSource {
         gamerImage: String = ""
     ): Result<String, GeneralError>
 
+    suspend fun updateGamer(
+        userId: String,
+        gamerAlias: String,
+        gamerAge: Int,
+        gamerCountry: String,
+        gamerCountryFlag: String?,
+        gamerImage: String = ""
+    ): Result<String, GeneralError>
+
     suspend fun checkGamerExists(gamerId: String): Result<Boolean, GeneralError>
     suspend fun updateGamerImage(gamerId: String, gamerImage: String): Result<Unit, GeneralError>
+    suspend fun deleteGamer(gamerId: String): Result<Unit, GeneralError>
 }

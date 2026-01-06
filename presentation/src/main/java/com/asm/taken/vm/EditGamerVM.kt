@@ -6,11 +6,15 @@ import androidx.lifecycle.viewModelScope
 import com.asm.domain.entities.Result
 import com.asm.domain.entities.asSuccessful
 import com.asm.domain.errors.GeneralError
+import com.asm.domain.use_cases.DeleteGamerUC
 import com.asm.domain.use_cases.GetCountriesInfoUC
+import com.asm.domain.use_cases.GetDefaultImageUC
 import com.asm.domain.use_cases.GetGamerUC
+import com.asm.domain.use_cases.SaveChangesGamerUC
 import com.asm.taken.model.Country
 import com.asm.taken.model.CountryData
 import com.asm.taken.model.EditGamerFormUiState
+import com.asm.taken.model.EditGamerOperationsState
 import com.asm.taken.model.EditGamerState
 import com.asm.taken.model.InputAgeError
 import com.asm.taken.model.InputAliasError
@@ -29,7 +33,9 @@ import javax.inject.Inject
 class EditGamerVM @Inject constructor(
     private val getGamerUC: GetGamerUC,
     private val getCountriesInfoUC: GetCountriesInfoUC,
-    private val saveGamerUC: GetGamerUC
+    private val getDefaultImageUC: GetDefaultImageUC,
+    private val saveChangesGamerUC: SaveChangesGamerUC,
+    private val deleteGamerUC: DeleteGamerUC
 ) : ViewModel() {
 
     companion object {
@@ -47,13 +53,68 @@ class EditGamerVM @Inject constructor(
                 countryUiState = InputUiState(CountryData("", null))
             )
         )
+    private val _editGamerOperationsState: MutableStateFlow<EditGamerOperationsState?> =
+        MutableStateFlow(null)
 
     val gamerState: StateFlow<EditGamerState> = _gamerState
     val editGamerFormState: StateFlow<EditGamerFormUiState> =
         _editGamerFormUiState
+    val editGamerOperationsState: StateFlow<EditGamerOperationsState?> = _editGamerOperationsState
 
-    fun saveGamer() {
+    fun saveGamer(
+        id: String,
+        alias: String,
+        age: Int,
+        country: String,
+        countryFlag: String?,
+        imageURI: String?
+    ) {
+        viewModelScope.launch {
+            _editGamerOperationsState.update { EditGamerOperationsState.Loading }
+            try {
+                val params = SaveChangesGamerUC.GamerParams(
+                    gamerId = id,
+                    nickName = alias,
+                    age = age,
+                    country = country,
+                    countryFlag = countryFlag,
+                    imageURI = imageURI
+                )
+                val navigationState =
+                    when (val gamerUpdatedResult = saveChangesGamerUC.execute(params)) {
+                        is Result.Successful<String> -> EditGamerOperationsState.GamerUpdated
+                        is Result.Unsuccessful<GeneralError> -> EditGamerOperationsState.Failure(
+                            gamerUpdatedResult.error
+                        )
+                    }
+                _editGamerOperationsState.update { navigationState }
+            } catch (exception: Exception) {
+                Log.e(CreateGamerVM.TAG, exception.stackTraceToString())
+                _editGamerOperationsState.update { EditGamerOperationsState.Failure(GeneralError.Unknown) }
+            }
+        }
+    }
 
+    fun deleteGamer(
+        gamerId: String,
+        signOutThirdProvider: suspend () -> Result<Unit, GeneralError>
+    ) {
+        viewModelScope.launch {
+            _editGamerOperationsState.update { EditGamerOperationsState.Loading }
+            val deleteGamerResult = deleteGamerUC.execute(
+                DeleteGamerUC.DeleteGamerParams(
+                    gamerId = gamerId,
+                    signOutThirdProvider = signOutThirdProvider
+                )
+            )
+            val operationState = when (deleteGamerResult) {
+                is Result.Successful<Unit> -> EditGamerOperationsState.GamerDeleted
+                is Result.Unsuccessful<GeneralError> -> EditGamerOperationsState.Failure(
+                    deleteGamerResult.error
+                )
+            }
+            _editGamerOperationsState.update { operationState }
+        }
     }
 
 
@@ -67,25 +128,33 @@ class EditGamerVM @Inject constructor(
 
                 val deferredGamerResult = async { getGamerUC.execute(gamerId) }
                 val deferredCountriesInfoResult = async { getCountriesInfoUC.execute(Unit) }
+                val deferredDefaultImageResult = async { getDefaultImageUC.execute(Unit) }
                 val socialNetworkResult = getCurrentUserSocialNetworkImage()
 
                 val gamerResult = deferredGamerResult.await()
                 val countriesResult = deferredCountriesInfoResult.await()
+                val defaultImageResult = deferredDefaultImageResult.await()
                 val gamerState = when {
                     gamerResult is Result.Unsuccessful -> EditGamerState.Failure(gamerResult.error)
                     socialNetworkResult is Result.Unsuccessful -> EditGamerState.Failure(
                         socialNetworkResult.error
                     )
+
                     countriesResult is Result.Unsuccessful -> EditGamerState.Failure(
                         countriesResult.error
+                    )
+
+                    defaultImageResult is Result.Unsuccessful -> EditGamerState.Failure(
+                        defaultImageResult.error
                     )
 
                     else -> {
                         val gamer = gamerResult.asSuccessful().data
                         if (gamer != null) EditGamerState.Success(
-                            gamer,
-                            socialNetworkResult.asSuccessful().data,
-                            countriesResult.asSuccessful().data.map {
+                            gamer = gamer,
+                            socialNetworkImage = socialNetworkResult.asSuccessful().data,
+                            defaultImageUrl = defaultImageResult.asSuccessful().data,
+                            countries = countriesResult.asSuccessful().data.map {
                                 Country(
                                     name = it.name,
                                     phoneCode = it.phoneCode,
@@ -133,6 +202,10 @@ class EditGamerVM @Inject constructor(
                 imageURI = InputUiState(imageURI)
             )
         }
+    }
+
+    fun resetEditGamerOperationsState() {
+        _editGamerOperationsState.update { null }
     }
 
     private fun validateAlias(alias: String): List<InputAliasError> {
