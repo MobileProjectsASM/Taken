@@ -1,6 +1,5 @@
 package com.asm.taken.vm
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.asm.domain.entities.Result
@@ -10,19 +9,17 @@ import com.asm.domain.use_cases.CloseSessionUC
 import com.asm.domain.use_cases.CreateGamerUC
 import com.asm.domain.use_cases.GetCountriesInfoUC
 import com.asm.domain.use_cases.SaveSessionUC
-import com.asm.taken.mappers.CountryMapper
-import com.asm.taken.model.CountriesUiState
+import com.asm.taken.model.CountriesState
 import com.asm.taken.model.CountryData
+import com.asm.taken.model.CreateGamerProcessState
+import com.asm.taken.model.CreateGamerUIState
 import com.asm.taken.model.InputAgeError
 import com.asm.taken.model.InputAliasError
 import com.asm.taken.model.InputCountryError
 import com.asm.taken.model.InputState
 import com.asm.taken.model.InputUiState
-import com.asm.taken.model.EditGamerFormUiState
-import com.asm.taken.model.NavigationState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -32,56 +29,53 @@ class CreateGamerVM @Inject constructor(
     private val closeSessionUC: CloseSessionUC,
     private val getCountriesInfoUC: GetCountriesInfoUC,
     private val createGamerUC: CreateGamerUC,
-    private val saveSessionUC: SaveSessionUC,
-    private val countryMapper: CountryMapper
+    private val saveSessionUC: SaveSessionUC
 ) : ViewModel() {
 
     companion object {
-        const val TAG = "EditGamerVM"
+        const val TAG = "edit_gamer_view_model"
     }
 
-    private val _countriesUiState: MutableStateFlow<CountriesUiState?> =
-        MutableStateFlow(null)
-    private val _editGamerFormUiState: MutableStateFlow<EditGamerFormUiState> =
-        MutableStateFlow(
-            EditGamerFormUiState(
-                imageURI = InputUiState(null),
-                aliasUiState = InputUiState(""),
-                ageUiState = InputUiState(""),
-                countryUiState = InputUiState(CountryData("", null))
-            )
-        )
-    private val _navigationState: MutableStateFlow<NavigationState?> = MutableStateFlow(null)
+    private val _createGamerUIState: MutableStateFlow<CreateGamerUIState> =
+        MutableStateFlow(CreateGamerUIState())
 
-    val countriesUiState: StateFlow<CountriesUiState?> = _countriesUiState
-    val editGamerFormState: StateFlow<EditGamerFormUiState> =
-        _editGamerFormUiState
-    val navigationState: StateFlow<NavigationState?> = _navigationState
-
-    fun getCountriesInfo() {
-        viewModelScope.launch {
-            _countriesUiState.update { CountriesUiState.Loading }
-            val countriesState: CountriesUiState =
-                when (val countriesResult = getCountriesInfoUC.execute(Unit)) {
-                    is Result.Unsuccessful -> CountriesUiState.Failure(countriesResult.error)
-                    is Result.Successful -> {
-                        val countries = countriesResult.data.map(countryMapper::toCountryUiState)
-                        CountriesUiState.Successful(countries)
-                    }
-                }
-            _countriesUiState.update { countriesState }
+    fun resetProcessState() {
+        _createGamerUIState.update {
+            it.copy(createGamerProcessState = CreateGamerProcessState.Idle)
         }
     }
 
-    fun resetNavigationState() {
-        _navigationState.update { null }
-    }
-
     fun resetCountriesState() {
-        _navigationState.update { null }
+        val currentFormState = _createGamerUIState.value.createGamerFormState
+        _createGamerUIState.update {
+            it.copy(createGamerFormState = currentFormState.copy(countriesState = CountriesState.Idle))
+        }
     }
 
-    //region createGamer
+    fun getCountriesInfo() {
+        viewModelScope.launch {
+            val currentFormState = _createGamerUIState.value.createGamerFormState
+            _createGamerUIState.update {
+                it.copy(
+                    createGamerFormState = currentFormState.copy(
+                        countriesState = CountriesState.Loading
+                    )
+                )
+            }
+            val countriesState: CountriesState =
+                when (val countriesResult = getCountriesInfoUC.execute(Unit)) {
+                    is Result.Unsuccessful -> CountriesState.Error(countriesResult.error)
+                    is Result.Successful -> CountriesState.CountriesLoaded(countriesResult.data)
+                }
+            _createGamerUIState.update {
+                it.copy(
+                    createGamerFormState = currentFormState.copy(
+                        countriesState = countriesState
+                    )
+                )
+            }
+        }
+    }
 
     fun createGamer(
         id: String,
@@ -92,62 +86,87 @@ class CreateGamerVM @Inject constructor(
         imageURI: String?
     ) {
         viewModelScope.launch {
-            _navigationState.update { NavigationState.Loading }
-            try {
-                val params = CreateGamerUC.GamerParams(
-                    gamerId = id,
-                    nickName = alias,
-                    age = age,
-                    country = country,
-                    countryFlag = countryFlag,
-                    imageURI = imageURI
-                )
-                val navigationState = when (val createGamerResult = createGamerUC.execute(params)) {
-                    is Result.Successful<String> -> when (val saveSessionResult =
-                        saveSessionUC.execute(Session.UserRegister(gamerId = createGamerResult.data))) {
-                        is Result.Successful<Unit> -> NavigationState.GamerCreated(createGamerResult.data)
-                        is Result.Unsuccessful<GeneralError> -> NavigationState.Failure(
-                            saveSessionResult.error
-                        )
-                    }
+            _createGamerUIState.update {
+                it.copy(createGamerProcessState = CreateGamerProcessState.Loading)
+            }
+            val params = CreateGamerUC.GamerParams(
+                gamerId = id,
+                nickName = alias,
+                age = age,
+                country = country,
+                countryFlag = countryFlag,
+                imageURI = imageURI
+            )
+            val processState = when (val createGamerResult = createGamerUC.execute(params)) {
+                is Result.Successful<String> -> when (val saveSessionResult =
+                    saveSessionUC.execute(Session.UserRegister(gamerId = createGamerResult.data))) {
+                    is Result.Successful<Unit> -> CreateGamerProcessState.GamerCreated(
+                        createGamerResult.data
+                    )
 
-                    is Result.Unsuccessful<GeneralError> -> NavigationState.Failure(
-                        createGamerResult.error
+                    is Result.Unsuccessful<GeneralError> -> CreateGamerProcessState.Failure(
+                        saveSessionResult.error
                     )
                 }
-                _navigationState.update { navigationState }
-            } catch (exception: Exception) {
-                Log.e(TAG, exception.stackTraceToString())
-                _navigationState.update { NavigationState.Failure(GeneralError.Unknown) }
+
+                is Result.Unsuccessful<GeneralError> -> CreateGamerProcessState.Failure(
+                    createGamerResult.error
+                )
+            }
+            _createGamerUIState.update {
+                it.copy(
+                    createGamerProcessState = processState
+                )
             }
         }
     }
 
     fun validateCreateGamerForm(
-        alias: String,
-        age: String,
-        countryData: CountryData,
-        imageURI: String?
+        alias: String, age: String, countryData: CountryData, imageURI: String?
     ) {
         val aliasErrors = validateAlias(alias)
         val ageErrors = validateAge(age)
         val countryErrors = validateCountry(countryData.name)
-        _editGamerFormUiState.update {
-            EditGamerFormUiState(
-                aliasUiState = aliasErrors.run {
-                    if (isEmpty()) InputUiState(alias, InputState.Success)
-                    else InputUiState(alias, InputState.Error(this))
-                },
-                ageUiState = ageErrors.run {
-                    if (isEmpty()) InputUiState(age, InputState.Success)
-                    else InputUiState(age, InputState.Error(this))
-                },
-                countryUiState = countryErrors.run {
-                    if (isEmpty()) InputUiState(countryData, InputState.Success)
-                    else InputUiState(countryData, InputState.Error(this))
-                },
-                imageURI = InputUiState(imageURI)
+        val aliasInputState = aliasErrors.run {
+            if (isEmpty()) InputUiState(alias, InputState.Success)
+            else InputUiState(alias, InputState.Error(this))
+        }
+        val ageInputState = ageErrors.run {
+            if (isEmpty()) InputUiState(age, InputState.Success)
+            else InputUiState(age, InputState.Error(this))
+        }
+        val countryInputState = countryErrors.run {
+            if (isEmpty()) InputUiState(countryData, InputState.Success)
+            else InputUiState(countryData, InputState.Error(this))
+        }
+
+        val currentFormState = _createGamerUIState.value.createGamerFormState
+        _createGamerUIState.update {
+            it.copy(
+                createGamerFormState = currentFormState.copy(
+                    aliasUiState = aliasInputState,
+                    ageUiState = ageInputState,
+                    countryUiState = countryInputState,
+                    imageURI = InputUiState(imageURI)
+                )
             )
+        }
+    }
+
+    fun closeSession(signOut: suspend () -> Result<Unit, GeneralError>) {
+        viewModelScope.launch {
+            _createGamerUIState.update {
+                it.copy(createGamerProcessState = CreateGamerProcessState.Loading)
+            }
+            val processState = when (val closeSessionResult = closeSessionUC.execute(signOut)) {
+                is Result.Successful<Unit> -> CreateGamerProcessState.Loading
+                is Result.Unsuccessful<GeneralError> -> CreateGamerProcessState.Failure(
+                    closeSessionResult.error
+                )
+            }
+            _createGamerUIState.update {
+                it.copy(createGamerProcessState = processState)
+            }
         }
     }
 
@@ -175,22 +194,4 @@ class CreateGamerVM @Inject constructor(
         if (country.isEmpty()) countryErrors.add(InputCountryError.EMPTY)
         return countryErrors
     }
-
-    //endregion
-
-    //region close session
-
-    fun closeSession(signOut: suspend () -> Result<Unit, GeneralError>) {
-        viewModelScope.launch {
-            _navigationState.update { NavigationState.Loading }
-            when (val closeSessionResult = closeSessionUC.execute(signOut)) {
-                is Result.Successful<Unit> -> _navigationState.update { NavigationState.SessionClosed }
-                is Result.Unsuccessful<GeneralError> -> _navigationState.update {
-                    NavigationState.Failure(closeSessionResult.error)
-                }
-            }
-        }
-    }
-
-    //endregion
 }

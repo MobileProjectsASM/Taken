@@ -9,7 +9,7 @@ import com.asm.domain.use_cases.GamerExistsUC
 import com.asm.domain.use_cases.GetCountriesInfoUC
 import com.asm.domain.use_cases.SignInUserUC
 import com.asm.taken.model.AuthPhoneProcessState
-import com.asm.taken.model.GetDataProcessState
+import com.asm.taken.model.CountriesState
 import com.asm.taken.model.InputOtpError
 import com.asm.taken.model.InputPhoneCodeError
 import com.asm.taken.model.InputPhoneNumberError
@@ -45,7 +45,7 @@ class AuthPhoneVM @Inject constructor(
         val currentFormState = _phoneAuthUIState.value.phoneAuthFormState
         _phoneAuthUIState.update {
             it.copy(
-                phoneAuthFormState = currentFormState.copy(dataFormProcess = GetDataProcessState.Idle)
+                phoneAuthFormState = currentFormState.copy(dataFormProcess = CountriesState.Idle)
             )
         }
     }
@@ -101,15 +101,15 @@ class AuthPhoneVM @Inject constructor(
         viewModelScope.launch {
             val currentFormState = _phoneAuthUIState.value.phoneAuthFormState
             val phoneAuthFormState =
-                currentFormState.copy(dataFormProcess = GetDataProcessState.Loading)
+                currentFormState.copy(dataFormProcess = CountriesState.Loading)
             _phoneAuthUIState.update { it.copy(phoneAuthFormState = phoneAuthFormState) }
             val processState = when (val countriesResult = getCountriesInfoUC.execute(Unit)) {
                 is Result.Unsuccessful -> currentFormState.copy(
-                    dataFormProcess = GetDataProcessState.Error(countriesResult.error)
+                    dataFormProcess = CountriesState.Error(countriesResult.error)
                 )
 
                 is Result.Successful -> currentFormState.copy(
-                    dataFormProcess = GetDataProcessState.CountriesLoaded(countriesResult.data)
+                    dataFormProcess = CountriesState.CountriesLoaded(countriesResult.data)
                 )
             }
             _phoneAuthUIState.update { it.copy(phoneAuthFormState = processState) }
