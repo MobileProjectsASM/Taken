@@ -162,7 +162,7 @@ class CreateGamerVM @Inject constructor(
                 it.copy(createGamerProcessState = CreateGamerProcessState.Loading)
             }
             val processState = when (val closeSessionResult = closeSessionUC.execute(Unit)) {
-                is Result.Successful<Unit> -> CreateGamerProcessState.Loading
+                is Result.Successful<Unit> -> CreateGamerProcessState.SessionClosed
                 is Result.Unsuccessful<GeneralError> -> CreateGamerProcessState.Failure(
                     closeSessionResult.error
                 )
