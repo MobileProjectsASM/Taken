@@ -37,7 +37,7 @@ data class Country(
 data class PhoneAuthFormState(
     val phoneCodeUiState: InputUiState<String, InputPhoneCodeError> = InputUiState(""),
     val phoneNumberUiState: InputUiState<String, InputPhoneNumberError> = InputUiState(""),
-    val dataFormProcess: GetDataProcessState = GetDataProcessState.Idle
+    val dataFormProcess: CountriesState = CountriesState.Idle
 )
 
 data class OtpFormState(
@@ -49,11 +49,11 @@ data class PhoneAuthUIState(
     val phoneAuthProcessState: AuthPhoneProcessState = AuthPhoneProcessState.Idle
 )
 
-sealed class GetDataProcessState {
-    data object Idle : GetDataProcessState()
-    data object Loading : GetDataProcessState()
-    data class CountriesLoaded(val countriesInfo: List<CountryInfo>) : GetDataProcessState()
-    data class Error(val generalError: GeneralError) : GetDataProcessState()
+sealed class CountriesState {
+    data object Idle : CountriesState()
+    data object Loading : CountriesState()
+    data class CountriesLoaded(val countriesInfo: List<CountryInfo>) : CountriesState()
+    data class Error(val generalError: GeneralError) : CountriesState()
 }
 
 sealed class AuthPhoneProcessState {
@@ -108,16 +108,30 @@ data class CreateAccountFormState(
     val passwordRepeatUiState: InputUiState<String, InputRepeatValueError> = InputUiState("")
 )
 
-data class EditGamerFormUiState(
-    val imageURI: InputUiState<String?, InputImageError>,
-    val aliasUiState: InputUiState<String, InputAliasError>,
-    val ageUiState: InputUiState<String, InputAgeError>,
-    val countryUiState: InputUiState<CountryData, InputCountryError>
+data class CreateGamerUIState(
+    val editGamerFormUiState: EditGamerFormUiState,
+    val createGamerProcessState: CreateGamerProcessState
 )
 
+data class EditGamerFormUiState(
+    val imageURI: InputUiState<String?, InputImageError> = InputUiState(null),
+    val aliasUiState: InputUiState<String, InputAliasError> = InputUiState(""),
+    val ageUiState: InputUiState<String, InputAgeError> = InputUiState(""),
+    val countryUiState: InputUiState<CountryData, InputCountryError> = InputUiState(CountryData()),
+    val countriesState: CountriesState = CountriesState.Idle
+)
+
+sealed class CreateGamerProcessState {
+    data object Idle: CreateGamerProcessState()
+    data object Loading: CreateGamerProcessState()
+    data object SessionClosed: CreateGamerProcessState()
+    data class GamerCreated(val gamerId: String): CreateGamerProcessState()
+    data class Failure(val error: GeneralError): CreateGamerProcessState()
+}
+
 data class CountryData(
-    val name: String,
-    val flag: String?
+    val name: String = "",
+    val flag: String? = null
 )
 
 //region ERRORS
