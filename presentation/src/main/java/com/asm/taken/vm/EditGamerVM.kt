@@ -11,7 +11,6 @@ import com.asm.domain.use_cases.GetCountriesInfoUC
 import com.asm.domain.use_cases.GetDefaultImageUC
 import com.asm.domain.use_cases.GetGamerUC
 import com.asm.domain.use_cases.SaveChangesGamerUC
-import com.asm.taken.model.Country
 import com.asm.taken.model.CountryData
 import com.asm.taken.model.EditGamerFormState
 import com.asm.taken.model.EditGamerOperationsState

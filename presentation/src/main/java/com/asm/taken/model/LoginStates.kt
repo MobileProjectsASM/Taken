@@ -4,11 +4,6 @@ import com.asm.domain.entities.AuthUser
 import com.asm.domain.entities.CountryInfo
 import com.asm.domain.errors.GeneralError
 
-data class EmailAndPasswordFormState(
-    val emailUiState: InputUiState<String, InputEmailError> = InputUiState(""),
-    val passwordUiState: InputUiState<String, InputPasswordError> = InputUiState("")
-)
-
 data class InputUiState<out Value, out InputError>(
     val value: Value,
     val state: InputState<InputError> = InputState.Idle
@@ -21,18 +16,6 @@ sealed class InputState<out InputError> {
         val errors: List<InputError>
     ) : InputState<InputError>()
 }
-
-sealed class CountriesUiState {
-    data object Loading : CountriesUiState()
-    data class Successful(val countriesInfo: List<Country>) : CountriesUiState()
-    data class Failure(val generalFailure: GeneralError) : CountriesUiState()
-}
-
-data class Country(
-    val name: String,
-    val phoneCode: String,
-    val flag: String
-)
 
 data class PhoneAuthFormState(
     val phoneCodeUiState: InputUiState<String, InputPhoneCodeError> = InputUiState(""),
@@ -69,6 +52,11 @@ sealed class AuthPhoneProcessState {
     data class UnregisteredUser(val authUser: AuthUser) : AuthPhoneProcessState()
     data class Error(val generalError: GeneralError) : AuthPhoneProcessState()
 }
+
+data class EmailAndPasswordFormState(
+    val emailUiState: InputUiState<String, InputEmailError> = InputUiState(""),
+    val passwordUiState: InputUiState<String, InputPasswordError> = InputUiState("")
+)
 
 data class LoginUIState(
     val emailAndPasswordFormState: EmailAndPasswordFormState = EmailAndPasswordFormState(),

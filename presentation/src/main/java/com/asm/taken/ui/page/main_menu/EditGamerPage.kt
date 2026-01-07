@@ -34,7 +34,6 @@ import com.asm.domain.entities.CountryInfo
 import com.asm.domain.entities.Gamer
 import com.asm.domain.errors.GeneralError
 import com.asm.taken.R
-import com.asm.taken.model.Country
 import com.asm.taken.model.CountryData
 import com.asm.taken.model.EditGamerFormState
 import com.asm.taken.model.EditGamerOperationsState
