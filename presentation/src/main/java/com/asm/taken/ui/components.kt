@@ -454,6 +454,7 @@ fun DefaultButton(
     modifier: Modifier = Modifier,
     enable: Boolean = true,
     text: String,
+    color: Color = colorResource(R.color.purple_200),
     onClickButton: (() -> Unit)? = null
 ) {
     Button(
@@ -461,7 +462,7 @@ fun DefaultButton(
         onClick = { onClickButton?.invoke() },
         enabled = enable,
         colors = ButtonDefaults.buttonColors(
-            containerColor = colorResource(R.color.purple_200),
+            containerColor = color,
             contentColor = Color.White,
             disabledContainerColor = Purple80,
             disabledContentColor = Color.White

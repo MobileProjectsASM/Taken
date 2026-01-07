@@ -15,6 +15,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -23,8 +24,10 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -160,6 +163,12 @@ fun EditGamerSection(
                         imageURI = editGamerFormState.imageURI.value
                     )
                 },
+                deleteGamer = {
+                    editGamerVM.deleteGamer(
+                        gamerId = gamerId,
+                        signOutThirdProvider = authenticationClient::signOut
+                    )
+                },
                 onBack = navigateToMainMenu
             )
         }
@@ -244,6 +253,7 @@ fun PanelFormEditGamer(
     countries: List<CountryInfo>?,
     validateFormCreateGamer: (String, String, CountryData, String?) -> Unit,
     saveGamer: () -> Unit,
+    deleteGamer: () -> Unit,
     onBack: () -> Unit
 ) {
     Column(
@@ -259,7 +269,8 @@ fun PanelFormEditGamer(
         ) {
             Column(
                 modifier = Modifier
-                    .fillMaxWidth()
+                    .fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Row(
                     modifier = Modifier
@@ -303,6 +314,11 @@ fun PanelFormEditGamer(
                                 || (it.gamerImage != defaultImageUrl && editGamerFormState.imageURI.value != it.gamerImage)
                     },
                     saveGamer = saveGamer
+                )
+                DefaultButton(
+                    text = stringResource(R.string.txt_btn_delete_gamer),
+                    color = colorResource(R.color.input_error_color),
+                    onClickButton = deleteGamer
                 )
             }
         }

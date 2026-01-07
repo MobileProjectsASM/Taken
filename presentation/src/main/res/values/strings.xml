@@ -48,6 +48,7 @@
     <string name="txt_btn_help">Help</string>
     <string name="txt_btn_logout">Log out</string>
     <string name="txt_btn_accept">Aceptar</string>
+    <string name="txt_btn_delete_gamer">Delete Gamer</string>
     
     <!-- Errors -->
     <string name="err_get_session_data">Error to get session data</string>
