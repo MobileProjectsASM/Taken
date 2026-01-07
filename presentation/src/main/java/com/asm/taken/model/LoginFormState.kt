@@ -109,8 +109,8 @@ data class CreateAccountFormState(
 )
 
 data class CreateGamerUIState(
-    val editGamerFormUiState: EditGamerFormUiState,
-    val createGamerProcessState: CreateGamerProcessState
+    val createGamerFormState: EditGamerFormUiState = EditGamerFormUiState(),
+    val createGamerProcessState: CreateGamerProcessState = CreateGamerProcessState.Idle
 )
 
 data class EditGamerFormUiState(
