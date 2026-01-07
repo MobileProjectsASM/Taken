@@ -9,7 +9,6 @@ import com.asm.domain.use_cases.GetSessionUC
 import com.asm.taken.model.InitRouteUiState
 import com.asm.taken.ui.navigation.Authentication
 import com.asm.taken.ui.navigation.CreateGamer
-import com.asm.taken.ui.navigation.Login
 import com.asm.taken.ui.navigation.MainPage
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow

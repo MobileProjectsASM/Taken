@@ -3,8 +3,7 @@ package com.asm.taken.ui.navigation
 import kotlinx.serialization.Serializable
 
 sealed class Route
-@Serializable
-data object Login: Route()
+
 @Serializable
 data object Authentication: Route()
 @Serializable

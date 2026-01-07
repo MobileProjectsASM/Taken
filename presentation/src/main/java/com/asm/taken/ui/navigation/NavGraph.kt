@@ -85,7 +85,7 @@ fun MainNavigation(
                     },
                     onNavigateToMainPage = {
                         navigationController.navigate(MainPage(gamerId = it)) {
-                            popUpTo(Login::class) {
+                            popUpTo(Authentication::class) {
                                 inclusive = true
                             }
                         }
@@ -97,7 +97,7 @@ fun MainNavigation(
                                 image = it.profilePictureUrl
                             )
                         ) {
-                            popUpTo(Login::class) {
+                            popUpTo(Authentication::class) {
                                 inclusive = true
                             }
                         }
@@ -144,7 +144,7 @@ fun MainNavigation(
                     popBackStack = navigationController::popBackStack,
                     onNavigateToMainPage = {
                         navigationController.navigate(MainPage(gamerId = it)) {
-                            popUpTo(Login::class) {
+                            popUpTo(Authentication::class) {
                                 inclusive = true
                             }
                         }
@@ -156,7 +156,7 @@ fun MainNavigation(
                                 image = imageUrl
                             )
                         ) {
-                            popUpTo(Login::class) {
+                            popUpTo(Authentication::class) {
                                 inclusive = true
                             }
                         }
@@ -173,7 +173,7 @@ fun MainNavigation(
                     createGamerVM = createGamerVM,
                     snackBarHostState = snackBarHostState,
                     onNavigateToAuthentication = {
-                        navigationController.navigate(Login) {
+                        navigationController.navigate(Authentication) {
                             popUpTo(CreateGamer::class) {
                                 inclusive = true
                             }
@@ -216,7 +216,7 @@ fun NavGraphBuilder.navigationMainPage(
                     mainVM = mainVM,
                     authenticationClient = authenticationClient,
                     onNavigateToAuthentication = {
-                        navigationController.navigate(Login) {
+                        navigationController.navigate(Authentication) {
                             popUpTo(MainPage::class) {
                                 inclusive = true
                             }
