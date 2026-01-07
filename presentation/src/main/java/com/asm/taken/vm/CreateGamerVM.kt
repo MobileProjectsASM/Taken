@@ -20,6 +20,7 @@ import com.asm.taken.model.InputState
 import com.asm.taken.model.InputUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -38,6 +39,8 @@ class CreateGamerVM @Inject constructor(
 
     private val _createGamerUIState: MutableStateFlow<CreateGamerUIState> =
         MutableStateFlow(CreateGamerUIState())
+
+    val createGamerUIState: StateFlow<CreateGamerUIState> = _createGamerUIState
 
     fun resetProcessState() {
         _createGamerUIState.update {
