@@ -153,12 +153,12 @@ class CreateGamerVM @Inject constructor(
         }
     }
 
-    fun closeSession(signOut: suspend () -> Result<Unit, GeneralError>) {
+    fun closeSession() {
         viewModelScope.launch {
             _createGamerUIState.update {
                 it.copy(createGamerProcessState = CreateGamerProcessState.Loading)
             }
-            val processState = when (val closeSessionResult = closeSessionUC.execute(signOut)) {
+            val processState = when (val closeSessionResult = closeSessionUC.execute(Unit)) {
                 is Result.Successful<Unit> -> CreateGamerProcessState.Loading
                 is Result.Unsuccessful<GeneralError> -> CreateGamerProcessState.Failure(
                     closeSessionResult.error
