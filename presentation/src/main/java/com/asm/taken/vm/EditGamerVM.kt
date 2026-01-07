@@ -154,13 +154,7 @@ class EditGamerVM @Inject constructor(
                             gamer = gamer,
                             socialNetworkImage = socialNetworkResult.asSuccessful().data,
                             defaultImageUrl = defaultImageResult.asSuccessful().data,
-                            countries = countriesResult.asSuccessful().data.map {
-                                Country(
-                                    name = it.name,
-                                    phoneCode = it.phoneCode,
-                                    flag = it.flag
-                                )
-                            }
+                            countries = countriesResult.asSuccessful().data
                         )
                         else EditGamerState.Failure(GeneralError.Unknown).also {
                             Log.e(TAG, "Gamer not found")

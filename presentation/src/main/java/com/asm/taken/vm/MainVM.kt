@@ -63,10 +63,10 @@ class MainVM @Inject constructor(
         }
     }
 
-    fun closeSession(signOut: suspend () -> Result<Unit, GeneralError>) {
+    fun closeSession() {
         viewModelScope.launch {
             _mainMenuState.update { MainMenuState.Loading }
-            val mainMenuState = when (val closeSessionResult = closeSessionUC.execute(signOut)) {
+            val mainMenuState = when (val closeSessionResult = closeSessionUC.execute(Unit)) {
                 is Result.Successful<Unit> -> MainMenuState.SessionClosed
                 is Result.Unsuccessful<GeneralError> -> MainMenuState.Fail(closeSessionResult.error)
             }

@@ -30,6 +30,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.asm.domain.entities.CountryInfo
 import com.asm.domain.entities.Gamer
 import com.asm.domain.errors.GeneralError
 import com.asm.taken.R
@@ -241,7 +242,7 @@ fun PanelFormEditGamer(
     labelButtonSaveGamer: String,
     socialNetworkImage: String?,
     editGamerFormState: EditGamerFormState,
-    countries: List<Country>?,
+    countries: List<CountryInfo>?,
     validateFormCreateGamer: (String, String, CountryData, String?) -> Unit,
     saveGamer: () -> Unit,
     onBack: () -> Unit

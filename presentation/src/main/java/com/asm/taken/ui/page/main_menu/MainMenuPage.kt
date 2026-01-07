@@ -99,7 +99,7 @@ fun MainSection(
                 snackBarHostState = snackBarHostState,
                 successfulGamer = state,
                 onCloseSession = {
-                    mainVM.closeSession(authenticationClient::signOut)
+                    mainVM.closeSession()
                 },
                 onCreateNewGame = {
 
@@ -123,7 +123,7 @@ fun MainSection(
                 image = painterResource(R.drawable.ic_warning),
                 message = stringResource(R.string.err_client),
                 logOut = {
-                    mainVM.closeSession(authenticationClient::signOut)
+                    mainVM.closeSession()
                 },
                 onDismissDialog = {
 
@@ -136,7 +136,7 @@ fun MainSection(
                 image = painterResource(R.drawable.ic_sin_internet),
                 message = stringResource(R.string.err_network_connection),
                 retryProcess = { mainVM.getMainDataGamer(gamerId) },
-                logOut = { mainVM.closeSession(authenticationClient::signOut) },
+                logOut = { mainVM.closeSession() },
                 onDismissDialog = {
 
                 }
@@ -146,7 +146,7 @@ fun MainSection(
                 title = stringResource(R.string.txt_ttl_service_error),
                 image = painterResource(R.drawable.ic_error),
                 message = stringResource(R.string.err_server),
-                logOut = { mainVM.closeSession(authenticationClient::signOut) },
+                logOut = { mainVM.closeSession() },
                 onDismissDialog = {
 
                 }
@@ -156,7 +156,7 @@ fun MainSection(
                 title = stringResource(R.string.txt_ttl_unexpected_error),
                 image = painterResource(R.drawable.ic_cancelar),
                 message = stringResource(R.string.err_process_data),
-                logOut = { mainVM.closeSession(authenticationClient::signOut) },
+                logOut = { mainVM.closeSession() },
                 onDismissDialog = {
 
                 }

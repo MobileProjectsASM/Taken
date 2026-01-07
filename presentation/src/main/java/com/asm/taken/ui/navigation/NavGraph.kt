@@ -8,6 +8,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.credentials.CredentialManager
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
@@ -55,11 +56,14 @@ fun MainNavigation(
 
             val loginManager = LoginManager.getInstance()
             val callbackManager = CallbackManager.Factory.create()
-            val metaLauncher = rememberLauncherForActivityResult(loginManager.createLogInActivityResultContract(callbackManager)) {}
+            val metaLauncher = rememberLauncherForActivityResult(
+                loginManager.createLogInActivityResultContract(callbackManager)
+            ) {}
             val firebase = FirebaseAuth.getInstance()
+            val credentialManager = CredentialManager.create(LocalContext.current)
             val authProviders = AuthenticationProviders(
                 firebaseAuth = firebase,
-                authRemoteSource = AuthFirebaseSource(firebase),
+                authRemoteSource = AuthFirebaseSource(firebase, credentialManager),
                 context = LocalContext.current,
                 loginManager = loginManager,
                 callbackManager = callbackManager,
@@ -116,11 +120,14 @@ fun MainNavigation(
         composable<AuthenticationPhone> { navBackStackEntry ->
             val loginManager = LoginManager.getInstance()
             val callbackManager = CallbackManager.Factory.create()
-            val metaLauncher = rememberLauncherForActivityResult(loginManager.createLogInActivityResultContract(callbackManager)) {}
+            val metaLauncher = rememberLauncherForActivityResult(
+                loginManager.createLogInActivityResultContract(callbackManager)
+            ) {}
             val firebase = FirebaseAuth.getInstance()
+            val credentialManager = CredentialManager.create(LocalContext.current)
             val authProviders = AuthenticationProviders(
                 firebaseAuth = firebase,
-                authRemoteSource = AuthFirebaseSource(firebase),
+                authRemoteSource = AuthFirebaseSource(firebase, credentialManager),
                 context = LocalContext.current,
                 loginManager = loginManager,
                 callbackManager = callbackManager,
