@@ -13,7 +13,7 @@ import com.asm.domain.use_cases.GetGamerUC
 import com.asm.domain.use_cases.SaveChangesGamerUC
 import com.asm.taken.model.Country
 import com.asm.taken.model.CountryData
-import com.asm.taken.model.EditGamerFormUiState
+import com.asm.taken.model.EditGamerFormState
 import com.asm.taken.model.EditGamerOperationsState
 import com.asm.taken.model.EditGamerState
 import com.asm.taken.model.InputAgeError
@@ -44,9 +44,9 @@ class EditGamerVM @Inject constructor(
 
     private val _gamerState: MutableStateFlow<EditGamerState> =
         MutableStateFlow(EditGamerState.Loading)
-    private val _editGamerFormUiState: MutableStateFlow<EditGamerFormUiState> =
+    private val _editGamerFormState: MutableStateFlow<EditGamerFormState> =
         MutableStateFlow(
-            EditGamerFormUiState(
+            EditGamerFormState(
                 imageURI = InputUiState(null),
                 aliasUiState = InputUiState(""),
                 ageUiState = InputUiState(""),
@@ -57,8 +57,8 @@ class EditGamerVM @Inject constructor(
         MutableStateFlow(null)
 
     val gamerState: StateFlow<EditGamerState> = _gamerState
-    val editGamerFormState: StateFlow<EditGamerFormUiState> =
-        _editGamerFormUiState
+    val editGamerFormState: StateFlow<EditGamerFormState> =
+        _editGamerFormState
     val editGamerOperationsState: StateFlow<EditGamerOperationsState?> = _editGamerOperationsState
 
     fun saveGamer(
@@ -185,8 +185,8 @@ class EditGamerVM @Inject constructor(
         val aliasErrors = validateAlias(alias)
         val ageErrors = validateAge(age)
         val countryErrors = validateCountry(countryData.name)
-        _editGamerFormUiState.update {
-            EditGamerFormUiState(
+        _editGamerFormState.update {
+            EditGamerFormState(
                 aliasUiState = aliasErrors.run {
                     if (isEmpty()) InputUiState(alias, InputState.Success)
                     else InputUiState(alias, InputState.Error(this))
