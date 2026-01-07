@@ -1,6 +1,8 @@
 package com.asm.data.sources.remote.impl.firebase
 
 import android.util.Log
+import androidx.credentials.ClearCredentialStateRequest
+import androidx.credentials.CredentialManager
 import com.asm.data.sources.remote.abstract_remotes.AuthRemoteSource
 import com.asm.domain.entities.AuthUser
 import com.asm.domain.entities.ProviderId
@@ -21,7 +23,8 @@ import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
 class AuthFirebaseSource @Inject constructor(
-    private val firebaseAuth: FirebaseAuth
+    private val firebaseAuth: FirebaseAuth,
+    private val credentialManager: CredentialManager
 ): AuthRemoteSource {
 
     companion object {
@@ -147,6 +150,17 @@ class AuthFirebaseSource @Inject constructor(
                 is FirebaseException -> GeneralError.ClientError("")
                 else -> GeneralError.Unknown
             }.toUnsuccessful()
+        }
+    }
+
+    override suspend fun signOut(): Result<Unit, GeneralError> {
+        return try {
+            firebaseAuth.signOut()
+            credentialManager.clearCredentialState(ClearCredentialStateRequest())
+            return Result.Successful(Unit)
+        } catch(exception: Exception) {
+            Log.e(TAG, "unexpected error to sign out", exception)
+            GeneralError.Unknown.toUnsuccessful()
         }
     }
 }

@@ -63,4 +63,13 @@ class AuthRepositoryImpl @Inject constructor(
             return GeneralError.Unknown.toUnsuccessful()
         }
     }
+
+    override suspend fun signOut(): Result<Unit, GeneralError> {
+        return try {
+            authRemoteSource.signOut()
+        } catch (exception: Exception) {
+            logger.logE(TAG, exception)
+            return GeneralError.Unknown.toUnsuccessful()
+        }
+    }
 }
