@@ -128,10 +128,14 @@ data class EditGamerFormState(
     val aliasUiState: InputUiState<String, InputAliasError> = InputUiState(""),
     val ageUiState: InputUiState<String, InputAgeError> = InputUiState(""),
     val countryUiState: InputUiState<CountryData, InputCountryError> = InputUiState(CountryData()),
-    val countriesState: CommonProcessState<List<CountryInfo>> = CommonProcessState.Idle,
-    val gamerState: CommonProcessState<Gamer> = CommonProcessState.Idle,
-    val defaultImageUrl: String? = null,
-    val socialNetworkImage: String? = null,
+    val metaDataFormState: CommonProcessState<MetaDataEditForm> = CommonProcessState.Idle
+)
+
+data class MetaDataEditForm(
+    val countries: List<CountryInfo>,
+    val gamer: Gamer,
+    val defaultImageUrl: String?,
+    val socialNetworkImage: String?,
 )
 
 data class EditGamerUIState(
@@ -141,14 +145,14 @@ data class EditGamerUIState(
 
 sealed class EditGamerProcessType {
     data object Idle: EditGamerProcessType()
-    data class DeleteGamerState(val processState: CommonProcessState<Nothing>): EditGamerProcessType()
-    data class UpdateGamerState(val processState: CommonProcessState<Nothing>): EditGamerProcessType()
+    data class DeleteGamerState(val processState: CommonProcessState<Unit>): EditGamerProcessType()
+    data class UpdateGamerState(val processState: CommonProcessState<Unit>): EditGamerProcessType()
 }
 
 sealed class CommonProcessState<out Data> {
     data object Idle : CommonProcessState<Nothing>()
     data object Loading: CommonProcessState<Nothing>()
-    data class Success<Data>(val data: Data): CommonProcessState<Data>()
+    data class Success<out Data>(val data: Data): CommonProcessState<Data>()
     data class Failure(val error: GeneralError): CommonProcessState<Nothing>()
 }
 

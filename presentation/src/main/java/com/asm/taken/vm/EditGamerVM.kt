@@ -11,15 +11,16 @@ import com.asm.domain.use_cases.GetCountriesInfoUC
 import com.asm.domain.use_cases.GetDefaultImageUC
 import com.asm.domain.use_cases.GetGamerUC
 import com.asm.domain.use_cases.SaveChangesGamerUC
+import com.asm.taken.model.CommonProcessState
 import com.asm.taken.model.CountryData
-import com.asm.taken.model.CreateGamerFormState
-import com.asm.taken.model.EditGamerProcessState
+import com.asm.taken.model.EditGamerProcessType
 import com.asm.taken.model.EditGamerUIState
 import com.asm.taken.model.InputAgeError
 import com.asm.taken.model.InputAliasError
 import com.asm.taken.model.InputCountryError
 import com.asm.taken.model.InputState
 import com.asm.taken.model.InputUiState
+import com.asm.taken.model.MetaDataEditForm
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -44,25 +45,22 @@ class EditGamerVM @Inject constructor(
     private val _editGamerUIState: MutableStateFlow<EditGamerUIState> = MutableStateFlow(
         EditGamerUIState()
     )
-    private val _gamerState: MutableStateFlow<EditGamerState> =
-        MutableStateFlow(EditGamerState.Loading)
-    private val _createGamerFormState: MutableStateFlow<CreateGamerFormState> =
-        MutableStateFlow(
-            CreateGamerFormState(
-                imageURI = InputUiState(null),
-                aliasUiState = InputUiState(""),
-                ageUiState = InputUiState(""),
-                countryUiState = InputUiState(CountryData("", null))
-            )
-        )
 
-    val gamerState: StateFlow<EditGamerState> = _gamerState
-    val createGamerFormState: StateFlow<CreateGamerFormState> =
-        _createGamerFormState
     val editGamerUIState: StateFlow<EditGamerUIState> = _editGamerUIState
 
     fun resetEditGamerProcessState() {
-        _editGamerUIState.update { it.copy(editGamerProcessState = EditGamerProcessState.Idle) }
+        _editGamerUIState.update { it.copy(editGamerProcessType = EditGamerProcessType.Idle) }
+    }
+
+    fun resetMetadataProcessState() {
+        val currentForm = _editGamerUIState.value.editGamerFormState
+        _editGamerUIState.update {
+            it.copy(
+                editGamerFormState = currentForm.copy(
+                    metaDataFormState = CommonProcessState.Idle
+                )
+            )
+        }
     }
 
     fun saveGamer(
@@ -74,7 +72,13 @@ class EditGamerVM @Inject constructor(
         imageURI: String?
     ) {
         viewModelScope.launch {
-            _editGamerUIState.update { it.copy(editGamerProcessState = EditGamerProcessState.Loading) }
+            _editGamerUIState.update {
+                it.copy(
+                    editGamerProcessType = EditGamerProcessType.UpdateGamerState(
+                        CommonProcessState.Loading
+                    )
+                )
+            }
             val params = SaveChangesGamerUC.GamerParams(
                 gamerId = id,
                 nickName = alias,
@@ -84,12 +88,18 @@ class EditGamerVM @Inject constructor(
                 imageURI = imageURI
             )
             val processState = when (val gamerUpdatedResult = saveChangesGamerUC.execute(params)) {
-                is Result.Successful<String> -> EditGamerProcessState.GamerUpdated
-                is Result.Unsuccessful<GeneralError> -> EditGamerProcessState.Failure(
+                is Result.Successful<String> -> CommonProcessState.Success(Unit)
+                is Result.Unsuccessful<GeneralError> -> CommonProcessState.Failure(
                     gamerUpdatedResult.error
                 )
             }
-            _editGamerUIState.update { it.copy(editGamerProcessState = processState) }
+            _editGamerUIState.update {
+                it.copy(
+                    editGamerProcessType = EditGamerProcessType.UpdateGamerState(
+                        processState
+                    )
+                )
+            }
         }
     }
 
@@ -98,7 +108,13 @@ class EditGamerVM @Inject constructor(
         signOutThirdProvider: suspend () -> Result<Unit, GeneralError>
     ) {
         viewModelScope.launch {
-            _editGamerUIState.update { it.copy(editGamerProcessState = EditGamerProcessState.Loading) }
+            _editGamerUIState.update {
+                it.copy(
+                    editGamerProcessType = EditGamerProcessType.DeleteGamerState(
+                        CommonProcessState.Loading
+                    )
+                )
+            }
             val deleteGamerResult = deleteGamerUC.execute(
                 DeleteGamerUC.DeleteGamerParams(
                     gamerId = gamerId,
@@ -106,12 +122,18 @@ class EditGamerVM @Inject constructor(
                 )
             )
             val processState = when (deleteGamerResult) {
-                is Result.Successful<Unit> -> EditGamerProcessState.GamerDeleted
-                is Result.Unsuccessful<GeneralError> -> EditGamerProcessState.Failure(
+                is Result.Successful<Unit> -> CommonProcessState.Success(Unit)
+                is Result.Unsuccessful<GeneralError> -> CommonProcessState.Failure(
                     deleteGamerResult.error
                 )
             }
-            _editGamerUIState.update { it.copy(editGamerProcessState = processState) }
+            _editGamerUIState.update {
+                it.copy(
+                    editGamerProcessType = EditGamerProcessType.DeleteGamerState(
+                        processState
+                    )
+                )
+            }
         }
     }
 
@@ -121,48 +143,56 @@ class EditGamerVM @Inject constructor(
         getCurrentUserSocialNetworkImage: () -> Result<String?, GeneralError>
     ) {
         viewModelScope.launch {
-            _gamerState.update { EditGamerState.Loading }
-            try {
-
-                val deferredGamerResult = async { getGamerUC.execute(gamerId) }
-                val deferredCountriesInfoResult = async { getCountriesInfoUC.execute(Unit) }
-                val deferredDefaultImageResult = async { getDefaultImageUC.execute(Unit) }
-                val socialNetworkResult = getCurrentUserSocialNetworkImage()
-
-                val gamerResult = deferredGamerResult.await()
-                val countriesResult = deferredCountriesInfoResult.await()
-                val defaultImageResult = deferredDefaultImageResult.await()
-                val gamerState = when {
-                    gamerResult is Result.Unsuccessful -> EditGamerState.Failure(gamerResult.error)
-                    socialNetworkResult is Result.Unsuccessful -> EditGamerState.Failure(
-                        socialNetworkResult.error
+            val currentFormState = _editGamerUIState.value.editGamerFormState
+            _editGamerUIState.update {
+                it.copy(
+                    editGamerFormState = currentFormState.copy(
+                        metaDataFormState = CommonProcessState.Loading
                     )
+                )
+            }
 
-                    countriesResult is Result.Unsuccessful -> EditGamerState.Failure(
-                        countriesResult.error
-                    )
+            val deferredGamerResult = async { getGamerUC.execute(gamerId) }
+            val deferredCountriesInfoResult = async { getCountriesInfoUC.execute(Unit) }
+            val deferredDefaultImageResult = async { getDefaultImageUC.execute(Unit) }
+            val socialNetworkResult = getCurrentUserSocialNetworkImage()
 
-                    defaultImageResult is Result.Unsuccessful -> EditGamerState.Failure(
-                        defaultImageResult.error
-                    )
+            val gamerResult = deferredGamerResult.await()
+            val countriesResult = deferredCountriesInfoResult.await()
+            val defaultImageResult = deferredDefaultImageResult.await()
+            val metaDataState = when {
+                gamerResult is Result.Unsuccessful -> CommonProcessState.Failure(gamerResult.error)
+                socialNetworkResult is Result.Unsuccessful -> CommonProcessState.Failure(
+                    socialNetworkResult.error
+                )
 
-                    else -> {
-                        val gamer = gamerResult.asSuccessful().data
-                        if (gamer != null) EditGamerState.Success(
+                countriesResult is Result.Unsuccessful -> CommonProcessState.Failure(countriesResult.error)
+
+                defaultImageResult is Result.Unsuccessful -> CommonProcessState.Failure(
+                    defaultImageResult.error
+                )
+
+                else -> {
+                    val gamer = gamerResult.asSuccessful().data
+                    if (gamer != null) CommonProcessState.Success(
+                        data = MetaDataEditForm(
                             gamer = gamer,
                             socialNetworkImage = socialNetworkResult.asSuccessful().data,
                             defaultImageUrl = defaultImageResult.asSuccessful().data,
                             countries = countriesResult.asSuccessful().data
-                        )
-                        else EditGamerState.Failure(GeneralError.Unknown).also {
-                            Log.e(TAG, "Gamer not found")
-                        }
+                        ),
+                    )
+                    else CommonProcessState.Failure(GeneralError.Unknown).also {
+                        Log.e(TAG, "Gamer not found")
                     }
                 }
-                _gamerState.update { gamerState }
-            } catch (exception: Exception) {
-                Log.e(TAG, "error to get gamer data", exception)
-                _gamerState.update { EditGamerState.Failure(GeneralError.Unknown) }
+            }
+            _editGamerUIState.update {
+                it.copy(
+                    editGamerFormState = currentFormState.copy(
+                        metaDataFormState = metaDataState
+                    )
+                )
             }
         }
     }
@@ -177,21 +207,29 @@ class EditGamerVM @Inject constructor(
         val aliasErrors = validateAlias(alias)
         val ageErrors = validateAge(age)
         val countryErrors = validateCountry(countryData.name)
-        _createGamerFormState.update {
-            CreateGamerFormState(
-                aliasUiState = aliasErrors.run {
-                    if (isEmpty()) InputUiState(alias, InputState.Success)
-                    else InputUiState(alias, InputState.Error(this))
-                },
-                ageUiState = ageErrors.run {
-                    if (isEmpty()) InputUiState(age, InputState.Success)
-                    else InputUiState(age, InputState.Error(this))
-                },
-                countryUiState = countryErrors.run {
-                    if (isEmpty()) InputUiState(countryData, InputState.Success)
-                    else InputUiState(countryData, InputState.Error(this))
-                },
-                imageURI = InputUiState(imageURI)
+        val aliasInputState = aliasErrors.run {
+            if (isEmpty()) InputUiState(alias, InputState.Success)
+            else InputUiState(alias, InputState.Error(this))
+        }
+        val countryInputState = countryErrors.run {
+            if (isEmpty()) InputUiState(countryData, InputState.Success)
+            else InputUiState(countryData, InputState.Error(this))
+        }
+        val ageInputState = ageErrors.run {
+            if (isEmpty()) InputUiState(age, InputState.Success)
+            else InputUiState(age, InputState.Error(this))
+        }
+
+        val currentForm = _editGamerUIState.value.editGamerFormState
+
+        _editGamerUIState.update {
+            it.copy(
+                editGamerFormState = currentForm.copy(
+                    aliasUiState = aliasInputState,
+                    ageUiState = ageInputState,
+                    countryUiState = countryInputState,
+                    imageURI = InputUiState(imageURI)
+                )
             )
         }
     }
