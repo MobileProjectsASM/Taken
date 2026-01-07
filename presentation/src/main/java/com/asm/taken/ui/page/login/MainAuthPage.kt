@@ -35,7 +35,7 @@ import com.asm.taken.model.AuthState
 import com.asm.taken.model.AuthTypeState
 import com.asm.taken.model.InputState
 import com.asm.taken.model.EmailAndPasswordFormState
-import com.asm.taken.model.LoginUIState2
+import com.asm.taken.model.LoginUIState
 import com.asm.taken.ui.CircularProgressDialog
 import com.asm.taken.ui.DefaultButton
 import com.asm.taken.ui.DefaultImageButton
@@ -48,13 +48,13 @@ import com.asm.taken.ui.PuzzleGeneralTitle
 import com.asm.taken.utils.AuthenticationProviders
 import com.asm.taken.utils.getErrorEmail
 import com.asm.taken.utils.getErrorPassword
-import com.asm.taken.vm.LoginVM2
+import com.asm.taken.vm.LoginVM
 import kotlinx.coroutines.launch
 
 @Composable
 fun MainAuthPage(
     authProvider: AuthenticationProviders,
-    loginVM2: LoginVM2,
+    loginVM: LoginVM,
     snackBarHostState: SnackbarHostState,
     onNavigateToCreateAccount: () -> Unit,
     onNavigateToAuthWithPhone: () -> Unit,
@@ -63,19 +63,19 @@ fun MainAuthPage(
 ) {
     val coroutineScope = rememberCoroutineScope()
 
-    val loginUIState2: LoginUIState2 by loginVM2.loginUIState2.collectAsStateWithLifecycle()
+    val loginUIState: LoginUIState by loginVM.loginUIState.collectAsStateWithLifecycle()
 
     AuthenticationSection(
-        emailAndPasswordFormState = loginUIState2.emailAndPasswordFormState,
+        emailAndPasswordFormState = loginUIState.emailAndPasswordFormState,
         onNavigateToCreateAccount = onNavigateToCreateAccount,
         onNavigateToAuthWithPhone = onNavigateToAuthWithPhone,
-        validateFormLogin = loginVM2::validateLoginForm,
-        loginWithEmailAndPassword = loginVM2::signInWithEmailAndPassword,
+        validateFormLogin = loginVM::validateLoginForm,
+        loginWithEmailAndPassword = loginVM::signInWithEmailAndPassword,
         loginWithGoogle = {
             coroutineScope.launch {
                 when (val result = authProvider.authWithGoogle()) {
-                    is Result.Successful<String> -> loginVM2.signInWithGoogle(result.data)
-                    is Result.Unsuccessful<GeneralError> -> loginVM2.updateAuthGoogleErrorState(
+                    is Result.Successful<String> -> loginVM.signInWithGoogle(result.data)
+                    is Result.Unsuccessful<GeneralError> -> loginVM.updateAuthGoogleErrorState(
                         result.error
                     )
                 }
@@ -84,27 +84,27 @@ fun MainAuthPage(
         loginWithFacebook = {
             coroutineScope.launch {
                 when (val result = authProvider.authWithFacebook()) {
-                    is Result.Successful<String> -> loginVM2.signInWithFacebook(result.data)
-                    is Result.Unsuccessful<GeneralError> -> loginVM2.updateAuthFacebookErrorState(
+                    is Result.Successful<String> -> loginVM.signInWithFacebook(result.data)
+                    is Result.Unsuccessful<GeneralError> -> loginVM.updateAuthFacebookErrorState(
                         result.error
                     )
                 }
             }
         }
     )
-    when (val authType = loginUIState2.authTypeState) {
+    when (val authType = loginUIState.authTypeState) {
         is AuthTypeState.EmailAndPasswordAuthType -> ProcessSection(
             authState = authType.authState,
             snackBarHostState = snackBarHostState,
             retryProcess = {
-                loginVM2.signInWithEmailAndPassword(
-                    email = loginUIState2.emailAndPasswordFormState.emailUiState.value,
-                    password = loginUIState2.emailAndPasswordFormState.passwordUiState.value
+                loginVM.signInWithEmailAndPassword(
+                    email = loginUIState.emailAndPasswordFormState.emailUiState.value,
+                    password = loginUIState.emailAndPasswordFormState.passwordUiState.value
                 )
             },
             onNavigateToMainPage = onNavigateToMainPage,
             onNavigateToCreateGamer = onNavigateToCreateGamer,
-            resetProcessState = loginVM2::resetProcessState
+            resetProcessState = loginVM::resetProcessState
         )
         is AuthTypeState.FacebookAuthType -> ProcessSection(
             authState = authType.authState,
@@ -112,8 +112,8 @@ fun MainAuthPage(
             retryProcess = {
                 coroutineScope.launch {
                     when (val result = authProvider.authWithFacebook()) {
-                        is Result.Successful<String> -> loginVM2.signInWithFacebook(result.data)
-                        is Result.Unsuccessful<GeneralError> -> loginVM2.updateAuthFacebookErrorState(
+                        is Result.Successful<String> -> loginVM.signInWithFacebook(result.data)
+                        is Result.Unsuccessful<GeneralError> -> loginVM.updateAuthFacebookErrorState(
                             result.error
                         )
                     }
@@ -121,7 +121,7 @@ fun MainAuthPage(
             },
             onNavigateToMainPage = onNavigateToMainPage,
             onNavigateToCreateGamer = onNavigateToCreateGamer,
-            resetProcessState = loginVM2::resetProcessState
+            resetProcessState = loginVM::resetProcessState
         )
         is AuthTypeState.GoogleAuthType -> ProcessSection(
             authState = authType.authState,
@@ -129,8 +129,8 @@ fun MainAuthPage(
             retryProcess = {
                 coroutineScope.launch {
                     when (val result = authProvider.authWithGoogle()) {
-                        is Result.Successful<String> -> loginVM2.signInWithGoogle(result.data)
-                        is Result.Unsuccessful<GeneralError> -> loginVM2.updateAuthGoogleErrorState(
+                        is Result.Successful<String> -> loginVM.signInWithGoogle(result.data)
+                        is Result.Unsuccessful<GeneralError> -> loginVM.updateAuthGoogleErrorState(
                             result.error
                         )
                     }
@@ -138,7 +138,7 @@ fun MainAuthPage(
             },
             onNavigateToMainPage = onNavigateToMainPage,
             onNavigateToCreateGamer = onNavigateToCreateGamer,
-            resetProcessState = loginVM2::resetProcessState
+            resetProcessState = loginVM::resetProcessState
         )
         AuthTypeState.Idle -> return
     }

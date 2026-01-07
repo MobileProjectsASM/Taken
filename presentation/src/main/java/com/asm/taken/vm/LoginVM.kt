@@ -1,24 +1,19 @@
 package com.asm.taken.vm
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.asm.domain.entities.AuthUser
+import com.asm.domain.entities.ProviderId
 import com.asm.domain.entities.Result
-import com.asm.domain.entities.Session
 import com.asm.domain.errors.GeneralError
-import com.asm.domain.use_cases.GamerExistsUC
-import com.asm.domain.use_cases.GetCountriesInfoUC
-import com.asm.domain.use_cases.SaveSessionUC
-import com.asm.taken.mappers.CountryMapper
-import com.asm.taken.model.CountriesUiState
-import com.asm.taken.model.InputOtpError
-import com.asm.taken.model.InputPhoneCodeError
-import com.asm.taken.model.InputPhoneNumberError
+import com.asm.domain.use_cases.SignInUserUC
+import com.asm.taken.model.AuthState
+import com.asm.taken.model.AuthTypeState
+import com.asm.taken.model.EmailAndPasswordFormState
+import com.asm.taken.model.InputEmailError
+import com.asm.taken.model.InputPasswordError
 import com.asm.taken.model.InputState
 import com.asm.taken.model.InputUiState
-import com.asm.taken.model.PhoneAuthFormState
-import com.asm.taken.model.LoginUiState
+import com.asm.taken.model.LoginUIState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -28,170 +23,153 @@ import javax.inject.Inject
 
 @HiltViewModel
 class LoginVM @Inject constructor(
-    private val gamerExistsUC: GamerExistsUC,
-    private val getCountriesInfoUC: GetCountriesInfoUC,
-    private val saveSessionUC: SaveSessionUC,
-    private val countryMapper: CountryMapper
+    private val signInUserUC: SignInUserUC
 ) : ViewModel() {
 
-    companion object {
-        const val TAG = "LoginVW"
+    private val _loginUIState: MutableStateFlow<LoginUIState> = MutableStateFlow(LoginUIState())
+
+    val loginUIState: StateFlow<LoginUIState> = _loginUIState
+
+    fun resetProcessState() = _loginUIState.update { it.copy(authTypeState = AuthTypeState.Idle) }
+
+    fun updateAuthGoogleErrorState(error: GeneralError) {
+        _loginUIState.update {
+            it.copy(
+                authTypeState = AuthTypeState.GoogleAuthType(
+                    AuthState.Error(error)
+                )
+            )
+        }
     }
 
-    //region MutableStateFlows
-    private val _countriesUiState: MutableStateFlow<CountriesUiState?> =
-        MutableStateFlow(null)
-    private val _PhoneAuthFormState: MutableStateFlow<PhoneAuthFormState> = MutableStateFlow(
-        PhoneAuthFormState(
-            phoneCodeUiState = InputUiState(""),
-            phoneNumberUiState = InputUiState("")
+    fun updateAuthFacebookErrorState(error: GeneralError) {
+        _loginUIState.update {
+            it.copy(
+                authTypeState = AuthTypeState.FacebookAuthType(
+                    AuthState.Error(error)
+                )
+            )
+        }
+    }
+
+    fun validateLoginForm(email: String, password: String) {
+        val emailErrors = validateEmail(email)
+        val passwordErrors = validatePasswordEmpty(password)
+        val emailUiState = emailErrors.run {
+            if (isEmpty()) InputUiState(email, InputState.Success)
+            else InputUiState(email, InputState.Error(emailErrors))
+        }
+        val passwordUiState = passwordErrors.run {
+            if (isEmpty()) InputUiState(password, InputState.Success)
+            else InputUiState(password, InputState.Error(passwordErrors))
+        }
+        val emailAndPasswordFormState = EmailAndPasswordFormState(
+            emailUiState = emailUiState,
+            passwordUiState = passwordUiState
         )
-    )
-    private val _loginUiState: MutableStateFlow<LoginUiState> =
-        MutableStateFlow(LoginUiState.Logout)
-    private val _otpFormUiState: MutableStateFlow<InputUiState<String, InputOtpError>> =
-        MutableStateFlow(
-            InputUiState("")
+        _loginUIState.update { it.copy(emailAndPasswordFormState = emailAndPasswordFormState) }
+    }
+
+    fun signInWithEmailAndPassword(
+        email: String,
+        password: String
+    ) {
+        viewModelScope.launch {
+            val authTypeState = AuthTypeState.EmailAndPasswordAuthType(AuthState.Loading)
+            _loginUIState.update { it.copy(authTypeState = authTypeState) }
+
+            val credentials = SignInUserUC.CredentialType.EmailAndPassword(
+                email = email,
+                password = password,
+            )
+            val authEmailAndPasswordState = when (val result = signInUserUC.execute(credentials)) {
+                is Result.Successful<SignInUserUC.User> -> when (val user = result.data) {
+                    is SignInUserUC.User.RegisteredUser -> AuthTypeState.EmailAndPasswordAuthType(
+                        AuthState.RegisteredUser(user.gamerId)
+                    )
+
+                    is SignInUserUC.User.UnregisteredUser -> AuthTypeState.EmailAndPasswordAuthType(
+                        AuthState.UnregisteredUser(user.authUser)
+                    )
+                }
+
+                is Result.Unsuccessful<GeneralError> -> AuthTypeState.EmailAndPasswordAuthType(
+                    AuthState.Error(result.error)
+                )
+            }
+            _loginUIState.update { it.copy(authTypeState = authEmailAndPasswordState) }
+        }
+    }
+
+    fun signInWithGoogle(token: String) {
+        viewModelScope.launch {
+            val authTypeState = AuthTypeState.GoogleAuthType(AuthState.Loading)
+            _loginUIState.update { it.copy(authTypeState = authTypeState) }
+
+            val credentials = SignInUserUC.CredentialType.Token(
+                token = token,
+                providerId = ProviderId.GOOGLE
+            )
+            val authGoogleState = when (val result = signInUserUC.execute(credentials)) {
+                is Result.Successful<SignInUserUC.User> -> when (val user = result.data) {
+                    is SignInUserUC.User.RegisteredUser -> AuthTypeState.GoogleAuthType(
+                        AuthState.RegisteredUser(user.gamerId)
+                    )
+
+                    is SignInUserUC.User.UnregisteredUser -> AuthTypeState.GoogleAuthType(
+                        AuthState.UnregisteredUser(user.authUser)
+                    )
+                }
+
+                is Result.Unsuccessful<GeneralError> -> AuthTypeState.GoogleAuthType(
+                    AuthState.Error(result.error)
+                )
+            }
+            _loginUIState.update { it.copy(authTypeState = authGoogleState) }
+        }
+    }
+
+    fun signInWithFacebook(token: String) {
+        viewModelScope.launch {
+            val authTypeState = AuthTypeState.FacebookAuthType(AuthState.Loading)
+            _loginUIState.update { it.copy(authTypeState = authTypeState) }
+
+            val credentials = SignInUserUC.CredentialType.Token(
+                token = token,
+                providerId = ProviderId.FACEBOOK
+            )
+            val authFacebookState = when (val result = signInUserUC.execute(credentials)) {
+                is Result.Successful<SignInUserUC.User> -> when (val user = result.data) {
+                    is SignInUserUC.User.RegisteredUser -> AuthTypeState.FacebookAuthType(
+                        AuthState.RegisteredUser(user.gamerId)
+                    )
+
+                    is SignInUserUC.User.UnregisteredUser -> AuthTypeState.FacebookAuthType(
+                        AuthState.UnregisteredUser(user.authUser)
+                    )
+                }
+
+                is Result.Unsuccessful<GeneralError> -> AuthTypeState.FacebookAuthType(
+                    AuthState.Error(result.error)
+                )
+            }
+            _loginUIState.update { it.copy(authTypeState = authFacebookState) }
+        }
+    }
+
+    private fun validateEmail(email: String): List<InputEmailError> {
+        val errors = mutableListOf<InputEmailError>()
+        if (email.isEmpty()) errors.add(InputEmailError.EMPTY)
+        if (!email.contains("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}\$".toRegex())) errors.add(
+            InputEmailError.EMAIL_INVALID
         )
-
-    //endregion
-
-    //region StateFlows
-
-    val countriesUiState: StateFlow<CountriesUiState?> = _countriesUiState
-    val phoneAuthFormState: StateFlow<PhoneAuthFormState> = _PhoneAuthFormState
-    val loginUiState: StateFlow<LoginUiState> = _loginUiState
-    val otpFormUiState: StateFlow<InputUiState<String, InputOtpError>> = _otpFormUiState
-
-    //endregion
-
-    override fun onCleared() {
-        Log.i(TAG, "onCleared")
-        super.onCleared()
-    }
-
-    //region LoginForm
-
-    fun getCountriesInfo() {
-        viewModelScope.launch {
-            _countriesUiState.update { CountriesUiState.Loading }
-            val countriesState: CountriesUiState =
-                when (val countriesResult = getCountriesInfoUC.execute(Unit)) {
-                    is Result.Unsuccessful -> CountriesUiState.Failure(countriesResult.error)
-                    is Result.Successful -> {
-                        val phoneCodes = countriesResult.data.map(countryMapper::toCountryUiState)
-                        CountriesUiState.Successful(phoneCodes)
-                    }
-                }
-            _countriesUiState.update { countriesState }
-        }
-    }
-
-    fun updateLoginState(authResult: Result<AuthUser, GeneralError>) {
-        viewModelScope.launch {
-            val loginState = when (authResult) {
-                is Result.Successful<AuthUser> -> updateSession(authResult.data)
-                is Result.Unsuccessful<GeneralError> -> LoginUiState.Error(authResult.error)
-            }
-            _loginUiState.update { loginState }
-        }
-    }
-
-    fun updateLoginState(loginUiState: LoginUiState) {
-        _loginUiState.update { loginUiState }
-    }
-
-    fun resetLoginUiState() {
-        _loginUiState.update { LoginUiState.Logout }
-    }
-
-    fun resetCountriesUiState() {
-        _countriesUiState.update { null }
-    }
-
-    fun cleanLoginPhoneForm() {
-        _PhoneAuthFormState.update {
-            it.copy(
-                phoneCodeUiState = InputUiState(""),
-                phoneNumberUiState = InputUiState("")
-            )
-        }
-    }
-
-    //endregion
-
-    //region LoginPhoneForm
-    fun validatePhoneNumberForm(phoneCode: String, phoneNumber: String) {
-        val phoneCodeErrors = validatePhoneCode(phoneCode)
-        val phoneNumberErrors = validatePhoneNumber(phoneNumber)
-        _PhoneAuthFormState.update {
-            val phoneCodeUiState = phoneCodeErrors.run {
-                if (isEmpty()) InputUiState(phoneCode, InputState.Success)
-                else InputUiState(phoneCode, InputState.Error(phoneCodeErrors))
-            }
-            val phoneNumberUiState = phoneNumberErrors.run {
-                if (isEmpty()) InputUiState(phoneNumber, InputState.Success)
-                else InputUiState(phoneNumber, InputState.Error(phoneNumberErrors))
-            }
-            it.copy(
-                phoneCodeUiState = phoneCodeUiState,
-                phoneNumberUiState = phoneNumberUiState
-            )
-        }
-    }
-
-    fun validateOtpForm(otp: String) {
-        val errorsOtp = validateOtp(otp)
-        _otpFormUiState.update {
-            it.copy(
-                value = otp,
-                state = if (errorsOtp.isEmpty()) InputState.Success else InputState.Error(errorsOtp)
-            )
-        }
-    }
-
-    private fun validatePhoneCode(phoneCode: String): List<InputPhoneCodeError> {
-        val errors = mutableListOf<InputPhoneCodeError>()
-        if (phoneCode.isEmpty()) errors.add(InputPhoneCodeError.EMPTY)
-        if (phoneCode.count() > 3) errors.add(InputPhoneCodeError.LESS_THAN_4_DIGITS)
-        if (!phoneCode.matches("^[0-9]+\$".toRegex())) errors.add(InputPhoneCodeError.ONLY_INT_NUMBERS)
         return errors
     }
 
-    private fun validatePhoneNumber(phoneNumber: String): List<InputPhoneNumberError> {
-        val errors = mutableListOf<InputPhoneNumberError>()
-        if (phoneNumber.isEmpty()) errors.add(InputPhoneNumberError.EMPTY)
-        if (!phoneNumber.matches("^[0-9]+\$".toRegex())) errors.add(InputPhoneNumberError.ONLY_INT_NUMBERS)
+    private fun validatePasswordEmpty(password: String): List<InputPasswordError> {
+        val errors = mutableListOf<InputPasswordError>()
+        if (password.isEmpty()) errors.add(InputPasswordError.EMPTY)
         return errors
     }
-
-    private fun validateOtp(otp: String): List<InputOtpError> {
-        val errors = mutableListOf<InputOtpError>()
-        if (otp.isEmpty()) errors.add(InputOtpError.EMPTY)
-        if (otp.count() != 6) errors.add(InputOtpError.BE_6_DIGITS)
-        if (!otp.matches("^[0-9]+\$".toRegex())) errors.add(InputOtpError.ONLY_INT_NUMBERS)
-        return errors
-    }
-
-    private suspend fun updateSession(authUser: AuthUser): LoginUiState {
-        return when (val gamerExistsResult =  gamerExistsUC.execute(authUser.userId)) {
-            is Result.Successful<Boolean> -> {
-                val session = when (gamerExistsResult.data) {
-                    true -> Session.UserRegister(authUser.userId)
-                    false -> authUser.run { Session.UserUnregister(userId, profilePictureUrl) }
-                }
-                when (val saveSessionResult = saveSessionUC.execute(session)) {
-                    is Result.Successful<Unit> -> when (gamerExistsResult.data) {
-                        true -> LoginUiState.RegisteredUser(authUser.userId)
-                        false -> LoginUiState.UnregisteredUser(authUser)
-                    }
-
-                    is Result.Unsuccessful<GeneralError> -> LoginUiState.Error(saveSessionResult.error)
-                }
-            }
-
-            is Result.Unsuccessful<GeneralError> -> LoginUiState.Error(gamerExistsResult.error)
-        }
-    }
-    //endregion
 }
+

@@ -32,7 +32,6 @@ import com.asm.taken.vm.CreateAccountVM
 import com.asm.taken.vm.CreateGamerVM
 import com.asm.taken.vm.EditGamerVM
 import com.asm.taken.vm.LoginVM
-import com.asm.taken.vm.LoginVM2
 import com.asm.taken.vm.MainVM
 import com.facebook.CallbackManager
 import com.facebook.login.LoginManager
@@ -67,12 +66,12 @@ fun MainNavigation(
                 metaAuthLauncher = metaLauncher
             )
 
-            val loginVM2 = hiltViewModel<LoginVM2>(navBackStackEntry)
+            val loginVM = hiltViewModel<LoginVM>(navBackStackEntry)
 
             BackgroundLogin {
                 MainAuthPage(
                     authProvider = authProviders,
-                    loginVM2 = loginVM2,
+                    loginVM = loginVM,
                     snackBarHostState = snackBarHostState,
                     onNavigateToCreateAccount = {
                         navigationController.navigate(CreateAccount)
@@ -158,11 +157,6 @@ fun MainNavigation(
                 )
             }
         }
-        /*navigationLogin(
-            navController = navigationController,
-            snackBarHostState = snackBarHostState,
-            authenticationClient = authenticationClient
-        )*/
         composable<CreateGamer> { navBackStackEntry ->
             val createGamer: CreateGamer = navBackStackEntry.toRoute()
             val createGamerVM = hiltViewModel<CreateGamerVM>(navBackStackEntry)
@@ -194,16 +188,6 @@ fun MainNavigation(
             snackBarHostState = snackBarHostState,
             navigationController = navigationController
         )
-    }
-}
-
-fun NavGraphBuilder.navigationLogin(
-    navController: NavHostController,
-    snackBarHostState: SnackbarHostState,
-    authenticationClient: AuthenticationClient
-) {
-    navigation<Login>(startDestination = Authentication) {
-
     }
 }
 
