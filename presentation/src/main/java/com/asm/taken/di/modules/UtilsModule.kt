@@ -2,6 +2,7 @@ package com.asm.taken.di.modules
 
 import android.content.Context
 import android.content.SharedPreferences
+import androidx.credentials.CredentialManager
 import androidx.room.Room
 import com.asm.data.sources.local.TakenDB
 import com.asm.data.sources.local.deserializer.SessionTypeAdapterFactory
@@ -29,6 +30,9 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 class UtilsModule {
+
+    @Provides
+    fun provideCredentialManager(@ApplicationContext context: Context): CredentialManager = CredentialManager.create(context)
 
     @Provides
     fun provideSharedPreferences(
