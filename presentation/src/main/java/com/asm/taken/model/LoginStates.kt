@@ -109,11 +109,11 @@ data class CreateAccountFormState(
 )
 
 data class CreateGamerUIState(
-    val createGamerFormState: EditGamerFormUiState = EditGamerFormUiState(),
+    val createGamerFormState: EditGamerFormState = EditGamerFormState(),
     val createGamerProcessState: CreateGamerProcessState = CreateGamerProcessState.Idle
 )
 
-data class EditGamerFormUiState(
+data class EditGamerFormState(
     val imageURI: InputUiState<String?, InputImageError> = InputUiState(null),
     val aliasUiState: InputUiState<String, InputAliasError> = InputUiState(""),
     val ageUiState: InputUiState<String, InputAgeError> = InputUiState(""),
