@@ -2,6 +2,7 @@ package com.asm.taken.model
 
 import com.asm.domain.entities.AuthUser
 import com.asm.domain.entities.CountryInfo
+import com.asm.domain.entities.Gamer
 import com.asm.domain.errors.GeneralError
 
 data class InputUiState<out Value, out InputError>(
@@ -97,11 +98,11 @@ data class CreateAccountFormState(
 )
 
 data class CreateGamerUIState(
-    val createGamerFormState: EditGamerFormState = EditGamerFormState(),
+    val createGamerFormState: CreateGamerFormState = CreateGamerFormState(),
     val createGamerProcessState: CreateGamerProcessState = CreateGamerProcessState.Idle
 )
 
-data class EditGamerFormState(
+data class CreateGamerFormState(
     val imageURI: InputUiState<String?, InputImageError> = InputUiState(null),
     val aliasUiState: InputUiState<String, InputAliasError> = InputUiState(""),
     val ageUiState: InputUiState<String, InputAgeError> = InputUiState(""),
@@ -121,6 +122,35 @@ data class CountryData(
     val name: String = "",
     val flag: String? = null
 )
+
+data class EditGamerFormState(
+    val imageURI: InputUiState<String?, InputImageError> = InputUiState(null),
+    val aliasUiState: InputUiState<String, InputAliasError> = InputUiState(""),
+    val ageUiState: InputUiState<String, InputAgeError> = InputUiState(""),
+    val countryUiState: InputUiState<CountryData, InputCountryError> = InputUiState(CountryData()),
+    val countriesState: CommonProcessState<List<CountryInfo>> = CommonProcessState.Idle,
+    val gamerState: CommonProcessState<Gamer> = CommonProcessState.Idle,
+    val defaultImageUrl: String? = null,
+    val socialNetworkImage: String? = null,
+)
+
+data class EditGamerUIState(
+    val editGamerFormState: EditGamerFormState = EditGamerFormState(),
+    val editGamerProcessType: EditGamerProcessType = EditGamerProcessType.Idle
+)
+
+sealed class EditGamerProcessType {
+    data object Idle: EditGamerProcessType()
+    data class DeleteGamerState(val processState: CommonProcessState<Nothing>): EditGamerProcessType()
+    data class UpdateGamerState(val processState: CommonProcessState<Nothing>): EditGamerProcessType()
+}
+
+sealed class CommonProcessState<out Data> {
+    data object Idle : CommonProcessState<Nothing>()
+    data object Loading: CommonProcessState<Nothing>()
+    data class Success<Data>(val data: Data): CommonProcessState<Data>()
+    data class Failure(val error: GeneralError): CommonProcessState<Nothing>()
+}
 
 //region ERRORS
 

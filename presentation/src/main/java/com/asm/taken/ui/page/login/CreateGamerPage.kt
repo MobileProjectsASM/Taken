@@ -68,7 +68,7 @@ import com.asm.taken.model.CountriesState
 import com.asm.taken.model.CountryData
 import com.asm.taken.model.CreateGamerProcessState
 import com.asm.taken.model.CreateGamerUIState
-import com.asm.taken.model.EditGamerFormState
+import com.asm.taken.model.CreateGamerFormState
 import com.asm.taken.model.InputAgeError
 import com.asm.taken.model.InputAliasError
 import com.asm.taken.model.InputCountryError
@@ -128,7 +128,7 @@ fun CreateGamerPage(
 
 @Composable
 fun CreateGamerSection(
-    createGamerFormState: EditGamerFormState,
+    createGamerFormState: CreateGamerFormState,
     socialNetworkImage: String?,
     gamerId: String,
     snackBarHostState: SnackbarHostState,
@@ -142,7 +142,7 @@ fun CreateGamerSection(
         snackBarHostState = snackBarHostState,
         labelButtonSaveGamer = stringResource(R.string.txt_btn_create_gamer),
         socialNetworkImage = socialNetworkImage,
-        editGamerFormState = createGamerFormState,
+        createGamerFormState = createGamerFormState,
         countries = (createGamerFormState.countriesState as? CountriesState.CountriesLoaded)?.countriesInfo,
         validateFormCreateGamer = validateFormCreateGamer,
         saveGamer = {
@@ -202,7 +202,7 @@ fun PanelFormCreateGamer(
     snackBarHostState: SnackbarHostState,
     labelButtonSaveGamer: String,
     socialNetworkImage: String?,
-    editGamerFormState: EditGamerFormState,
+    createGamerFormState: CreateGamerFormState,
     countries: List<CountryInfo>?,
     validateFormCreateGamer: (String, String, CountryData, String?) -> Unit,
     saveGamer: () -> Unit,
@@ -253,7 +253,7 @@ fun PanelFormCreateGamer(
                     labelButtonSaveGamer = labelButtonSaveGamer,
                     socialNetworkImage = socialNetworkImage,
                     errorImageUrlNotFound = stringResource(R.string.txt_label_image_url_not_found),
-                    editGamerFormState = editGamerFormState,
+                    createGamerFormState = createGamerFormState,
                     countriesUiState = countries,
                     validateFormCreateGamer = validateFormCreateGamer,
                     saveGamer = saveGamer
@@ -270,15 +270,15 @@ fun FormEditGamer(
     errorImageUrlNotFound: String,
     labelButtonSaveGamer: String,
     socialNetworkImage: String?,
-    editGamerFormState: EditGamerFormState,
+    createGamerFormState: CreateGamerFormState,
     countriesUiState: List<CountryInfo>?,
     validateFormCreateGamer: (String, String, CountryData, String?) -> Unit,
-    enableActionButton: Boolean = editGamerFormState.aliasUiState.state is InputState.Success && editGamerFormState.ageUiState.state is InputState.Success && editGamerFormState.countryUiState.state is InputState.Success,
+    enableActionButton: Boolean = createGamerFormState.aliasUiState.state is InputState.Success && createGamerFormState.ageUiState.state is InputState.Success && createGamerFormState.countryUiState.state is InputState.Success,
     saveGamer: () -> Unit
 ) {
     val coroutineScope = rememberCoroutineScope()
     var showChangeProfileImageDialog: Boolean by rememberSaveable { mutableStateOf(false) }
-    when (val imageSelectedState = editGamerFormState.imageURI.state) {
+    when (val imageSelectedState = createGamerFormState.imageURI.state) {
         is InputState.Error<InputImageError> -> imageSelectedState.errors.map { getErrorImage(it) }
         InputState.Idle, InputState.Success -> listOf()
     }
@@ -287,9 +287,9 @@ fun FormEditGamer(
     ) { uri ->
         if (uri != null) {
             validateFormCreateGamer(
-                editGamerFormState.aliasUiState.value,
-                editGamerFormState.ageUiState.value,
-                editGamerFormState.countryUiState.value,
+                createGamerFormState.aliasUiState.value,
+                createGamerFormState.ageUiState.value,
+                createGamerFormState.countryUiState.value,
                 uri.toString()
             )
         }
@@ -301,9 +301,9 @@ fun FormEditGamer(
             showChangeProfileImageDialog = false
             when (optionChosen) {
                 OptionChosen.Default -> validateFormCreateGamer(
-                    editGamerFormState.aliasUiState.value,
-                    editGamerFormState.ageUiState.value,
-                    editGamerFormState.countryUiState.value,
+                    createGamerFormState.aliasUiState.value,
+                    createGamerFormState.ageUiState.value,
+                    createGamerFormState.countryUiState.value,
                     null
                 )
 
@@ -314,9 +314,9 @@ fun FormEditGamer(
                 )
 
                 is OptionChosen.SocialNetwork -> validateFormCreateGamer(
-                    editGamerFormState.aliasUiState.value,
-                    editGamerFormState.ageUiState.value,
-                    editGamerFormState.countryUiState.value,
+                    createGamerFormState.aliasUiState.value,
+                    createGamerFormState.ageUiState.value,
+                    createGamerFormState.countryUiState.value,
                     optionChosen.urlImage
                 )
 
@@ -329,7 +329,7 @@ fun FormEditGamer(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         InputSelectImage(
-            imageURI = editGamerFormState.imageURI.value,
+            imageURI = createGamerFormState.imageURI.value,
             error = painterResource(R.drawable.gamer),
             onError = {
                 coroutineScope.launch {
@@ -348,11 +348,11 @@ fun FormEditGamer(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 10.dp),
-            value = editGamerFormState.aliasUiState.value,
+            value = createGamerFormState.aliasUiState.value,
             label = R.string.txt_label_alias,
             leadingIcon = Icons.Default.Person,
             cdLeadingIcon = null,
-            errors = editGamerFormState.aliasUiState.state.let { aliasState ->
+            errors = createGamerFormState.aliasUiState.state.let { aliasState ->
                 when (aliasState) {
                     is InputState.Error<InputAliasError> -> aliasState.errors.map { getErrorAlias(it) }
                     InputState.Idle, InputState.Success -> listOf()
@@ -361,9 +361,9 @@ fun FormEditGamer(
         ) { newAlias ->
             validateFormCreateGamer(
                 newAlias,
-                editGamerFormState.ageUiState.value,
-                editGamerFormState.countryUiState.value,
-                editGamerFormState.imageURI.value
+                createGamerFormState.ageUiState.value,
+                createGamerFormState.countryUiState.value,
+                createGamerFormState.imageURI.value
             )
         }
         Spacer(modifier = Modifier.height(10.dp))
@@ -372,11 +372,11 @@ fun FormEditGamer(
                 .fillMaxWidth()
                 .padding(horizontal = 10.dp),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            value = editGamerFormState.ageUiState.value,
+            value = createGamerFormState.ageUiState.value,
             label = R.string.txt_label_age,
             leadingIcon = Icons.Default.Attribution,
             cdLeadingIcon = null,
-            errors = editGamerFormState.ageUiState.state.let { ageState ->
+            errors = createGamerFormState.ageUiState.state.let { ageState ->
                 when (ageState) {
                     is InputState.Error<InputAgeError> -> ageState.errors.map { getErrorAge(it) }
                     InputState.Idle, InputState.Success -> listOf()
@@ -384,10 +384,10 @@ fun FormEditGamer(
             }
         ) { newAge ->
             validateFormCreateGamer(
-                editGamerFormState.aliasUiState.value,
+                createGamerFormState.aliasUiState.value,
                 newAge,
-                editGamerFormState.countryUiState.value,
-                editGamerFormState.imageURI.value
+                createGamerFormState.countryUiState.value,
+                createGamerFormState.imageURI.value
             )
         }
         Spacer(modifier = Modifier.height(10.dp))
@@ -396,8 +396,8 @@ fun FormEditGamer(
                 .fillMaxWidth()
                 .padding(horizontal = 10.dp),
             countriesUiState = countriesUiState,
-            value = editGamerFormState.countryUiState.value,
-            countryErrors = editGamerFormState.countryUiState.state.let { countryState ->
+            value = createGamerFormState.countryUiState.value,
+            countryErrors = createGamerFormState.countryUiState.state.let { countryState ->
                 when (countryState) {
                     is InputState.Error<InputCountryError> -> countryState.errors.map {
                         getErrorCountry(it)
@@ -408,10 +408,10 @@ fun FormEditGamer(
             }
         ) {
             validateFormCreateGamer(
-                editGamerFormState.aliasUiState.value,
-                editGamerFormState.ageUiState.value,
+                createGamerFormState.aliasUiState.value,
+                createGamerFormState.ageUiState.value,
                 it,
-                editGamerFormState.imageURI.value
+                createGamerFormState.imageURI.value
             )
         }
         Spacer(modifier = Modifier.height(20.dp))

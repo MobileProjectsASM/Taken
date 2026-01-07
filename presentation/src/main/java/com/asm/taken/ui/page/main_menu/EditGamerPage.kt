@@ -15,7 +15,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -38,9 +37,8 @@ import com.asm.domain.entities.Gamer
 import com.asm.domain.errors.GeneralError
 import com.asm.taken.R
 import com.asm.taken.model.CountryData
-import com.asm.taken.model.EditGamerFormState
+import com.asm.taken.model.CreateGamerFormState
 import com.asm.taken.model.EditGamerOperationsState
-import com.asm.taken.model.EditGamerState
 import com.asm.taken.model.InputState
 import com.asm.taken.ui.CircularProgressDialog
 import com.asm.taken.ui.DefaultButton
@@ -89,7 +87,7 @@ fun EditGamerSection(
     }
 
     val gamerUIState: EditGamerState by editGamerVM.gamerState.collectAsStateWithLifecycle()
-    val editGamerFormState: EditGamerFormState by editGamerVM.editGamerFormState.collectAsStateWithLifecycle()
+    val createGamerFormState: CreateGamerFormState by editGamerVM.createGamerFormState.collectAsStateWithLifecycle()
 
     when (val gamerState = gamerUIState) {
         is EditGamerState.Failure -> when (gamerState.error) {
@@ -148,7 +146,7 @@ fun EditGamerSection(
                 snackBarHostState = snackBarHostState,
                 currentGamer = gamerState.gamer,
                 defaultImageUrl = gamerState.defaultImageUrl,
-                editGamerFormState = editGamerFormState,
+                createGamerFormState = createGamerFormState,
                 labelButtonSaveGamer = stringResource(R.string.txt_btn_save_changes),
                 socialNetworkImage = gamerState.socialNetworkImage,
                 countries = gamerState.countries,
@@ -156,11 +154,11 @@ fun EditGamerSection(
                 saveGamer = {
                     editGamerVM.saveGamer(
                         id = gamerState.gamer.gamerId,
-                        alias = editGamerFormState.aliasUiState.value,
-                        age = editGamerFormState.ageUiState.value.toInt(),
-                        country = editGamerFormState.countryUiState.value.name,
-                        countryFlag = editGamerFormState.countryUiState.value.flag,
-                        imageURI = editGamerFormState.imageURI.value
+                        alias = createGamerFormState.aliasUiState.value,
+                        age = createGamerFormState.ageUiState.value.toInt(),
+                        country = createGamerFormState.countryUiState.value.name,
+                        countryFlag = createGamerFormState.countryUiState.value.flag,
+                        imageURI = createGamerFormState.imageURI.value
                     )
                 },
                 deleteGamer = {
@@ -249,7 +247,7 @@ fun PanelFormEditGamer(
     defaultImageUrl: String? = null,
     labelButtonSaveGamer: String,
     socialNetworkImage: String?,
-    editGamerFormState: EditGamerFormState,
+    createGamerFormState: CreateGamerFormState,
     countries: List<CountryInfo>?,
     validateFormCreateGamer: (String, String, CountryData, String?) -> Unit,
     saveGamer: () -> Unit,
@@ -301,17 +299,17 @@ fun PanelFormEditGamer(
                     labelButtonSaveGamer = labelButtonSaveGamer,
                     errorImageUrlNotFound = stringResource(R.string.txt_label_image_url_not_found),
                     socialNetworkImage = socialNetworkImage,
-                    editGamerFormState = editGamerFormState,
+                    createGamerFormState = createGamerFormState,
                     countriesUiState = countries,
                     validateFormCreateGamer = validateFormCreateGamer,
-                    enableActionButton = editGamerFormState.aliasUiState.state is InputState.Success && editGamerFormState.ageUiState.state is InputState.Success && editGamerFormState.countryUiState.state is InputState.Success && currentGamer.let {
-                        it.gamerNickName != editGamerFormState.aliasUiState.value
-                                || it.gamerAge.toString() != editGamerFormState.ageUiState.value
-                                || it.gamerCountry != editGamerFormState.countryUiState.value.name
+                    enableActionButton = createGamerFormState.aliasUiState.state is InputState.Success && createGamerFormState.ageUiState.state is InputState.Success && createGamerFormState.countryUiState.state is InputState.Success && currentGamer.let {
+                        it.gamerNickName != createGamerFormState.aliasUiState.value
+                                || it.gamerAge.toString() != createGamerFormState.ageUiState.value
+                                || it.gamerCountry != createGamerFormState.countryUiState.value.name
                                 || (it.gamerImage == defaultImageUrl
-                                && editGamerFormState.imageURI.value != null
-                                && editGamerFormState.imageURI.value != defaultImageUrl)
-                                || (it.gamerImage != defaultImageUrl && editGamerFormState.imageURI.value != it.gamerImage)
+                                && createGamerFormState.imageURI.value != null
+                                && createGamerFormState.imageURI.value != defaultImageUrl)
+                                || (it.gamerImage != defaultImageUrl && createGamerFormState.imageURI.value != it.gamerImage)
                     },
                     saveGamer = saveGamer
                 )
