@@ -164,7 +164,6 @@ fun MainNavigation(
                 CreateGamerPage(
                     createGamerInfo = createGamer,
                     createGamerVM = createGamerVM,
-                    authenticationClient = authenticationClient,
                     snackBarHostState = snackBarHostState,
                     onNavigateToAuthentication = {
                         navigationController.navigate(Login) {

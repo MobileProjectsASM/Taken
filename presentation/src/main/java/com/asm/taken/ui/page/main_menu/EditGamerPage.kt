@@ -35,7 +35,7 @@ import com.asm.domain.errors.GeneralError
 import com.asm.taken.R
 import com.asm.taken.model.Country
 import com.asm.taken.model.CountryData
-import com.asm.taken.model.EditGamerFormUiState
+import com.asm.taken.model.EditGamerFormState
 import com.asm.taken.model.EditGamerOperationsState
 import com.asm.taken.model.EditGamerState
 import com.asm.taken.model.InputState
@@ -86,7 +86,7 @@ fun EditGamerSection(
     }
 
     val gamerUIState: EditGamerState by editGamerVM.gamerState.collectAsStateWithLifecycle()
-    val editGamerFormState: EditGamerFormUiState by editGamerVM.editGamerFormState.collectAsStateWithLifecycle()
+    val editGamerFormState: EditGamerFormState by editGamerVM.editGamerFormState.collectAsStateWithLifecycle()
 
     when (val gamerState = gamerUIState) {
         is EditGamerState.Failure -> when (gamerState.error) {
@@ -240,7 +240,7 @@ fun PanelFormEditGamer(
     defaultImageUrl: String? = null,
     labelButtonSaveGamer: String,
     socialNetworkImage: String?,
-    editGamerFormState: EditGamerFormUiState,
+    editGamerFormState: EditGamerFormState,
     countries: List<Country>?,
     validateFormCreateGamer: (String, String, CountryData, String?) -> Unit,
     saveGamer: () -> Unit,

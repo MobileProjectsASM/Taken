@@ -3,7 +3,6 @@ package com.asm.taken.ui.page.login
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.SurfaceCoroutineScope
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -63,168 +62,138 @@ import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import coil.compose.AsyncImagePainter
-import com.asm.domain.errors.GeneralError
+import com.asm.domain.entities.CountryInfo
 import com.asm.taken.R
-import com.asm.taken.model.CountriesUiState
-import com.asm.taken.model.Country
+import com.asm.taken.model.CountriesState
 import com.asm.taken.model.CountryData
-import com.asm.taken.model.EditGamerFormUiState
+import com.asm.taken.model.CreateGamerProcessState
+import com.asm.taken.model.CreateGamerUIState
+import com.asm.taken.model.EditGamerFormState
 import com.asm.taken.model.InputAgeError
 import com.asm.taken.model.InputAliasError
 import com.asm.taken.model.InputCountryError
 import com.asm.taken.model.InputImageError
 import com.asm.taken.model.InputState
-import com.asm.taken.model.NavigationState
 import com.asm.taken.ui.CircularProgressDialog
 import com.asm.taken.ui.DefaultButton
 import com.asm.taken.ui.DefaultOutlinedTextFieldLI
 import com.asm.taken.ui.DefaultText
-import com.asm.taken.ui.DialogError
-import com.asm.taken.ui.ErrorCountries
+import com.asm.taken.ui.ErrorComponent
 import com.asm.taken.ui.PuzzleGeneralTitle
-import com.asm.taken.ui.SnackBarError
 import com.asm.taken.ui.navigation.CreateGamer
 import com.asm.taken.ui.puzzleFontFamily
-import com.asm.taken.utils.AuthenticationClient
 import com.asm.taken.utils.getErrorAge
 import com.asm.taken.utils.getErrorAlias
 import com.asm.taken.utils.getErrorCountry
 import com.asm.taken.utils.getErrorImage
 import com.asm.taken.vm.CreateGamerVM
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
 @Composable
 fun CreateGamerPage(
     createGamerInfo: CreateGamer,
     createGamerVM: CreateGamerVM,
-    authenticationClient: AuthenticationClient,
     snackBarHostState: SnackbarHostState,
     onNavigateToAuthentication: () -> Unit,
     onNavigateToHome: (String) -> Unit
 ) {
-    CreateGamerSection(
-        socialNetworkImage = createGamerInfo.image,
-        gamerId = createGamerInfo.id,
-        authenticationClient = authenticationClient,
-        createGamerVM = createGamerVM,
-        snackBarHostState = snackBarHostState
-    )
-    NavigationSection(
-        snackBarHostState = snackBarHostState,
-        createGamerVM = createGamerVM,
-        onNavigateToHome = onNavigateToHome,
-        onNavigateToAuthentication = onNavigateToAuthentication,
-    )
-}
-
-@Composable
-fun CreateGamerSection(
-    socialNetworkImage: String?,
-    gamerId: String,
-    authenticationClient: AuthenticationClient,
-    createGamerVM: CreateGamerVM,
-    snackBarHostState: SnackbarHostState,
-) {
-    val editGamerFormState: EditGamerFormUiState by createGamerVM.editGamerFormState.collectAsStateWithLifecycle()
-    val countriesUiState: CountriesUiState? by createGamerVM.countriesUiState.collectAsStateWithLifecycle()
+    val createGamerUIState: CreateGamerUIState by createGamerVM.createGamerUIState.collectAsStateWithLifecycle()
 
     LaunchedEffect(true) {
         createGamerVM.getCountriesInfo()
     }
 
+    CreateGamerSection(
+        createGamerFormState = createGamerUIState.createGamerFormState,
+        socialNetworkImage = createGamerInfo.image,
+        gamerId = createGamerInfo.id,
+        snackBarHostState = snackBarHostState,
+        validateFormCreateGamer = createGamerVM::validateCreateGamerForm,
+        saveGamer = createGamerVM::createGamer,
+        closeSession = createGamerVM::closeSession,
+        resetProcessState = createGamerVM::resetCountriesState,
+        retryGetCountries = createGamerVM::getCountriesInfo
+    )
+    NavigationSection(
+        createGamerProcessState = createGamerUIState.createGamerProcessState,
+        snackBarHostState = snackBarHostState,
+        onNavigateToHome = onNavigateToHome,
+        onNavigateToAuthentication = onNavigateToAuthentication,
+        retryCreateGamer = {
+
+        },
+        resetProcessState = createGamerVM::resetProcessState
+    )
+}
+
+@Composable
+fun CreateGamerSection(
+    createGamerFormState: EditGamerFormState,
+    socialNetworkImage: String?,
+    gamerId: String,
+    snackBarHostState: SnackbarHostState,
+    validateFormCreateGamer: (String, String, CountryData, String?) -> Unit,
+    saveGamer: (String, String, Int, String, String?, String?) -> Unit,
+    closeSession: () -> Unit,
+    resetProcessState: () -> Unit,
+    retryGetCountries: () -> Unit
+) {
     PanelFormCreateGamer(
         snackBarHostState = snackBarHostState,
         labelButtonSaveGamer = stringResource(R.string.txt_btn_create_gamer),
         socialNetworkImage = socialNetworkImage,
-        editGamerFormState = editGamerFormState,
-        countries = (countriesUiState as? CountriesUiState.Successful)?.countriesInfo,
-        validateFormCreateGamer = createGamerVM::validateCreateGamerForm,
+        editGamerFormState = createGamerFormState,
+        countries = (createGamerFormState.countriesState as? CountriesState.CountriesLoaded)?.countriesInfo,
+        validateFormCreateGamer = validateFormCreateGamer,
         saveGamer = {
-            createGamerVM.createGamer(
+            saveGamer(
                 gamerId,
-                editGamerFormState.aliasUiState.value,
-                editGamerFormState.ageUiState.value.toInt(),
-                editGamerFormState.countryUiState.value.name,
-                editGamerFormState.countryUiState.value.flag,
-                editGamerFormState.imageURI.value
+                createGamerFormState.aliasUiState.value,
+                createGamerFormState.ageUiState.value.toInt(),
+                createGamerFormState.countryUiState.value.name,
+                createGamerFormState.countryUiState.value.flag,
+                createGamerFormState.imageURI.value
             )
         },
-        closeSession = {
-            createGamerVM.closeSession(authenticationClient::signOut)
-        }
+        closeSession = closeSession
     )
-    when (val countriesState = countriesUiState) {
-        is CountriesUiState.Failure -> ErrorCountries(
-            generalError = countriesState.generalFailure,
+    when (val countriesState = createGamerFormState.countriesState) {
+        is CountriesState.Error -> ErrorComponent(
+            generalError = countriesState.generalError,
             snackBarHostState = snackBarHostState,
-            resetState = createGamerVM::resetCountriesState,
-            retryProcess = createGamerVM::getCountriesInfo
+            resetProcessState = resetProcessState,
+            retryProcess = retryGetCountries
         )
 
-        CountriesUiState.Loading -> CircularProgressDialog()
+        CountriesState.Loading -> CircularProgressDialog()
         else -> return
     }
 }
 
 @Composable
 fun NavigationSection(
+    createGamerProcessState: CreateGamerProcessState,
     snackBarHostState: SnackbarHostState,
-    createGamerVM: CreateGamerVM,
     onNavigateToHome: (String) -> Unit,
-    onNavigateToAuthentication: () -> Unit
+    onNavigateToAuthentication: () -> Unit,
+    retryCreateGamer: () -> Unit,
+    resetProcessState: () -> Unit
 ) {
-    val navigationState: NavigationState? by createGamerVM.navigationState.collectAsStateWithLifecycle()
-
-    when (val state = navigationState) {
-        is NavigationState.Failure -> when (state.error) {
-            is GeneralError.ClientError -> DialogError(
-                title = stringResource(R.string.txt_ttl_client_error),
-                image = painterResource(R.drawable.ic_warning),
-                message = stringResource(R.string.err_client),
-                onDismissedDialog = createGamerVM::resetNavigationState
-            )
-
-            GeneralError.ConnectionError -> DialogError(
-                title = stringResource(R.string.txt_ttl_unexpected_error),
-                image = painterResource(R.drawable.ic_warning),
-                message = stringResource(R.string.err_server_connection),
-                onDismissedDialog = createGamerVM::resetNavigationState
-            )
-
-            GeneralError.NetworkError -> SnackBarError(
-                snackBarHostState = snackBarHostState,
-                actionLabel = stringResource(R.string.txt_label_retry),
-                duration = SnackbarDuration.Long,
-                message = stringResource(R.string.err_network_connection),
-                onDismissed = createGamerVM::resetNavigationState
-            )
-
-            is GeneralError.ServerError -> DialogError(
-                title = stringResource(R.string.txt_ttl_service_error),
-                image = painterResource(R.drawable.ic_error),
-                message = stringResource(R.string.err_server),
-                onDismissedDialog = createGamerVM::resetNavigationState
-            )
-
-            GeneralError.Unknown -> SnackBarError(
-                snackBarHostState = snackBarHostState,
-                message = stringResource(R.string.err_auth),
-                withDismissAction = true,
-                onDismissed = createGamerVM::resetNavigationState
-            )
+    when (createGamerProcessState) {
+        is CreateGamerProcessState.Failure -> ErrorComponent(
+            generalError = createGamerProcessState.error,
+            snackBarHostState = snackBarHostState,
+            retryProcess = retryCreateGamer,
+            resetProcessState = resetProcessState
+        )
+        is CreateGamerProcessState.GamerCreated -> LaunchedEffect(true) {
+            onNavigateToHome(createGamerProcessState.gamerId)
         }
-
-        is NavigationState.GamerCreated -> LaunchedEffect(true) {
-            onNavigateToHome(state.gamerId)
-        }
-
-        NavigationState.SessionClosed -> LaunchedEffect(true) {
+        CreateGamerProcessState.Loading -> CircularProgressDialog()
+        CreateGamerProcessState.SessionClosed -> LaunchedEffect(true) {
             onNavigateToAuthentication()
         }
-
-        NavigationState.Loading -> CircularProgressDialog()
-        null -> return
+        CreateGamerProcessState.Idle -> return
     }
 }
 
@@ -233,8 +202,8 @@ fun PanelFormCreateGamer(
     snackBarHostState: SnackbarHostState,
     labelButtonSaveGamer: String,
     socialNetworkImage: String?,
-    editGamerFormState: EditGamerFormUiState,
-    countries: List<Country>?,
+    editGamerFormState: EditGamerFormState,
+    countries: List<CountryInfo>?,
     validateFormCreateGamer: (String, String, CountryData, String?) -> Unit,
     saveGamer: () -> Unit,
     closeSession: () -> Unit
@@ -301,8 +270,8 @@ fun FormEditGamer(
     errorImageUrlNotFound: String,
     labelButtonSaveGamer: String,
     socialNetworkImage: String?,
-    editGamerFormState: EditGamerFormUiState,
-    countriesUiState: List<Country>?,
+    editGamerFormState: EditGamerFormState,
+    countriesUiState: List<CountryInfo>?,
     validateFormCreateGamer: (String, String, CountryData, String?) -> Unit,
     enableActionButton: Boolean = editGamerFormState.aliasUiState.state is InputState.Success && editGamerFormState.ageUiState.state is InputState.Success && editGamerFormState.countryUiState.state is InputState.Success,
     saveGamer: () -> Unit
@@ -462,7 +431,7 @@ fun FormEditGamer(
 @Composable
 fun CountryInput(
     modifier: Modifier = Modifier,
-    countriesUiState: List<Country>?,
+    countriesUiState: List<CountryInfo>?,
     value: CountryData,
     countryErrors: List<String>,
     onCountryChange: (CountryData) -> Unit
@@ -509,7 +478,7 @@ fun CountryInput(
 fun ChooseCountryDialog(
     country: String,
     flag: String?,
-    countriesUiState: List<Country>,
+    countriesUiState: List<CountryInfo>,
     onCountrySelected: (String, String?) -> Unit
 ) {
     Dialog(
