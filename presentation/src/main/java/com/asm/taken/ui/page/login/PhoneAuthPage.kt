@@ -51,7 +51,7 @@ import com.asm.domain.entities.AuthUser
 import com.asm.domain.entities.CountryInfo
 import com.asm.taken.R
 import com.asm.taken.model.AuthPhoneProcessState
-import com.asm.taken.model.GetDataProcessState
+import com.asm.taken.model.CountriesState
 import com.asm.taken.model.InputOtpError
 import com.asm.taken.model.InputPhoneCodeError
 import com.asm.taken.model.InputPhoneNumberError
@@ -147,13 +147,13 @@ fun AuthWithPhone(
         onSentPhone = phoneNumberSent
     )
     when (val currentState = phoneAuthFormState.dataFormProcess) {
-        is GetDataProcessState.Error -> ErrorComponent(
+        is CountriesState.Error -> ErrorComponent(
             generalError = currentState.generalError,
             snackBarHostState = snackBarHostState,
             retryProcess = retryGetDataForm,
             resetProcessState = resetProcessState
         )
-        GetDataProcessState.Loading -> CircularProgressDialog()
+        CountriesState.Loading -> CircularProgressDialog()
         else -> return
     }
 }
@@ -206,7 +206,7 @@ fun FormPhoneNumber(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 10.dp),
-            countries = (phoneAuthFormState.dataFormProcess as? GetDataProcessState.CountriesLoaded)?.countriesInfo,
+            countries = (phoneAuthFormState.dataFormProcess as? CountriesState.CountriesLoaded)?.countriesInfo,
             codeValue = phoneAuthFormState.phoneCodeUiState.value,
             phoneCodeErrors = phoneAuthFormState.phoneCodeUiState.state.let { phoneCodeState ->
                 when (phoneCodeState) {
