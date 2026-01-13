@@ -12,5 +12,6 @@ interface AuthRemoteSource {
     suspend fun authWithOtp(sessionId: String, otp: String): Result<AuthUser, GeneralError>
     suspend fun authWithCredential(authCredential: AuthCredential): Result<AuthUser, GeneralError> //Exception case
     suspend fun createAccount(email: String, password: String): Result<Unit, GeneralError>
+    suspend fun getAuthUser(): Result<AuthUser, GeneralError>
     suspend fun signOut(): Result<Unit, GeneralError>
 }

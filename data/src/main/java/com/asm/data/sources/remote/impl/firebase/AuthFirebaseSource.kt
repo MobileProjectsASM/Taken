@@ -17,6 +17,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthException
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.google.firebase.auth.FirebaseAuthInvalidUserException
+import com.google.firebase.auth.GetTokenResult
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.PhoneAuthProvider
 import kotlinx.coroutines.tasks.await
@@ -25,10 +26,28 @@ import javax.inject.Inject
 class AuthFirebaseSource @Inject constructor(
     private val firebaseAuth: FirebaseAuth,
     private val credentialManager: CredentialManager
-): AuthRemoteSource {
+) : AuthRemoteSource {
 
     companion object {
         const val TAG = "auth_firebase_source"
+
+        enum class Provider {
+            UNDEFINED,
+            FACEBOOK,
+            PASSWORD,
+            GOOGLE,
+            PHONE;
+
+            companion object {
+                fun getType(id: String): Provider = when (id) {
+                    "facebook.com" -> FACEBOOK
+                    "password" -> PASSWORD
+                    "google.com" -> GOOGLE
+                    "phone" -> PHONE
+                    else -> UNDEFINED
+                }
+            }
+        }
     }
 
     override suspend fun authWithEmailAndPassword(
@@ -55,7 +74,10 @@ class AuthFirebaseSource @Inject constructor(
         }
     }
 
-    override suspend fun authWithToken(token: String, providerId: ProviderId): Result<AuthUser, GeneralError> {
+    override suspend fun authWithToken(
+        token: String,
+        providerId: ProviderId
+    ): Result<AuthUser, GeneralError> {
         return try {
             val authCredential: AuthCredential = when (providerId) {
                 ProviderId.FACEBOOK -> FacebookAuthProvider.getCredential(token)
@@ -135,7 +157,8 @@ class AuthFirebaseSource @Inject constructor(
         password: String
     ): Result<Unit, GeneralError> {
         return try {
-            val createAccountResult = firebaseAuth.createUserWithEmailAndPassword(email, password).await()
+            val createAccountResult =
+                firebaseAuth.createUserWithEmailAndPassword(email, password).await()
             val firebaseUser = createAccountResult.user
             if (firebaseUser == null) {
                 Log.e(TAG, "FirebaseUser is null")
@@ -153,12 +176,42 @@ class AuthFirebaseSource @Inject constructor(
         }
     }
 
+    override suspend fun getAuthUser(): Result<AuthUser, GeneralError> {
+        return try {
+            firebaseAuth.currentUser?.let {
+                val provider = Provider.getType(it.providerData[1].providerId)
+                val imageUrl = when (provider) {
+                    Provider.FACEBOOK -> {
+                        val tokenResult: GetTokenResult? = it.getIdToken(false).await()
+                        it.photoUrl?.toString()?.let { photoUrl ->
+                            tokenResult?.token?.let { token ->
+                                "$photoUrl?height=500&access_token=$token"
+                            }
+                        }
+                    }
+
+                    Provider.GOOGLE -> it.photoUrl.toString()
+                    Provider.PASSWORD, Provider.PHONE, Provider.UNDEFINED -> null
+                }
+                Result.Successful(
+                    AuthUser(
+                        userId = it.uid,
+                        profilePictureUrl = imageUrl
+                    )
+                )
+            } ?: throw Exception("Current user is null")
+        } catch (exception: Exception) {
+            Log.e(TAG, "unexpected exception to get authenticated user", exception)
+            GeneralError.Unknown.toUnsuccessful()
+        }
+    }
+
     override suspend fun signOut(): Result<Unit, GeneralError> {
         return try {
             firebaseAuth.signOut()
             credentialManager.clearCredentialState(ClearCredentialStateRequest())
             return Result.Successful(Unit)
-        } catch(exception: Exception) {
+        } catch (exception: Exception) {
             Log.e(TAG, "unexpected error to sign out", exception)
             GeneralError.Unknown.toUnsuccessful()
         }
