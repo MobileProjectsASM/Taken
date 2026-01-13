@@ -7,6 +7,7 @@ import com.asm.domain.entities.Result
 import com.asm.domain.entities.asSuccessful
 import com.asm.domain.errors.GeneralError
 import com.asm.domain.use_cases.DeleteGamerUC
+import com.asm.domain.use_cases.GetAuthUserUC
 import com.asm.domain.use_cases.GetCountriesInfoUC
 import com.asm.domain.use_cases.GetDefaultImageUC
 import com.asm.domain.use_cases.GetGamerUC
@@ -35,6 +36,7 @@ class EditGamerVM @Inject constructor(
     private val getCountriesInfoUC: GetCountriesInfoUC,
     private val getDefaultImageUC: GetDefaultImageUC,
     private val saveChangesGamerUC: SaveChangesGamerUC,
+    private val getAuthUserUC: GetAuthUserUC,
     private val deleteGamerUC: DeleteGamerUC
 ) : ViewModel() {
 
@@ -52,7 +54,7 @@ class EditGamerVM @Inject constructor(
         _editGamerUIState.update { it.copy(editGamerProcessType = EditGamerProcessType.Idle) }
     }
 
-    fun resetMetadataProcessState() {
+    fun resetMetaDataProcessState() {
         val currentForm = _editGamerUIState.value.editGamerFormState
         _editGamerUIState.update {
             it.copy(
@@ -103,7 +105,7 @@ class EditGamerVM @Inject constructor(
         }
     }
 
-    fun deleteGamer(
+    /*fun deleteGamer(
         gamerId: String,
         signOutThirdProvider: suspend () -> Result<Unit, GeneralError>
     ) {
@@ -135,12 +137,11 @@ class EditGamerVM @Inject constructor(
                 )
             }
         }
-    }
+    }*/
 
 
     fun getGamerData(
-        gamerId: String,
-        getCurrentUserSocialNetworkImage: () -> Result<String?, GeneralError>
+        gamerId: String
     ) {
         viewModelScope.launch {
             val currentFormState = _editGamerUIState.value.editGamerFormState
@@ -155,11 +156,12 @@ class EditGamerVM @Inject constructor(
             val deferredGamerResult = async { getGamerUC.execute(gamerId) }
             val deferredCountriesInfoResult = async { getCountriesInfoUC.execute(Unit) }
             val deferredDefaultImageResult = async { getDefaultImageUC.execute(Unit) }
-            val socialNetworkResult = getCurrentUserSocialNetworkImage()
+            val deferredSocialNetworkResult = async { getAuthUserUC.execute(Unit) }
 
             val gamerResult = deferredGamerResult.await()
             val countriesResult = deferredCountriesInfoResult.await()
             val defaultImageResult = deferredDefaultImageResult.await()
+            val socialNetworkResult = deferredSocialNetworkResult.await()
             val metaDataState = when {
                 gamerResult is Result.Unsuccessful -> CommonProcessState.Failure(gamerResult.error)
                 socialNetworkResult is Result.Unsuccessful -> CommonProcessState.Failure(
@@ -177,7 +179,7 @@ class EditGamerVM @Inject constructor(
                     if (gamer != null) CommonProcessState.Success(
                         data = MetaDataEditForm(
                             gamer = gamer,
-                            socialNetworkImage = socialNetworkResult.asSuccessful().data,
+                            socialNetworkImage = socialNetworkResult.asSuccessful().data.profilePictureUrl,
                             defaultImageUrl = defaultImageResult.asSuccessful().data,
                             countries = countriesResult.asSuccessful().data
                         ),

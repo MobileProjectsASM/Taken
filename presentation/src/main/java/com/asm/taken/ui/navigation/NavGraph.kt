@@ -234,7 +234,6 @@ fun NavGraphBuilder.navigationMainPage(
             BackgroundMainSection {
                 EditGamerPage(
                     gamerId = gamerId,
-                    authenticationClient = authenticationClient,
                     snackBarHostState = snackBarHostState,
                     editGamerVM = editGamerVM,
                     navigateToMainMenu = navigationController::popBackStack
