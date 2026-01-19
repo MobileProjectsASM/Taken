@@ -123,15 +123,12 @@ data class CountryData(
     val flag: String? = null
 )
 
-data class EditGamerFormState(
+
+data class MetaDataEditForm(
     val imageURI: InputUiState<String?, InputImageError> = InputUiState(null),
     val aliasUiState: InputUiState<String, InputAliasError> = InputUiState(""),
     val ageUiState: InputUiState<String, InputAgeError> = InputUiState(""),
     val countryUiState: InputUiState<CountryData, InputCountryError> = InputUiState(CountryData()),
-    val metaDataFormState: CommonProcessState<MetaDataEditForm> = CommonProcessState.Idle
-)
-
-data class MetaDataEditForm(
     val countries: List<CountryInfo>,
     val gamer: Gamer,
     val defaultImageUrl: String?,
@@ -139,7 +136,7 @@ data class MetaDataEditForm(
 )
 
 data class EditGamerUIState(
-    val editGamerFormState: EditGamerFormState = EditGamerFormState(),
+    val editFormState: CommonProcessState<MetaDataEditForm> = CommonProcessState.Loading,
     val editGamerProcessType: EditGamerProcessType = EditGamerProcessType.Idle
 )
 

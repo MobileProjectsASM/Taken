@@ -3,6 +3,7 @@ package com.asm.taken.vm
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.asm.domain.entities.Gamer
 import com.asm.domain.entities.Result
 import com.asm.domain.entities.asSuccessful
 import com.asm.domain.errors.GeneralError
@@ -55,12 +56,9 @@ class EditGamerVM @Inject constructor(
     }
 
     fun resetMetaDataProcessState() {
-        val currentForm = _editGamerUIState.value.editGamerFormState
         _editGamerUIState.update {
             it.copy(
-                editGamerFormState = currentForm.copy(
-                    metaDataFormState = CommonProcessState.Idle
-                )
+                editFormState = CommonProcessState.Idle
             )
         }
     }
@@ -144,14 +142,7 @@ class EditGamerVM @Inject constructor(
         gamerId: String
     ) {
         viewModelScope.launch {
-            val currentFormState = _editGamerUIState.value.editGamerFormState
-            _editGamerUIState.update {
-                it.copy(
-                    editGamerFormState = currentFormState.copy(
-                        metaDataFormState = CommonProcessState.Loading
-                    )
-                )
-            }
+            _editGamerUIState.update { it.copy(editFormState = CommonProcessState.Loading) }
 
             val deferredGamerResult = async { getGamerUC.execute(gamerId) }
             val deferredCountriesInfoResult = async { getCountriesInfoUC.execute(Unit) }
@@ -178,6 +169,15 @@ class EditGamerVM @Inject constructor(
                     val gamer = gamerResult.asSuccessful().data
                     if (gamer != null) CommonProcessState.Success(
                         data = MetaDataEditForm(
+                            imageURI = InputUiState(gamer.gamerImage),
+                            aliasUiState = InputUiState(gamer.gamerNickName),
+                            ageUiState = InputUiState(gamer.gamerAge.toString()),
+                            countryUiState = InputUiState(
+                                CountryData(
+                                    gamer.gamerCountry,
+                                    gamer.gamerCountryFlag
+                                )
+                            ),
                             gamer = gamer,
                             socialNetworkImage = socialNetworkResult.asSuccessful().data.profilePictureUrl,
                             defaultImageUrl = defaultImageResult.asSuccessful().data,
@@ -189,12 +189,9 @@ class EditGamerVM @Inject constructor(
                     }
                 }
             }
+
             _editGamerUIState.update {
-                it.copy(
-                    editGamerFormState = currentFormState.copy(
-                        metaDataFormState = metaDataState
-                    )
-                )
+                it.copy(editFormState = metaDataState)
             }
         }
     }
@@ -222,17 +219,18 @@ class EditGamerVM @Inject constructor(
             else InputUiState(age, InputState.Error(this))
         }
 
-        val currentForm = _editGamerUIState.value.editGamerFormState
+        val currentFormState = _editGamerUIState.value.editFormState
 
-        _editGamerUIState.update {
-            it.copy(
-                editGamerFormState = currentForm.copy(
+        if (currentFormState is CommonProcessState.Success) {
+            val formState = CommonProcessState.Success(
+                currentFormState.data.copy(
                     aliasUiState = aliasInputState,
                     ageUiState = ageInputState,
                     countryUiState = countryInputState,
                     imageURI = InputUiState(imageURI)
                 )
             )
+            _editGamerUIState.update { it.copy(editFormState = formState) }
         }
     }
 

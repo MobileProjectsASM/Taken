@@ -21,6 +21,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.filled.Attribution
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Replay
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -30,6 +31,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -45,10 +47,10 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.asm.domain.entities.CountryInfo
 import com.asm.domain.entities.Gamer
+import com.asm.domain.errors.GeneralError
 import com.asm.taken.R
 import com.asm.taken.model.CommonProcessState
 import com.asm.taken.model.CountryData
-import com.asm.taken.model.EditGamerFormState
 import com.asm.taken.model.EditGamerProcessType
 import com.asm.taken.model.EditGamerUIState
 import com.asm.taken.model.InputAgeError
@@ -60,6 +62,7 @@ import com.asm.taken.model.MetaDataEditForm
 import com.asm.taken.ui.CircularProgressDialog
 import com.asm.taken.ui.DefaultButton
 import com.asm.taken.ui.DefaultOutlinedTextFieldLI
+import com.asm.taken.ui.DialogError
 import com.asm.taken.ui.ErrorComponent
 import com.asm.taken.ui.ImageDialog
 import com.asm.taken.ui.PuzzleGeneralTitle
@@ -90,7 +93,7 @@ fun EditGamerPage(
     }
 
     EditGamerSection(
-        editGamerFormState = editGamerUIState.editGamerFormState,
+        editGamerFormState = editGamerUIState.editFormState,
         gamerId = gamerId,
         snackBarHostState = snackBarHostState,
         saveGamer = editGamerVM::saveGamer,
@@ -100,7 +103,8 @@ fun EditGamerPage(
         },
         navigateToMainMenu = navigateToMainMenu,
         retryGetMetaData = { editGamerVM.getGamerData(gamerId = gamerId) },
-        resetGetMetaDataProcess = editGamerVM::resetMetaDataProcessState
+        resetGetMetaDataProcess = editGamerVM::resetMetaDataProcessState,
+        onBack = navigateToMainMenu
     )
     ResultOperationsSection(
         editGamerProcessType = editGamerUIState.editGamerProcessType,
@@ -118,7 +122,7 @@ fun EditGamerPage(
 
 @Composable
 fun EditGamerSection(
-    editGamerFormState: EditGamerFormState,
+    editGamerFormState: CommonProcessState<MetaDataEditForm>,
     gamerId: String,
     snackBarHostState: SnackbarHostState,
     saveGamer: (String, String, Int, String, String?, String?) -> Unit,
@@ -126,41 +130,42 @@ fun EditGamerSection(
     deleteGamer: () -> Unit,
     navigateToMainMenu: () -> Unit,
     retryGetMetaData: () -> Unit,
-    resetGetMetaDataProcess: () -> Unit
+    resetGetMetaDataProcess: () -> Unit,
+    onBack: () -> Unit
 ) {
-    PanelFormEditGamer(
-        editGamerFormState = editGamerFormState,
-        snackBarHostState = snackBarHostState,
-        currentGamer = (editGamerFormState.metaDataFormState as? CommonProcessState.Success)?.data?.gamer,
-        defaultImageUrl = (editGamerFormState.metaDataFormState as? CommonProcessState.Success)?.data?.defaultImageUrl,
-        labelButtonSaveGamer = stringResource(R.string.txt_btn_save_changes),
-        socialNetworkImage = (editGamerFormState.metaDataFormState as? CommonProcessState.Success)?.data?.socialNetworkImage,
-        countries = (editGamerFormState.metaDataFormState as? CommonProcessState.Success)?.data?.countries,
-        validateFormCreateGamer = validateEditGamerForm,
-        saveGamer = {
-            saveGamer(
-                gamerId,
-                editGamerFormState.aliasUiState.value,
-                editGamerFormState.ageUiState.value.toInt(),
-                editGamerFormState.countryUiState.value.name,
-                editGamerFormState.countryUiState.value.flag,
-                editGamerFormState.imageURI.value
-            )
-        },
-        deleteGamer = deleteGamer,
-        onBack = navigateToMainMenu
-    )
-
-    when (val state = editGamerFormState.metaDataFormState) {
+    when (editGamerFormState) {
         is CommonProcessState.Failure -> ErrorComponent(
-            generalError = state.error,
-            snackBarHostState = snackBarHostState,
+            generalError = editGamerFormState.error,
             retryProcess = retryGetMetaData,
-            resetProcessState = resetGetMetaDataProcess
+            resetProcessState = resetGetMetaDataProcess,
+            onBack = onBack
         )
 
         CommonProcessState.Loading -> CircularProgressDialog()
-        CommonProcessState.Idle, is CommonProcessState.Success<MetaDataEditForm> -> return
+        is CommonProcessState.Success<MetaDataEditForm> -> PanelFormEditGamer(
+            metaDataEditForm = editGamerFormState.data,
+            snackBarHostState = snackBarHostState,
+            currentGamer = editGamerFormState.data.gamer,
+            defaultImageUrl = editGamerFormState.data.defaultImageUrl,
+            labelButtonSaveGamer = stringResource(R.string.txt_btn_save_changes),
+            socialNetworkImage = editGamerFormState.data.socialNetworkImage,
+            countries = editGamerFormState.data.countries,
+            validateFormCreateGamer = validateEditGamerForm,
+            saveGamer = {
+                saveGamer(
+                    gamerId,
+                    editGamerFormState.data.aliasUiState.value,
+                    editGamerFormState.data.ageUiState.value.toInt(),
+                    editGamerFormState.data.countryUiState.value.name,
+                    editGamerFormState.data.countryUiState.value.flag,
+                    editGamerFormState.data.imageURI.value
+                )
+            },
+            deleteGamer = deleteGamer,
+            onBack = navigateToMainMenu
+        )
+
+        CommonProcessState.Idle -> return
     }
 }
 
@@ -174,47 +179,60 @@ fun ResultOperationsSection(
     resetEditGamerProcess: () -> Unit
 ) {
     when (editGamerProcessType) {
-        is EditGamerProcessType.DeleteGamerState -> when (val processState = editGamerProcessType.processState) {
+        is EditGamerProcessType.DeleteGamerState -> when (val processState =
+            editGamerProcessType.processState) {
             is CommonProcessState.Failure -> ErrorComponent(
                 generalError = processState.error,
                 snackBarHostState = snackBarHostState,
                 retryProcess = retryDeleteGamerProcess,
                 resetProcessState = resetEditGamerProcess
             )
+
             CommonProcessState.Loading -> CircularProgressDialog()
             is CommonProcessState.Success<Unit> -> TODO()
             CommonProcessState.Idle -> return
         }
-        is EditGamerProcessType.UpdateGamerState -> when (val processState = editGamerProcessType.processState) {
+
+        is EditGamerProcessType.UpdateGamerState -> when (val processState =
+            editGamerProcessType.processState) {
             is CommonProcessState.Failure -> ErrorComponent(
                 generalError = processState.error,
                 snackBarHostState = snackBarHostState,
                 retryProcess = retryUpdateGamerProcess,
                 resetProcessState = resetEditGamerProcess
             )
+
             CommonProcessState.Loading -> CircularProgressDialog()
-            is CommonProcessState.Success<Unit> -> ImageDialog(
-                title = stringResource(R.string.txt_ttl_success_operation),
-                image = painterResource(R.drawable.ic_success),
-                message = stringResource(R.string.txt_label_gamer_updated)
-            ) {
-                DefaultButton(
-                    text = stringResource(R.string.txt_btn_accept),
-                    onClickButton = {
-                        resetEditGamerProcess()
-                        //navigateToMainMenu()
+            is CommonProcessState.Success<Unit> -> {
+                var showDialog by rememberSaveable { mutableStateOf(true) }
+                if (showDialog) {
+                    ImageDialog(
+                        title = stringResource(R.string.txt_ttl_success_operation),
+                        image = painterResource(R.drawable.ic_success),
+                        message = stringResource(R.string.txt_label_gamer_updated)
+                    ) {
+                        DefaultButton(
+                            text = stringResource(R.string.txt_btn_accept),
+                            onClickButton = {
+                                resetEditGamerProcess()
+                                navigateToMainMenu()
+                                showDialog = false
+                            }
+                        )
                     }
-                )
+                }
             }
+
             CommonProcessState.Idle -> return
         }
+
         EditGamerProcessType.Idle -> return
     }
 }
 
 @Composable
 fun PanelFormEditGamer(
-    editGamerFormState: EditGamerFormState,
+    metaDataEditForm: MetaDataEditForm,
     snackBarHostState: SnackbarHostState,
     currentGamer: Gamer? = null,
     defaultImageUrl: String? = null,
@@ -273,15 +291,15 @@ fun PanelFormEditGamer(
                     socialNetworkImage = socialNetworkImage,
                     countriesUiState = countries,
                     validateFormCreateGamer = validateFormCreateGamer,
-                    editGamerFormState = editGamerFormState,
-                    enableActionButton = editGamerFormState.aliasUiState.state is InputState.Success && editGamerFormState.ageUiState.state is InputState.Success && editGamerFormState.countryUiState.state is InputState.Success && currentGamer?.let {
-                        it.gamerNickName != editGamerFormState.aliasUiState.value
-                                || it.gamerAge.toString() != editGamerFormState.ageUiState.value
-                                || it.gamerCountry != editGamerFormState.countryUiState.value.name
+                    metaDataEditForm = metaDataEditForm,
+                    enableActionButton = metaDataEditForm.aliasUiState.state is InputState.Success && metaDataEditForm.ageUiState.state is InputState.Success && metaDataEditForm.countryUiState.state is InputState.Success && currentGamer?.let {
+                        it.gamerNickName != metaDataEditForm.aliasUiState.value
+                                || it.gamerAge.toString() != metaDataEditForm.ageUiState.value
+                                || it.gamerCountry != metaDataEditForm.countryUiState.value.name
                                 || (it.gamerImage == defaultImageUrl
-                                && editGamerFormState.imageURI.value != null
-                                && editGamerFormState.imageURI.value != defaultImageUrl)
-                                || (it.gamerImage != defaultImageUrl && editGamerFormState.imageURI.value != it.gamerImage)
+                                && metaDataEditForm.imageURI.value != null
+                                && metaDataEditForm.imageURI.value != defaultImageUrl)
+                                || (it.gamerImage != defaultImageUrl && metaDataEditForm.imageURI.value != it.gamerImage)
                     } ?: false,
                     saveGamer = saveGamer
                 )
@@ -301,15 +319,15 @@ fun FormEditGamer(
     errorImageUrlNotFound: String,
     labelButtonSaveGamer: String,
     socialNetworkImage: String?,
-    editGamerFormState: EditGamerFormState,
+    metaDataEditForm: MetaDataEditForm,
     countriesUiState: List<CountryInfo>?,
     validateFormCreateGamer: (String, String, CountryData, String?) -> Unit,
-    enableActionButton: Boolean = editGamerFormState.aliasUiState.state is InputState.Success && editGamerFormState.ageUiState.state is InputState.Success && editGamerFormState.countryUiState.state is InputState.Success,
+    enableActionButton: Boolean = metaDataEditForm.aliasUiState.state is InputState.Success && metaDataEditForm.ageUiState.state is InputState.Success && metaDataEditForm.countryUiState.state is InputState.Success,
     saveGamer: () -> Unit
 ) {
     val coroutineScope = rememberCoroutineScope()
     var showChangeProfileImageDialog: Boolean by rememberSaveable { mutableStateOf(false) }
-    when (val imageSelectedState = editGamerFormState.imageURI.state) {
+    when (val imageSelectedState = metaDataEditForm.imageURI.state) {
         is InputState.Error<InputImageError> -> imageSelectedState.errors.map { getErrorImage(it) }
         InputState.Idle, InputState.Success -> listOf()
     }
@@ -318,9 +336,9 @@ fun FormEditGamer(
     ) { uri ->
         if (uri != null) {
             validateFormCreateGamer(
-                editGamerFormState.aliasUiState.value,
-                editGamerFormState.ageUiState.value,
-                editGamerFormState.countryUiState.value,
+                metaDataEditForm.aliasUiState.value,
+                metaDataEditForm.ageUiState.value,
+                metaDataEditForm.countryUiState.value,
                 uri.toString()
             )
         }
@@ -332,9 +350,9 @@ fun FormEditGamer(
             showChangeProfileImageDialog = false
             when (optionChosen) {
                 OptionChosen.Default -> validateFormCreateGamer(
-                    editGamerFormState.aliasUiState.value,
-                    editGamerFormState.ageUiState.value,
-                    editGamerFormState.countryUiState.value,
+                    metaDataEditForm.aliasUiState.value,
+                    metaDataEditForm.ageUiState.value,
+                    metaDataEditForm.countryUiState.value,
                     null
                 )
 
@@ -345,9 +363,9 @@ fun FormEditGamer(
                 )
 
                 is OptionChosen.SocialNetwork -> validateFormCreateGamer(
-                    editGamerFormState.aliasUiState.value,
-                    editGamerFormState.ageUiState.value,
-                    editGamerFormState.countryUiState.value,
+                    metaDataEditForm.aliasUiState.value,
+                    metaDataEditForm.ageUiState.value,
+                    metaDataEditForm.countryUiState.value,
                     optionChosen.urlImage
                 )
 
@@ -360,7 +378,7 @@ fun FormEditGamer(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         InputSelectImage(
-            imageURI = editGamerFormState.imageURI.value,
+            imageURI = metaDataEditForm.imageURI.value,
             error = painterResource(R.drawable.gamer),
             onError = {
                 coroutineScope.launch {
@@ -379,11 +397,11 @@ fun FormEditGamer(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 10.dp),
-            value = editGamerFormState.aliasUiState.value,
+            value = metaDataEditForm.aliasUiState.value,
             label = R.string.txt_label_alias,
             leadingIcon = Icons.Default.Person,
             cdLeadingIcon = null,
-            errors = editGamerFormState.aliasUiState.state.let { aliasState ->
+            errors = metaDataEditForm.aliasUiState.state.let { aliasState ->
                 when (aliasState) {
                     is InputState.Error<InputAliasError> -> aliasState.errors.map { getErrorAlias(it) }
                     InputState.Idle, InputState.Success -> listOf()
@@ -392,9 +410,9 @@ fun FormEditGamer(
         ) { newAlias ->
             validateFormCreateGamer(
                 newAlias,
-                editGamerFormState.ageUiState.value,
-                editGamerFormState.countryUiState.value,
-                editGamerFormState.imageURI.value
+                metaDataEditForm.ageUiState.value,
+                metaDataEditForm.countryUiState.value,
+                metaDataEditForm.imageURI.value
             )
         }
         Spacer(modifier = Modifier.height(10.dp))
@@ -403,11 +421,11 @@ fun FormEditGamer(
                 .fillMaxWidth()
                 .padding(horizontal = 10.dp),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            value = editGamerFormState.ageUiState.value,
+            value = metaDataEditForm.ageUiState.value,
             label = R.string.txt_label_age,
             leadingIcon = Icons.Default.Attribution,
             cdLeadingIcon = null,
-            errors = editGamerFormState.ageUiState.state.let { ageState ->
+            errors = metaDataEditForm.ageUiState.state.let { ageState ->
                 when (ageState) {
                     is InputState.Error<InputAgeError> -> ageState.errors.map { getErrorAge(it) }
                     InputState.Idle, InputState.Success -> listOf()
@@ -415,10 +433,10 @@ fun FormEditGamer(
             }
         ) { newAge ->
             validateFormCreateGamer(
-                editGamerFormState.aliasUiState.value,
+                metaDataEditForm.aliasUiState.value,
                 newAge,
-                editGamerFormState.countryUiState.value,
-                editGamerFormState.imageURI.value
+                metaDataEditForm.countryUiState.value,
+                metaDataEditForm.imageURI.value
             )
         }
         Spacer(modifier = Modifier.height(10.dp))
@@ -427,8 +445,8 @@ fun FormEditGamer(
                 .fillMaxWidth()
                 .padding(horizontal = 10.dp),
             countriesUiState = countriesUiState,
-            value = editGamerFormState.countryUiState.value,
-            countryErrors = editGamerFormState.countryUiState.state.let { countryState ->
+            value = metaDataEditForm.countryUiState.value,
+            countryErrors = metaDataEditForm.countryUiState.state.let { countryState ->
                 when (countryState) {
                     is InputState.Error<InputCountryError> -> countryState.errors.map {
                         getErrorCountry(it)
@@ -439,10 +457,10 @@ fun FormEditGamer(
             }
         ) {
             validateFormCreateGamer(
-                editGamerFormState.aliasUiState.value,
-                editGamerFormState.ageUiState.value,
+                metaDataEditForm.aliasUiState.value,
+                metaDataEditForm.ageUiState.value,
                 it,
-                editGamerFormState.imageURI.value
+                metaDataEditForm.imageURI.value
             )
         }
         Spacer(modifier = Modifier.height(20.dp))
@@ -459,8 +477,94 @@ fun FormEditGamer(
     }
 }
 
+@Composable
+fun ErrorComponent(
+    generalError: GeneralError,
+    retryProcess: () -> Unit,
+    resetProcessState: () -> Unit,
+    onBack: () -> Unit
+) {
+    when (generalError) {
+        is GeneralError.ClientError -> DialogError(
+            title = stringResource(R.string.txt_ttl_client_error),
+            image = painterResource(R.drawable.ic_warning),
+            message = stringResource(R.string.err_client),
+            textAction = stringResource(id = R.string.txt_label_retry),
+            iconAction = Icons.Filled.Replay,
+            onAction = retryProcess,
+            onDismissedDialog = resetProcessState,
+            onBack = onBack
+        )
+
+        GeneralError.NetworkError -> DialogError(
+            title = stringResource(R.string.txt_ttl_client_error),
+            image = painterResource(R.drawable.ic_sin_internet),
+            message = stringResource(R.string.err_network_connection),
+            textAction = stringResource(id = R.string.txt_label_retry),
+            iconAction = Icons.Filled.Replay,
+            onAction = retryProcess,
+            onDismissedDialog = resetProcessState,
+            onBack = onBack
+        )
+
+        is GeneralError.ServerError -> DialogError(
+            title = stringResource(R.string.txt_ttl_service_error),
+            image = painterResource(R.drawable.ic_error),
+            message = stringResource(R.string.err_server),
+            textAction = stringResource(id = R.string.txt_label_retry),
+            iconAction = Icons.Filled.Replay,
+            onAction = retryProcess,
+            onDismissedDialog = resetProcessState,
+            onBack = onBack
+        )
+
+        GeneralError.Unknown -> DialogError(
+            title = stringResource(R.string.txt_ttl_unexpected_error),
+            image = painterResource(R.drawable.ic_warning),
+            message = stringResource(R.string.err_unknown),
+            textAction = stringResource(id = R.string.txt_label_retry),
+            iconAction = Icons.Filled.Replay,
+            onAction = retryProcess,
+            onDismissedDialog = resetProcessState,
+            onBack = onBack
+        )
+
+        GeneralError.ConnectionError -> DialogError(
+            title = stringResource(R.string.txt_ttl_unexpected_error),
+            image = painterResource(R.drawable.ic_warning),
+            message = stringResource(R.string.err_server_connection),
+            textAction = stringResource(id = R.string.txt_label_retry),
+            iconAction = Icons.Filled.Replay,
+            onAction = retryProcess,
+            onDismissedDialog = resetProcessState,
+            onBack = onBack
+        )
+    }
+}
+
 @Preview(showSystemUi = true, showBackground = true)
 @Composable
 fun EditGamerPagePreview() {
+    val snackBarHostState = remember { SnackbarHostState() }
 
+    EditGamerSection(
+        editGamerFormState = CommonProcessState.Failure(GeneralError.NetworkError),
+        gamerId = "abcd-efgh",
+        snackBarHostState = snackBarHostState,
+        saveGamer = { a, b, c, d, e, f ->
+
+        },
+        validateEditGamerForm = { a, b, c, d ->
+
+        },
+        deleteGamer = {
+
+        },
+        navigateToMainMenu = {
+
+        },
+        retryGetMetaData = { },
+        resetGetMetaDataProcess = { },
+        onBack = {}
+    )
 }

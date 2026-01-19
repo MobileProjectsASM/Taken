@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -27,6 +28,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.outlined.Cancel
@@ -578,7 +580,7 @@ fun ImageDialog(
     image: Painter,
     message: String,
     onDismissRequest: (() -> Unit)? = null,
-    onCloseDialog: (() -> Unit)? = null,
+    headerDialog: @Composable (RowScope.() -> Unit)? = null,
     contentButtons: @Composable (ColumnScope.() -> Unit)? = null,
 ) {
     Dialog(onDismissRequest = onDismissRequest ?: {}) {
@@ -586,28 +588,13 @@ fun ImageDialog(
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                onCloseDialog?.also {
+                if (headerDialog != null) {
                     Row(
-                        modifier = Modifier.fillMaxWidth().padding(10.dp),
-                        horizontalArrangement = Arrangement.End
-                    ) {
-                        Spacer(
-                            modifier = Modifier.weight(weight = 1f)
-                        )
-                        IconButton(
-                            modifier = Modifier
-                                .background(color = Color.Red, shape = CircleShape)
-                                .size(24.dp),
-                            onClick = onCloseDialog
-                        ) {
-                            Icon(
-                                modifier = Modifier.size(20.dp),
-                                imageVector = Icons.Rounded.Close,
-                                contentDescription = null,
-                                tint = Color.White
-                            )
-                        }
-                    }
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(10.dp),
+                        content = headerDialog
+                    )
                 }
                 Spacer(modifier = Modifier.height(16.dp))
                 PuzzleGeneralTitle(
@@ -651,6 +638,63 @@ fun ImageDialog(
 }
 
 @Composable
+fun ImageDialog(
+    title: String,
+    image: Painter,
+    message: String,
+    onClose: (() -> Unit)? = null,
+    onBack: (() -> Unit)? = null,
+    onDismissRequest: (() -> Unit)? = null,
+    contentButtons: @Composable (ColumnScope.() -> Unit)? = null
+) {
+    ImageDialog(
+        title = title,
+        image = image,
+        message = message,
+        onDismissRequest = onDismissRequest,
+        headerDialog = if (onClose != null || onBack != null) {
+            {
+                onBack?.let {
+                    IconButton(
+                        modifier = Modifier
+                            .background(color = Color.Red, shape = CircleShape)
+                            .size(24.dp),
+                        onClick = it
+                    ) {
+                        Icon(
+                            modifier = Modifier.size(20.dp),
+                            imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
+                            contentDescription = null,
+                            tint = Color.White
+                        )
+                    }
+                }
+                Spacer(
+                    modifier = Modifier.weight(weight = 1f)
+                )
+                onClose?.let {
+                    IconButton(
+                        modifier = Modifier
+                            .background(color = Color.Red, shape = CircleShape)
+                            .size(24.dp),
+                        onClick = onClose
+                    ) {
+                        Icon(
+                            modifier = Modifier.size(20.dp),
+                            imageVector = Icons.Rounded.Close,
+                            contentDescription = null,
+                            tint = Color.White
+                        )
+                    }
+                }
+            }
+        } else null,
+        contentButtons = contentButtons,
+    )
+}
+
+
+@Composable
 fun DialogError(
     title: String,
     image: Painter,
@@ -668,7 +712,7 @@ fun DialogError(
                 showErrorDialog = false
                 onDismissedDialog()
             },
-            onCloseDialog = {
+            onClose = {
                 showErrorDialog = false
                 onDismissedDialog()
             },
@@ -683,6 +727,45 @@ fun DialogError(
                         }
                     )
                 }
+            }
+        )
+    }
+}
+
+@Composable
+fun DialogError(
+    title: String,
+    image: Painter,
+    message: String,
+    textAction: String,
+    iconAction: ImageVector,
+    onAction: () -> Unit,
+    onDismissedDialog: () -> Unit,
+    onBack: (() -> Unit)? = null
+) {
+    var showDialog by rememberSaveable { mutableStateOf(true) }
+    if (showDialog) {
+        ImageDialog(
+            title = title,
+            image = image,
+            message = message,
+            onBack = onBack?.let {
+                {
+                    showDialog = false
+                    onBack()
+                    onDismissedDialog()
+                }
+            },
+            contentButtons = {
+                DefaultIconButton(
+                    text = textAction,
+                    imageVector = iconAction,
+                    onClickButton = {
+                        onAction()
+                        showDialog = false
+                        onDismissedDialog()
+                    }
+                )
             }
         )
     }
@@ -722,12 +805,14 @@ fun ErrorComponent(
             message = stringResource(R.string.err_client),
             onDismissedDialog = resetProcessState
         )
+
         GeneralError.ConnectionError -> DialogError(
             title = stringResource(R.string.txt_ttl_unexpected_error),
             image = painterResource(R.drawable.ic_warning),
             message = stringResource(R.string.err_server_connection),
             onDismissedDialog = resetProcessState
         )
+
         GeneralError.NetworkError -> DialogError(
             title = stringResource(R.string.txt_ttl_service_error),
             image = painterResource(R.drawable.ic_sin_internet),
@@ -735,65 +820,19 @@ fun ErrorComponent(
             onDismissedDialog = resetProcessState,
             onClickAction = retryProcess
         )
+
         is GeneralError.ServerError -> DialogError(
             title = stringResource(R.string.txt_ttl_service_error),
             image = painterResource(R.drawable.ic_error),
             message = stringResource(R.string.err_server),
             onDismissedDialog = resetProcessState
         )
+
         GeneralError.Unknown -> SnackBarError(
             snackBarHostState = snackBarHostState,
             message = stringResource(R.string.err_auth),
             withDismissAction = true,
             onDismissed = resetProcessState
-        )
-    }
-}
-
-@Composable
-fun ErrorCountries(
-    generalError: GeneralError,
-    snackBarHostState: SnackbarHostState,
-    resetState: () -> Unit,
-    retryProcess: () -> Unit,
-) {
-    when (generalError) {
-        is GeneralError.ClientError -> DialogError(
-            title = stringResource(R.string.txt_ttl_client_error),
-            image = painterResource(R.drawable.ic_warning),
-            message = stringResource(R.string.err_client),
-            onDismissedDialog = resetState
-        )
-
-        GeneralError.NetworkError -> SnackBarError(
-            snackBarHostState = snackBarHostState,
-            actionLabel = stringResource(R.string.txt_label_retry),
-            duration = SnackbarDuration.Long,
-            message = stringResource(R.string.err_network_connection),
-            onDismissed = resetState,
-            onActionPerformed = retryProcess
-        )
-
-        is GeneralError.ServerError -> DialogError(
-            title = stringResource(R.string.txt_ttl_service_error),
-            image = painterResource(R.drawable.ic_error),
-            message = stringResource(R.string.err_server),
-            onDismissedDialog = resetState
-        )
-
-        GeneralError.Unknown -> SnackBarError(
-            snackBarHostState = snackBarHostState,
-            message = stringResource(R.string.err_get_countries),
-            withDismissAction = true,
-            onDismissed = resetState
-        )
-
-        GeneralError.ConnectionError -> DialogError(
-            title = stringResource(R.string.txt_ttl_unexpected_error),
-            image = painterResource(R.drawable.ic_warning),
-            message = stringResource(R.string.err_server_connection),
-            onDismissedDialog = resetState,
-            onClickAction = retryProcess
         )
     }
 }
