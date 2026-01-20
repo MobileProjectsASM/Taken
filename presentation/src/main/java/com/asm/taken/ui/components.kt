@@ -740,7 +740,6 @@ fun DialogError(
     textAction: String,
     iconAction: ImageVector,
     onAction: () -> Unit,
-    onDismissedDialog: () -> Unit,
     onBack: (() -> Unit)? = null
 ) {
     var showDialog by rememberSaveable { mutableStateOf(true) }
@@ -753,7 +752,6 @@ fun DialogError(
                 {
                     showDialog = false
                     onBack()
-                    onDismissedDialog()
                 }
             },
             contentButtons = {
@@ -761,9 +759,8 @@ fun DialogError(
                     text = textAction,
                     imageVector = iconAction,
                     onClickButton = {
-                        onAction()
                         showDialog = false
-                        onDismissedDialog()
+                        onAction()
                     }
                 )
             }

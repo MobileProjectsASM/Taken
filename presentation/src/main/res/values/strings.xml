@@ -1,5 +1,6 @@
 <resources>
     <string name="app_name">PUZZLE</string>
+    <string name="txt_ttl_warning">Warning</string>
     <string name="txt_ttl_login_dialog">Welcome to Puzzle!!</string>
     <string name="txt_ttl_login_with_phone_number">Login With Phone Number!</string>
     <string name="txt_ttl_choose_phone_code">Choose phone code</string>
@@ -32,6 +33,7 @@
     <string name="txt_label_age">Age</string>
     <string name="txt_label_gamer_updated">Gamer updated</string>
     <string name="txt_label_image_url_not_found">Image Url not found</string>
+    <string name="txt_label_confirm_delete_message">All your progress will be lost.\nDo you still want to continue?</string>
     <string name="txt_cd_ti_password">Password visibility</string>
     <string name="txt_cd_btn_choose_image">Where fetch image?</string>
     <string name="txt_cd_btn_logout">Logout button</string>
@@ -48,7 +50,8 @@
     <string name="txt_btn_help">Help</string>
     <string name="txt_btn_logout">Log out</string>
     <string name="txt_btn_accept">Aceptar</string>
-    <string name="txt_btn_delete_gamer">Delete Gamer</string>
+    <string name="txt_btn_delete_gamer">DELETE GAMER</string>
+    <string name="txt_btn_confirm_delete_button">CONFIRM</string>
     
     <!-- Errors -->
     <string name="err_get_session_data">Error to get session data</string>

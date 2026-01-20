@@ -9,4 +9,5 @@
     <color name="white">#FFFFFFFF</color>
     <color name="input_error_color">#FFFF6961</color>
     <color name="purple_80">#FFD0BCFF</color>
+    <color name="red">#FFFF0000</color>
 </resources>
