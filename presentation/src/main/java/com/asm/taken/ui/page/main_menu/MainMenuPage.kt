@@ -47,6 +47,7 @@ import com.asm.domain.errors.GeneralError
 import com.asm.taken.R
 import com.asm.taken.model.CommonProcessState
 import com.asm.taken.model.MainMenuState
+import com.asm.taken.model.MainMenuUIState
 import com.asm.taken.model.MenuProcessType
 import com.asm.taken.ui.CircularProgressDialog
 import com.asm.taken.ui.DefaultButton
@@ -69,7 +70,7 @@ fun MainMenuPage(
     navigateToShowRanking: () -> Unit,
     navigateToShowHelp: () -> Unit
 ) {
-    val mainMenuUIState: CommonProcessState<MainMenuState> by mainVM.mainMenuState.collectAsStateWithLifecycle()
+    val mainMenuUIState: MainMenuUIState by mainVM.mainMenuState.collectAsStateWithLifecycle()
 
     LaunchedEffect(true) { mainVM.getMainMenuData(gamerId) }
 
@@ -90,7 +91,7 @@ fun MainMenuPage(
 
 @Composable
 fun MainSection(
-    mainMenuUIState: CommonProcessState<MainMenuState>,
+    mainMenuUIState: MainMenuUIState,
     snackBarHostState: SnackbarHostState,
     navigateToAuthPage: () -> Unit,
     navigateToEditGamerPage: () -> Unit,
@@ -103,15 +104,8 @@ fun MainSection(
     resetProcess: () -> Unit
 ) {
     when (mainMenuUIState) {
-        is CommonProcessState.Failure -> ErrorComponentMainMenu(
-            mainMenuUIState.error,
-            retryProcess = retryGetMainMenuData,
-            closeSession = closeSession
-        )
-
-        CommonProcessState.Loading -> CircularProgressDialog()
-        is CommonProcessState.Success<MainMenuState> -> MenuSection(
-            mainMenuState = mainMenuUIState.data,
+        is MainMenuUIState.DataMenuLoaded -> MenuSection(
+            mainMenuState = mainMenuUIState.mainMenuState,
             snackBarHostState = snackBarHostState,
             closeSession = closeSession,
             createNewGame = createNewGame,
@@ -122,8 +116,15 @@ fun MainSection(
             navigateToShowHelpPage = navigateToShowHelpPage,
             resetProcess = resetProcess
         )
-
-        CommonProcessState.Idle -> return
+        is MainMenuUIState.Failure -> ErrorComponentMainMenu(
+            mainMenuUIState.error,
+            retryProcess = retryGetMainMenuData,
+            closeSession = closeSession
+        )
+        MainMenuUIState.Loading -> CircularProgressDialog()
+        MainMenuUIState.SessionClosed -> LaunchedEffect(true) {
+            navigateToAuthPage()
+        }
     }
 }
 
@@ -520,8 +521,8 @@ fun PreviewMainMenu() {
         gamerCountryFlag = "\uD83C\uDDF2\uD83C\uDDFD",
         gamerImage = "https://images.unsplash.com/photo-1575936123452-b67c3203c357?fm=jpg&q=60&w=3000&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8aW1hZ2V8ZW58MHx8MHx8fDA%3D"
     )
-    val mainMenuUIState: CommonProcessState<MainMenuState> = CommonProcessState.Success(
-        data = MainMenuState(
+    val mainMenuUIState: MainMenuUIState = MainMenuUIState.DataMenuLoaded(
+        mainMenuState = MainMenuState(
             gamer = gamer,
             itHasProgress = false,
             /*menuProcessType = MenuProcessType.CreateNewGameProcess(CommonProcessState.Failure(

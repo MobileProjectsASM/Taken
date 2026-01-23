@@ -11,6 +11,7 @@ import com.asm.domain.use_cases.GetGamerUC
 import com.asm.domain.use_cases.HasThereBeenAnyProgressUC
 import com.asm.taken.model.CommonProcessState
 import com.asm.taken.model.MainMenuState
+import com.asm.taken.model.MainMenuUIState
 import com.asm.taken.model.MenuProcessType
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.async
@@ -31,27 +32,27 @@ class MainVM @Inject constructor(
         const val TAG = "main_menu_view_model"
     }
 
-    private val _mainMenuState = MutableStateFlow<CommonProcessState<MainMenuState>>(
-        CommonProcessState.Loading
+    private val _mainMenuState = MutableStateFlow<MainMenuUIState>(
+        MainMenuUIState.Loading
     )
 
-    val mainMenuState: StateFlow<CommonProcessState<MainMenuState>> = _mainMenuState
+    val mainMenuState: StateFlow<MainMenuUIState> = _mainMenuState
 
     fun getMainMenuData(gamerId: String) {
         viewModelScope.launch {
-            _mainMenuState.update { CommonProcessState.Loading }
+            _mainMenuState.update { MainMenuUIState.Loading }
 
             val gamerData = async { getGamerUC.execute(gamerId) }
             val gamesData = async { hasThereBeenAnyProgressUC.execute(gamerId) }
 
             val resultGamerData = gamerData.await()
             val isThereProgressResult = gamesData.await()
-            val mainMenuState: CommonProcessState<MainMenuState> = when {
-                resultGamerData is Result.Unsuccessful<GeneralError> -> CommonProcessState.Failure(
+            val mainMenuState: MainMenuUIState = when {
+                resultGamerData is Result.Unsuccessful<GeneralError> -> MainMenuUIState.Failure(
                     resultGamerData.error
                 )
 
-                isThereProgressResult is Result.Unsuccessful<GeneralError> -> CommonProcessState.Failure(
+                isThereProgressResult is Result.Unsuccessful<GeneralError> -> MainMenuUIState.Failure(
                     isThereProgressResult.error
                 )
 
@@ -59,13 +60,13 @@ class MainVM @Inject constructor(
                     val gamer = resultGamerData.asSuccessful().data
                     val isThereProgress = isThereProgressResult.asSuccessful().data
                     gamer?.let {
-                        CommonProcessState.Success(
+                        MainMenuUIState.DataMenuLoaded(
                             MainMenuState(
                                 gamer = gamer,
                                 itHasProgress = isThereProgress
                             )
                         )
-                    } ?: CommonProcessState.Failure(GeneralError.ServerError()).also {
+                    } ?: MainMenuUIState.Failure(GeneralError.ServerError()).also {
                         Log.e(TAG, "The user is authenticated but the associated gamer not exits")
                     }
                 }
@@ -75,40 +76,61 @@ class MainVM @Inject constructor(
     }
 
     fun closeSession() {
-        viewModelScope.launch {
-            val currentState = _mainMenuState.value
-            if (currentState is CommonProcessState.Success) {
-                _mainMenuState.update {
-                    CommonProcessState.Success(
-                        currentState.data.copy(
-                            menuProcessType = MenuProcessType.SessionCloseProcess(CommonProcessState.Loading)
-                        )
-                    )
-                }
-                val sessionClosedState =
-                    when (val closeSessionResult = closeSessionUC.execute(Unit)) {
-                        is Result.Successful<Unit> -> CommonProcessState.Success(Unit)
-                        is Result.Unsuccessful<GeneralError> -> CommonProcessState.Failure(
-                            closeSessionResult.error
+        when (val currentState = _mainMenuState.value) {
+            is MainMenuUIState.DataMenuLoaded -> {
+                viewModelScope.launch {
+                    _mainMenuState.update {
+                        MainMenuUIState.DataMenuLoaded(
+                            currentState.mainMenuState.copy(
+                                menuProcessType = MenuProcessType.SessionCloseProcess(
+                                    CommonProcessState.Loading
+                                )
+                            )
                         )
                     }
+                    val sessionClosedState =
+                        when (val closeSessionResult = closeSessionUC.execute(Unit)) {
+                            is Result.Successful<Unit> -> CommonProcessState.Success(Unit)
+                            is Result.Unsuccessful<GeneralError> -> CommonProcessState.Failure(
+                                closeSessionResult.error
+                            )
+                        }
 
-                _mainMenuState.update {
-                    CommonProcessState.Success(
-                        currentState.data.copy(
-                            menuProcessType = MenuProcessType.SessionCloseProcess(sessionClosedState)
+                    _mainMenuState.update {
+                        MainMenuUIState.DataMenuLoaded(
+                            currentState.mainMenuState.copy(
+                                menuProcessType = MenuProcessType.SessionCloseProcess(
+                                    sessionClosedState
+                                )
+                            )
                         )
-                    )
+                    }
                 }
             }
+
+            is MainMenuUIState.Failure -> {
+                viewModelScope.launch {
+                    _mainMenuState.update { MainMenuUIState.Loading }
+                    val sessionClosedState =
+                        when (val closeSessionResult = closeSessionUC.execute(Unit)) {
+                            is Result.Successful<Unit> -> MainMenuUIState.SessionClosed
+                            is Result.Unsuccessful<GeneralError> -> MainMenuUIState.Failure(
+                                closeSessionResult.error
+                            )
+                        }
+                    _mainMenuState.update { sessionClosedState }
+                }
+            }
+
+            else -> return
         }
     }
 
     fun resetProcess() {
-        val mainMenuState = _mainMenuState.value
-        if (mainMenuState is CommonProcessState.Success) {
+        val currentState = _mainMenuState.value
+        if (currentState is MainMenuUIState.DataMenuLoaded) {
             _mainMenuState.update {
-                CommonProcessState.Success(mainMenuState.data.copy(menuProcessType = MenuProcessType.Idle))
+                MainMenuUIState.DataMenuLoaded(currentState.mainMenuState.copy(menuProcessType = MenuProcessType.Idle))
             }
         }
     }

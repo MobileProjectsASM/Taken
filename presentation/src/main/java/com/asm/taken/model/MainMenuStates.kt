@@ -1,6 +1,14 @@
 package com.asm.taken.model
 
 import com.asm.domain.entities.Gamer
+import com.asm.domain.errors.GeneralError
+
+sealed class MainMenuUIState {
+    data object Loading : MainMenuUIState()
+    data object SessionClosed: MainMenuUIState()
+    data class DataMenuLoaded(val mainMenuState: MainMenuState): MainMenuUIState()
+    data class Failure(val error: GeneralError): MainMenuUIState()
+}
 
 data class MainMenuState(
     val gamer: Gamer,
