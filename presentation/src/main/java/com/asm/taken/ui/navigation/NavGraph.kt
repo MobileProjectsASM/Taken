@@ -190,7 +190,6 @@ fun MainNavigation(
             }
         }
         navigationMainPage(
-            authenticationClient = authenticationClient,
             snackBarHostState = snackBarHostState,
             navigationController = navigationController
         )
@@ -198,7 +197,6 @@ fun MainNavigation(
 }
 
 fun NavGraphBuilder.navigationMainPage(
-    authenticationClient: AuthenticationClient,
     snackBarHostState: SnackbarHostState,
     navigationController: NavHostController
 ) {
@@ -214,8 +212,7 @@ fun NavGraphBuilder.navigationMainPage(
                     gamerId = gamerId,
                     snackBarHostState = snackBarHostState,
                     mainVM = mainVM,
-                    authenticationClient = authenticationClient,
-                    onNavigateToAuthentication = {
+                    navigateToAuthPage = {
                         navigationController.navigate(Authentication) {
                             popUpTo(MainPage::class) {
                                 inclusive = true
@@ -224,6 +221,15 @@ fun NavGraphBuilder.navigationMainPage(
                     },
                     navigateToEditGamer = {
                         navigationController.navigate(EditGamer(gamerId = gamerId))
+                    },
+                    navigateToLevelsPage = {
+
+                    },
+                    navigateToShowRanking = {
+
+                    },
+                    navigateToShowHelp = {
+
                     }
                 )
             }

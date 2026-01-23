@@ -52,10 +52,9 @@ class MainActivity : ComponentActivity() {
                     keepSplashScreen = true
                     val message = when (val error = initRouteState.error) {
                         is GeneralError.ClientError -> error.message ?: resourceResolver.getString(R.string.err_client)
-                        GeneralError.NetworkError -> resourceResolver.getString(R.string.err_network_connection)
+                        GeneralError.ConnectionError -> resourceResolver.getString(R.string.err_connection)
                         is GeneralError.ServerError -> error.message ?: resourceResolver.getString(R.string.err_server)
                         GeneralError.Unknown -> resourceResolver.getString(R.string.err_unknown)
-                        GeneralError.ConnectionError -> resourceResolver.getString(R.string.err_server_connection)
                     }
                     Snackbar.make(window.decorView, message, Snackbar.LENGTH_SHORT).show()
                 }

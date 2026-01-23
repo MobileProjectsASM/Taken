@@ -804,13 +804,6 @@ fun ErrorComponent(
         )
 
         GeneralError.ConnectionError -> DialogError(
-            title = stringResource(R.string.txt_ttl_unexpected_error),
-            image = painterResource(R.drawable.ic_warning),
-            message = stringResource(R.string.err_server_connection),
-            onDismissedDialog = resetProcessState
-        )
-
-        GeneralError.NetworkError -> DialogError(
             title = stringResource(R.string.txt_ttl_service_error),
             image = painterResource(R.drawable.ic_sin_internet),
             message = stringResource(R.string.err_server),

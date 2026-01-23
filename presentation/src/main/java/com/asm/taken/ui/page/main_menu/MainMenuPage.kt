@@ -26,6 +26,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -44,15 +45,16 @@ import coil.compose.AsyncImage
 import com.asm.domain.entities.Gamer
 import com.asm.domain.errors.GeneralError
 import com.asm.taken.R
-import com.asm.taken.model.GamerState
+import com.asm.taken.model.CommonProcessState
 import com.asm.taken.model.MainMenuState
+import com.asm.taken.model.MenuProcessType
 import com.asm.taken.ui.CircularProgressDialog
 import com.asm.taken.ui.DefaultButton
 import com.asm.taken.ui.DefaultIconButton
 import com.asm.taken.ui.DefaultText
 import com.asm.taken.ui.ImageDialog
 import com.asm.taken.ui.PuzzleGeneralTitle
-import com.asm.taken.utils.AuthenticationClient
+import com.asm.taken.ui.SnackBarError
 import com.asm.taken.vm.MainVM
 import kotlinx.coroutines.launch
 
@@ -61,165 +63,179 @@ fun MainMenuPage(
     gamerId: String,
     snackBarHostState: SnackbarHostState,
     mainVM: MainVM,
-    authenticationClient: AuthenticationClient,
-    onNavigateToAuthentication: () -> Unit,
-    navigateToEditGamer: () -> Unit
+    navigateToAuthPage: () -> Unit,
+    navigateToEditGamer: () -> Unit,
+    navigateToLevelsPage: (gamerId: String) -> Unit,
+    navigateToShowRanking: () -> Unit,
+    navigateToShowHelp: () -> Unit
 ) {
-    LaunchedEffect(true) { mainVM.getMainDataGamer(gamerId) }
+    val mainMenuUIState: CommonProcessState<MainMenuState> by mainVM.mainMenuState.collectAsStateWithLifecycle()
+
+    LaunchedEffect(true) { mainVM.getMainMenuData(gamerId) }
+
     MainSection(
-        gamerId = gamerId,
-        mainVM = mainVM,
-        authenticationClient = authenticationClient,
+        mainMenuUIState = mainMenuUIState,
         snackBarHostState = snackBarHostState,
-        navigateToEditGamerPage = navigateToEditGamer
-    )
-    NavigateSection(
-        snackBarHostState = snackBarHostState,
-        mainVM = mainVM,
-        onNavigateToAuthentication = onNavigateToAuthentication
+        retryGetMainMenuData = { mainVM.getMainMenuData(gamerId) },
+        navigateToAuthPage = navigateToAuthPage,
+        navigateToEditGamerPage = navigateToEditGamer,
+        navigateToLevelsPage = { navigateToLevelsPage(gamerId) },
+        navigateToShowHelpPage = navigateToShowHelp,
+        navigateToShowRankingPage = navigateToShowRanking,
+        createNewGame = mainVM::createNewGame,
+        closeSession = mainVM::closeSession,
+        resetProcess = mainVM::resetProcess
     )
 }
 
 @Composable
 fun MainSection(
-    gamerId: String,
+    mainMenuUIState: CommonProcessState<MainMenuState>,
     snackBarHostState: SnackbarHostState,
-    mainVM: MainVM,
-    authenticationClient: AuthenticationClient,
-    navigateToEditGamerPage: () -> Unit
+    navigateToAuthPage: () -> Unit,
+    navigateToEditGamerPage: () -> Unit,
+    navigateToLevelsPage: () -> Unit,
+    navigateToShowRankingPage: () -> Unit,
+    navigateToShowHelpPage: () -> Unit,
+    retryGetMainMenuData: () -> Unit,
+    createNewGame: () -> Unit,
+    closeSession: () -> Unit,
+    resetProcess: () -> Unit
 ) {
-    val gamerState: GamerState by mainVM.gamerState.collectAsStateWithLifecycle()
+    when (mainMenuUIState) {
+        is CommonProcessState.Failure -> ErrorComponentMainMenu(
+            mainMenuUIState.error,
+            retryProcess = retryGetMainMenuData,
+            closeSession = closeSession
+        )
 
-    when (val state = gamerState) {
-        is GamerState.Successful -> Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ) {
-            ContentMainMenu(
-                snackBarHostState = snackBarHostState,
-                successfulGamer = state,
-                onCloseSession = {
-                    mainVM.closeSession()
-                },
-                onCreateNewGame = {
-
-                },
-                onContinueGame = {
-
-                },
-                onEditGamer = navigateToEditGamerPage,
-                onShowRanking = {
-
-                },
-                onShowHelp = {
-
-                }
-            )
-        }
-
-        is GamerState.Fail -> when (state.error) {
-            is GeneralError.ClientError -> DialogError(
-                title = stringResource(R.string.txt_ttl_client_error),
-                image = painterResource(R.drawable.ic_warning),
-                message = stringResource(R.string.err_client),
-                logOut = {
-                    mainVM.closeSession()
-                },
-                onDismissDialog = {
-
-                }
-            )
-
-            GeneralError.ConnectionError -> TODO()
-            GeneralError.NetworkError -> DialogError(
-                title = stringResource(R.string.txt_ttl_client_error),
-                image = painterResource(R.drawable.ic_sin_internet),
-                message = stringResource(R.string.err_network_connection),
-                retryProcess = { mainVM.getMainDataGamer(gamerId) },
-                logOut = { mainVM.closeSession() },
-                onDismissDialog = {
-
-                }
-            )
-
-            is GeneralError.ServerError -> DialogError(
-                title = stringResource(R.string.txt_ttl_service_error),
-                image = painterResource(R.drawable.ic_error),
-                message = stringResource(R.string.err_server),
-                logOut = { mainVM.closeSession() },
-                onDismissDialog = {
-
-                }
-            )
-
-            GeneralError.Unknown -> DialogError(
-                title = stringResource(R.string.txt_ttl_unexpected_error),
-                image = painterResource(R.drawable.ic_cancelar),
-                message = stringResource(R.string.err_process_data),
-                logOut = { mainVM.closeSession() },
-                onDismissDialog = {
-
-                }
-            )
-        }
-
-        GamerState.Loading -> CircularProgressDialog()
-    }
-}
-
-@Composable
-fun ContentMainMenu(
-    snackBarHostState: SnackbarHostState,
-    successfulGamer: GamerState.Successful,
-    onCloseSession: () -> Unit,
-    onCreateNewGame: (Boolean) -> Unit,
-    onContinueGame: () -> Unit,
-    onEditGamer: () -> Unit,
-    onShowRanking: () -> Unit,
-    onShowHelp: () -> Unit
-) {
-    Column(
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        PanelGamerProfile(
+        CommonProcessState.Loading -> CircularProgressDialog()
+        is CommonProcessState.Success<MainMenuState> -> MenuSection(
+            mainMenuState = mainMenuUIState.data,
             snackBarHostState = snackBarHostState,
-            errorMessageImageUrlNotFound = stringResource(R.string.txt_label_image_url_not_found),
-            gamer = successfulGamer.gamer,
-            closeSession = onCloseSession
+            closeSession = closeSession,
+            createNewGame = createNewGame,
+            navigateToAuthPage = navigateToAuthPage,
+            navigateToEditGamerPage = navigateToEditGamerPage,
+            navigateToLevelsPage = navigateToLevelsPage,
+            navigateToShowRankingPage = navigateToShowRankingPage,
+            navigateToShowHelpPage = navigateToShowHelpPage,
+            resetProcess = resetProcess
         )
-        PanelMenu(
-            itHasProgress = successfulGamer.itHasProgress,
-            onCreateNewGame = onCreateNewGame,
-            onContinueGame = onContinueGame,
-            onEditGamer = onEditGamer,
-            onShowRanking = onShowRanking,
-            onShowHelp = onShowHelp
+
+        CommonProcessState.Idle -> return
+    }
+}
+
+@Composable
+fun MenuSection(
+    mainMenuState: MainMenuState,
+    snackBarHostState: SnackbarHostState,
+    closeSession: () -> Unit,
+    createNewGame: () -> Unit,
+    navigateToAuthPage: () -> Unit,
+    navigateToEditGamerPage: () -> Unit,
+    navigateToLevelsPage: () -> Unit,
+    navigateToShowRankingPage: () -> Unit,
+    navigateToShowHelpPage: () -> Unit,
+    resetProcess: () -> Unit
+) {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        var showConfirmDialog: Boolean by rememberSaveable { mutableStateOf(false) }
+        if (showConfirmDialog) {
+            ImageDialog(
+                title = stringResource(R.string.txt_ttl_warning),
+                image = painterResource(R.drawable.ic_warning),
+                message = stringResource(R.string.txt_label_confirm_delete_message),
+                onClose = { showConfirmDialog = false },
+                onDismissRequest = { showConfirmDialog = false }
+            ) {
+                DefaultButton(
+                    text = stringResource(id = R.string.txt_btn_confirm_delete_button),
+                    onClickButton = {
+                        showConfirmDialog = false
+                        createNewGame()
+                    }
+                )
+            }
+        }
+        Column(
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            PanelGamerProfile(
+                snackBarHostState = snackBarHostState,
+                errorMessageImageUrlNotFound = stringResource(R.string.txt_label_image_url_not_found),
+                gamer = mainMenuState.gamer,
+                closeSession = closeSession
+            )
+            PanelMenu(
+                itHasProgress = mainMenuState.itHasProgress,
+                createNewGame = {
+                    if (mainMenuState.itHasProgress) showConfirmDialog = true
+                    else navigateToLevelsPage()
+                },
+                onClickContinue = navigateToLevelsPage,
+                onClickEditGamer = navigateToEditGamerPage,
+                onClickShowRanking = navigateToShowRankingPage,
+                onClickShowHelp = navigateToShowHelpPage
+            )
+        }
+        ProcessSection(
+            menuProcessType = mainMenuState.menuProcessType,
+            snackBarHostState = snackBarHostState,
+            navigateToAuthPage = navigateToAuthPage,
+            navigateToLevelsPage = navigateToLevelsPage,
+            retryCreateNewGame = createNewGame,
+            retryCloseSession = closeSession,
+            resetProcess = resetProcess
         )
     }
 }
 
 @Composable
-fun NavigateSection(
+fun ProcessSection(
+    menuProcessType: MenuProcessType,
     snackBarHostState: SnackbarHostState,
-    mainVM: MainVM,
-    onNavigateToAuthentication: () -> Unit
+    navigateToAuthPage: () -> Unit,
+    navigateToLevelsPage: () -> Unit,
+    retryCreateNewGame: () -> Unit,
+    retryCloseSession: () -> Unit,
+    resetProcess: () -> Unit
 ) {
-    val mainMenuState: MainMenuState? by mainVM.mainMenuState.collectAsStateWithLifecycle()
-    when (val state = mainMenuState) {
-        is MainMenuState.Fail -> when (state.error) {
-            is GeneralError.ClientError -> TODO()
-            GeneralError.ConnectionError -> TODO()
-            GeneralError.NetworkError -> TODO()
+    when (menuProcessType) {
+        is MenuProcessType.CreateNewGameProcess -> when (val processState =
+            menuProcessType.process) {
+            is CommonProcessState.Failure -> ErrorComponentProcess(
+                snackBarHostState = snackBarHostState,
+                generalError = processState.error,
+                retryProcess = retryCreateNewGame,
+                onCloseDialog = resetProcess,
+                onDismissedSnackBar = resetProcess
+            )
 
-            is GeneralError.ServerError -> TODO()
-
-            GeneralError.Unknown -> TODO()
+            CommonProcessState.Loading -> CircularProgressDialog()
+            is CommonProcessState.Success<Unit> -> LaunchedEffect(true) { navigateToLevelsPage() }
+            CommonProcessState.Idle -> return
         }
 
-        MainMenuState.Loading -> CircularProgressDialog()
-        MainMenuState.SessionClosed -> LaunchedEffect(true) { onNavigateToAuthentication() }
+        is MenuProcessType.SessionCloseProcess -> when (val processState =
+            menuProcessType.process) {
+            is CommonProcessState.Failure -> ErrorComponentProcess(
+                snackBarHostState = snackBarHostState,
+                generalError = processState.error,
+                retryProcess = retryCloseSession,
+                onCloseDialog = resetProcess,
+                onDismissedSnackBar = resetProcess
+            )
+            CommonProcessState.Loading -> CircularProgressDialog()
+            is CommonProcessState.Success<Unit> -> LaunchedEffect(true) { navigateToAuthPage() }
+            CommonProcessState.Idle -> return
+        }
 
-        null -> return
+        MenuProcessType.Idle -> return
     }
 }
 
@@ -309,11 +325,11 @@ fun PanelGamerProfile(
 @Composable
 fun PanelMenu(
     itHasProgress: Boolean,
-    onCreateNewGame: (Boolean) -> Unit,
-    onContinueGame: () -> Unit,
-    onEditGamer: () -> Unit,
-    onShowRanking: () -> Unit,
-    onShowHelp: () -> Unit
+    createNewGame: () -> Unit,
+    onClickContinue: () -> Unit,
+    onClickEditGamer: () -> Unit,
+    onClickShowRanking: () -> Unit,
+    onClickShowHelp: () -> Unit
 ) {
     Card(
         modifier = Modifier
@@ -329,88 +345,205 @@ fun PanelMenu(
             DefaultButton(
                 modifier = Modifier.padding(start = 10.dp, end = 10.dp, top = 10.dp),
                 text = stringResource(id = R.string.txt_btn_new_game),
-                onClickButton = { onCreateNewGame(itHasProgress) }
+                onClickButton = createNewGame
             )
             if (itHasProgress) {
                 DefaultButton(
                     modifier = Modifier.padding(start = 10.dp, end = 10.dp, top = 10.dp),
                     text = stringResource(id = R.string.txt_btn_continue_game),
-                    onClickButton = onContinueGame
+                    onClickButton = onClickContinue
                 )
             }
             DefaultButton(
                 modifier = Modifier.padding(start = 10.dp, end = 10.dp, top = 10.dp),
                 text = stringResource(id = R.string.txt_btn_edit_gamer),
-                onClickButton = onEditGamer
+                onClickButton = onClickEditGamer
             )
             DefaultButton(
                 modifier = Modifier.padding(start = 10.dp, end = 10.dp, top = 10.dp),
                 text = stringResource(id = R.string.txt_btn_show_ranking),
-                onClickButton = onShowRanking
+                onClickButton = onClickShowRanking
             )
             DefaultButton(
                 modifier = Modifier.padding(10.dp),
                 text = stringResource(id = R.string.txt_btn_help),
-                onClickButton = onShowHelp
+                onClickButton = onClickShowHelp
             )
         }
     }
 }
 
 @Composable
-fun DialogError(
+fun ErrorComponentMainMenu(
+    generalError: GeneralError,
+    retryProcess: () -> Unit,
+    closeSession: () -> Unit
+) {
+    when (generalError) {
+        is GeneralError.ClientError -> ImageDialog(
+            title = stringResource(R.string.txt_ttl_client_error),
+            image = painterResource(R.drawable.ic_warning),
+            message = stringResource(R.string.err_client),
+            retryProcess = retryProcess,
+            closeSession = closeSession
+        )
+
+        GeneralError.ConnectionError -> ImageDialog(
+            title = stringResource(R.string.txt_ttl_service_error),
+            image = painterResource(R.drawable.ic_sin_internet),
+            message = stringResource(R.string.err_server),
+            retryProcess = retryProcess,
+            closeSession = closeSession
+        )
+
+        is GeneralError.ServerError -> ImageDialog(
+            title = stringResource(R.string.txt_ttl_service_error),
+            image = painterResource(R.drawable.ic_error),
+            message = stringResource(R.string.err_server),
+            retryProcess = retryProcess,
+            closeSession = closeSession
+        )
+
+        GeneralError.Unknown -> ImageDialog(
+            title = stringResource(R.string.txt_ttl_unexpected_error),
+            image = painterResource(R.drawable.ic_cancelar),
+            message = stringResource(R.string.err_process_data),
+            closeSession = closeSession,
+        )
+    }
+}
+
+@Composable
+fun ErrorComponentProcess(
+    snackBarHostState: SnackbarHostState,
+    generalError: GeneralError,
+    retryProcess: () -> Unit,
+    onCloseDialog: () -> Unit,
+    onDismissedSnackBar: () -> Unit
+) {
+    when (generalError) {
+        is GeneralError.ClientError -> ImageDialog(
+            title = stringResource(R.string.txt_ttl_client_error),
+            image = painterResource(R.drawable.ic_warning),
+            message = stringResource(R.string.err_client),
+            retryProcess = retryProcess,
+            onClose = onCloseDialog
+        )
+
+        GeneralError.ConnectionError -> ImageDialog(
+            title = stringResource(R.string.txt_ttl_service_error),
+            image = painterResource(R.drawable.ic_sin_internet),
+            message = stringResource(R.string.err_connection),
+            retryProcess = retryProcess,
+            onClose = onCloseDialog
+        )
+
+        is GeneralError.ServerError -> ImageDialog(
+            title = stringResource(R.string.txt_ttl_service_error),
+            image = painterResource(R.drawable.ic_error),
+            message = stringResource(R.string.err_server),
+            retryProcess = retryProcess,
+            onClose = onCloseDialog
+        )
+
+        GeneralError.Unknown -> SnackBarError(
+            snackBarHostState = snackBarHostState,
+            message = stringResource(R.string.err_auth),
+            withDismissAction = true,
+            onDismissed = onDismissedSnackBar
+        )
+    }
+}
+
+@Composable
+fun ImageDialog(
     title: String,
     image: Painter,
     message: String,
     retryProcess: (() -> Unit)? = null,
-    logOut: () -> Unit,
-    onDismissDialog: () -> Unit
+    closeSession: () -> Unit
 ) {
-    var showErrorDialog by rememberSaveable { mutableStateOf(true) }
-    if (showErrorDialog) {
-        ImageDialog(
-            title = title,
-            image = image,
-            message = message
-        ) {
-            retryProcess?.also {
-                DefaultIconButton(
-                    text = stringResource(id = R.string.txt_label_retry),
-                    imageVector = Icons.Filled.Replay,
-                    onClickButton = {
-                        retryProcess()
-                        showErrorDialog = false
-                        onDismissDialog()
-                    }
-                )
-                Spacer(modifier = Modifier.height(10.dp))
-            }
+    ImageDialog(
+        title = title,
+        image = image,
+        message = message
+    ) {
+        retryProcess?.also {
             DefaultIconButton(
-                text = stringResource(id = R.string.txt_btn_logout),
-                imageVector = Icons.AutoMirrored.Filled.Logout,
-                onClickButton = {
-                    logOut()
-                    showErrorDialog = false
-                    onDismissDialog()
-                }
+                text = stringResource(id = R.string.txt_label_retry),
+                imageVector = Icons.Filled.Replay,
+                onClickButton = retryProcess
             )
+            Spacer(modifier = Modifier.height(10.dp))
         }
+        DefaultIconButton(
+            text = stringResource(id = R.string.txt_btn_logout),
+            imageVector = Icons.AutoMirrored.Filled.Logout,
+            onClickButton = closeSession
+        )
+    }
+}
+
+@Composable
+fun ImageDialog(
+    title: String,
+    image: Painter,
+    message: String,
+    retryProcess: () -> Unit,
+    onClose: () -> Unit
+) {
+    ImageDialog(
+        title = title,
+        image = image,
+        message = message,
+        onClose = onClose
+    ) {
+        DefaultIconButton(
+            text = stringResource(id = R.string.txt_label_retry),
+            imageVector = Icons.Filled.Replay,
+            onClickButton = retryProcess
+        )
     }
 }
 
 @Preview(showSystemUi = true)
 @Composable
 fun PreviewMainMenu() {
+    val snackBarHostState = remember { SnackbarHostState() }
+
+    //val mainMenuUIState: CommonProcessState<MainMenuState> = CommonProcessState.Loading
     val gamer = Gamer(
         gamerId = "abcd-efgh",
         gamerNickName = "Arturo",
         gamerAge = 28,
         gamerCountry = "Mexico",
         gamerCountryFlag = "\uD83C\uDDF2\uD83C\uDDFD",
-        gamerImage = "https://firebasestorage.googleapis.com/v0/b/puzzle-16426.firebasestorage.app/o/images%2Fprofile%2Fpi_7Si8Y2UkZBNVjQLVpwLuiwuqXv93.webp?alt=media&token=4b00af8a-5e39-4064-bb18-80cd6565300d"
+        gamerImage = "https://images.unsplash.com/photo-1575936123452-b67c3203c357?fm=jpg&q=60&w=3000&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8aW1hZ2V8ZW58MHx8MHx8fDA%3D"
     )
-    val successfulGamer = GamerState.Successful(
-        gamer = gamer,
-        itHasProgress = true
+    val mainMenuUIState: CommonProcessState<MainMenuState> = CommonProcessState.Success(
+        data = MainMenuState(
+            gamer = gamer,
+            itHasProgress = false,
+            /*menuProcessType = MenuProcessType.CreateNewGameProcess(CommonProcessState.Failure(
+                error = GeneralError.ConnectionError
+            ))*/
+        )
+    )
+    /*val mainMenuUIState: CommonProcessState<MainMenuState> = CommonProcessState.Failure(
+        error = GeneralError.ClientError()
+    )*/
+
+    MainSection(
+        mainMenuUIState = mainMenuUIState,
+        snackBarHostState = snackBarHostState,
+        navigateToAuthPage = { },
+        navigateToEditGamerPage = { },
+        navigateToLevelsPage = { },
+        retryGetMainMenuData = { },
+        navigateToShowRankingPage = { },
+        navigateToShowHelpPage = { },
+        createNewGame = { },
+        closeSession = { },
+        resetProcess = { }
     )
 }

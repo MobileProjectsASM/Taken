@@ -520,10 +520,10 @@ fun ErrorComponent(
             onBack = onBack
         )
 
-        GeneralError.NetworkError -> DialogError(
+        GeneralError.ConnectionError -> DialogError(
             title = stringResource(R.string.txt_ttl_client_error),
             image = painterResource(R.drawable.ic_sin_internet),
-            message = stringResource(R.string.err_network_connection),
+            message = stringResource(R.string.err_connection),
             textAction = stringResource(id = R.string.txt_label_retry),
             iconAction = Icons.Filled.Replay,
             onAction = retryProcess,
@@ -544,16 +544,6 @@ fun ErrorComponent(
             title = stringResource(R.string.txt_ttl_unexpected_error),
             image = painterResource(R.drawable.ic_warning),
             message = stringResource(R.string.err_unknown),
-            textAction = stringResource(id = R.string.txt_label_retry),
-            iconAction = Icons.Filled.Replay,
-            onAction = retryProcess,
-            onBack = onBack
-        )
-
-        GeneralError.ConnectionError -> DialogError(
-            title = stringResource(R.string.txt_ttl_unexpected_error),
-            image = painterResource(R.drawable.ic_warning),
-            message = stringResource(R.string.err_server_connection),
             textAction = stringResource(id = R.string.txt_label_retry),
             iconAction = Icons.Filled.Replay,
             onAction = retryProcess,

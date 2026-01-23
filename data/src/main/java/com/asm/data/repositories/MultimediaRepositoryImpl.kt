@@ -31,7 +31,7 @@ class MultimediaRepositoryImpl @Inject constructor(
         byteArray: ByteArray
     ): Result<String, GeneralError> {
         return try {
-            if (!connectionSource.isNetworkAvailable()) return Result.Unsuccessful(GeneralError.NetworkError)
+            if (!connectionSource.isNetworkAvailable()) return Result.Unsuccessful(GeneralError.ConnectionError)
             val imagePath = "$PROFILE_IMAGES_PATH/$profileImageName"
             multimediaRemoteSource.uploadResource(imagePath, byteArray)
         } catch (exception: Exception) {
@@ -43,7 +43,7 @@ class MultimediaRepositoryImpl @Inject constructor(
     override suspend fun deleteResourceByUrl(uri: String): Result<Boolean, GeneralError> {
         return try {
             if (uri.startsWith(URL_PREFIX)) {
-                if (!connectionSource.isNetworkAvailable()) Result.Unsuccessful(GeneralError.NetworkError)
+                if (!connectionSource.isNetworkAvailable()) Result.Unsuccessful(GeneralError.ConnectionError)
                 else multimediaRemoteSource.deleteResourceByUrl(uri)
             }
             else TODO()
@@ -56,7 +56,7 @@ class MultimediaRepositoryImpl @Inject constructor(
     override suspend fun getDefaultUserImage(): Result<String?, GeneralError> {
         return try {
             val fullPath = "$PROFILE_IMAGES_PATH/$DEFAULT_PROFILE_IMAGE"
-            if (!connectionSource.isNetworkAvailable()) return Result.Unsuccessful(GeneralError.NetworkError)
+            if (!connectionSource.isNetworkAvailable()) return Result.Unsuccessful(GeneralError.ConnectionError)
             multimediaRemoteSource.getUrlResource(fullPath)
         } catch (exception: Exception) {
             logger.logE(TAG, exception)

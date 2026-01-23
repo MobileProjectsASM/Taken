@@ -121,7 +121,7 @@ class AuthenticationProviders(
                     Log.e(TAG, "Unexpected Exception to auth with phone number", firebaseException)
                     val phonesSendOtpError = when (firebaseException) {
                         is FirebaseAuthInvalidCredentialsException, is FirebaseTooManyRequestsException, is FirebaseAuthMissingActivityForRecaptchaException -> GeneralError.ClientError()
-                        is FirebaseNetworkException -> GeneralError.NetworkError
+                        is FirebaseNetworkException -> GeneralError.ConnectionError
                         else -> GeneralError.Unknown
                     }
                     it.resume(AuthWithPhoneResult.Error(phonesSendOtpError))

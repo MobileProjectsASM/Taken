@@ -1,19 +1,15 @@
 package com.asm.taken.model
 
 import com.asm.domain.entities.Gamer
-import com.asm.domain.errors.GeneralError
 
-sealed class GamerState {
-    data class Successful(
-        val gamer: Gamer,
-        val itHasProgress: Boolean
-    ): GamerState()
-    data object Loading: GamerState()
-    data class Fail(val error: GeneralError): GamerState()
-}
+data class MainMenuState(
+    val gamer: Gamer,
+    val itHasProgress: Boolean,
+    val menuProcessType: MenuProcessType = MenuProcessType.Idle
+)
 
-sealed class MainMenuState {
-    data object Loading: MainMenuState()
-    data object SessionClosed: MainMenuState()
-    data class Fail(val error: GeneralError): MainMenuState()
+sealed class MenuProcessType {
+    data object Idle: MenuProcessType()
+    data class SessionCloseProcess(val process: CommonProcessState<Unit>): MenuProcessType()
+    data class CreateNewGameProcess(val process: CommonProcessState<Unit>): MenuProcessType()
 }
