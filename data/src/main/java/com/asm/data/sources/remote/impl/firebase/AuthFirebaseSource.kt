@@ -67,7 +67,7 @@ class AuthFirebaseSource @Inject constructor(
             when (exception) {
                 is FirebaseAuthInvalidUserException -> GeneralError.ClientError("")
                 is FirebaseAuthInvalidCredentialsException -> GeneralError.ClientError("")
-                is FirebaseNetworkException -> GeneralError.NetworkError
+                is FirebaseNetworkException -> GeneralError.ConnectionError
                 is FirebaseException -> GeneralError.ClientError("")
                 else -> GeneralError.Unknown
             }.toUnsuccessful()
@@ -99,7 +99,7 @@ class AuthFirebaseSource @Inject constructor(
             when (exception) {
                 is FirebaseAuthInvalidUserException -> GeneralError.ClientError("")
                 is FirebaseAuthInvalidCredentialsException -> GeneralError.ClientError("")
-                is FirebaseNetworkException -> GeneralError.NetworkError
+                is FirebaseNetworkException -> GeneralError.ConnectionError
                 is FirebaseException -> GeneralError.ClientError("")
                 else -> GeneralError.Unknown
             }.toUnsuccessful()
@@ -124,7 +124,7 @@ class AuthFirebaseSource @Inject constructor(
             when (exception) {
                 is FirebaseAuthInvalidUserException -> GeneralError.ClientError("")
                 is FirebaseAuthInvalidCredentialsException -> GeneralError.ClientError("")
-                is FirebaseNetworkException -> GeneralError.NetworkError
+                is FirebaseNetworkException -> GeneralError.ConnectionError
                 is FirebaseException -> GeneralError.ClientError("")
                 else -> GeneralError.Unknown
             }.toUnsuccessful()
@@ -145,7 +145,7 @@ class AuthFirebaseSource @Inject constructor(
             when (exception) {
                 is FirebaseAuthInvalidUserException -> GeneralError.ClientError("")
                 is FirebaseAuthInvalidCredentialsException -> GeneralError.ClientError("")
-                is FirebaseNetworkException -> GeneralError.NetworkError
+                is FirebaseNetworkException -> GeneralError.ConnectionError
                 is FirebaseException -> GeneralError.ClientError("")
                 else -> GeneralError.Unknown
             }.toUnsuccessful()
@@ -169,7 +169,7 @@ class AuthFirebaseSource @Inject constructor(
             Log.e(TAG, "Unexpected exception to create account", exception)
             when (exception) {
                 is FirebaseAuthException -> GeneralError.ClientError("")
-                is FirebaseNetworkException -> GeneralError.NetworkError
+                is FirebaseNetworkException -> GeneralError.ConnectionError
                 is FirebaseException -> GeneralError.ClientError("")
                 else -> GeneralError.Unknown
             }.toUnsuccessful()

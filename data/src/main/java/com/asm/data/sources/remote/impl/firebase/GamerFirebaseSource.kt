@@ -12,7 +12,6 @@ import com.asm.domain.errors.GeneralError
 import com.asm.domain.errors.toUnsuccessful
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.FirebaseFirestoreException
-import com.google.firebase.firestore.SetOptions
 import com.google.firebase.functions.FirebaseFunctions
 import com.google.firebase.functions.FirebaseFunctionsException
 import com.google.gson.Gson
@@ -81,7 +80,7 @@ class GamerFirebaseSource @Inject constructor(
         } catch (exception: Exception) {
             Log.e(TAG, "Unexpected save gamer", exception)
             when (exception) {
-                is IOException -> GeneralError.NetworkError.toUnsuccessful()
+                is IOException -> GeneralError.ConnectionError.toUnsuccessful()
                 is FirebaseFunctionsException -> handleFirebaseFunctionException(exception)
                     .toUnsuccessful()
 
@@ -112,7 +111,7 @@ class GamerFirebaseSource @Inject constructor(
         } catch (exception: Exception) {
             Log.e(TAG, "Unexpected save gamer", exception)
             when (exception) {
-                is IOException -> GeneralError.NetworkError.toUnsuccessful()
+                is IOException -> GeneralError.ConnectionError.toUnsuccessful()
                 is FirebaseFirestoreException -> handleFirebaseFireStoreException(exception)
                     .toUnsuccessful()
 

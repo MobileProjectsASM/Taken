@@ -33,7 +33,7 @@ class CountryInfoRepositoryImpl @Inject constructor(
 
     override suspend fun downloadCountriesInfo(): Result<Unit, GeneralError> {
         return try {
-            if (!connectionSource.isNetworkAvailable()) return GeneralError.NetworkError.toUnsuccessful()
+            if (!connectionSource.isNetworkAvailable()) return GeneralError.ConnectionError.toUnsuccessful()
             when (val countriesCallCodeResult = countryInfoRemoteSource.getCountriesCallCode()) {
                 is Result.Successful<List<CountryInfo>> -> countryInfoLocalSource.saveCountriesInfo(
                     countriesCallCodeResult.data

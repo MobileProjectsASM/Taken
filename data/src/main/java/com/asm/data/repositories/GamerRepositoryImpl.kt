@@ -28,7 +28,7 @@ class GamerRepositoryImpl @Inject constructor(
         gamerImage: String
     ): Result<String, GeneralError> {
         if (!connectionSource.isNetworkAvailable())
-            return GeneralError.NetworkError.toUnsuccessful()
+            return GeneralError.ConnectionError.toUnsuccessful()
         return gamerRemoteSource.saveGamer(
             userId,
             gamerAlias,
@@ -48,7 +48,7 @@ class GamerRepositoryImpl @Inject constructor(
         gamerImage: String
     ): Result<String, GeneralError> {
         if (!connectionSource.isNetworkAvailable())
-            return GeneralError.NetworkError.toUnsuccessful()
+            return GeneralError.ConnectionError.toUnsuccessful()
         return gamerRemoteSource.updateGamer(
             userId,
             gamerAlias,
@@ -64,7 +64,7 @@ class GamerRepositoryImpl @Inject constructor(
         imageUrl: String
     ): Result<Unit, GeneralError> {
         return try {
-            if (!connectionSource.isNetworkAvailable()) GeneralError.NetworkError.toUnsuccessful()
+            if (!connectionSource.isNetworkAvailable()) GeneralError.ConnectionError.toUnsuccessful()
             else gamerRemoteSource.updateGamerImage(gamerId, imageUrl)
         } catch (e: Exception) {
             logger.logE(TAG, e)
@@ -74,7 +74,7 @@ class GamerRepositoryImpl @Inject constructor(
 
     override suspend fun verifyGamerExists(gamerId: String): Result<Boolean, GeneralError> {
         return try {
-            if (!connectionSource.isNetworkAvailable()) GeneralError.NetworkError.toUnsuccessful()
+            if (!connectionSource.isNetworkAvailable()) GeneralError.ConnectionError.toUnsuccessful()
             else gamerRemoteSource.checkGamerExists(gamerId)
         } catch (e: Exception) {
             logger.logE(TAG, e)
@@ -84,7 +84,7 @@ class GamerRepositoryImpl @Inject constructor(
 
     override suspend fun deleteGamer(gamerId: String): Result<Unit, GeneralError> {
         return try {
-            if (!connectionSource.isNetworkAvailable()) GeneralError.NetworkError.toUnsuccessful()
+            if (!connectionSource.isNetworkAvailable()) GeneralError.ConnectionError.toUnsuccessful()
             else gamerRemoteSource.deleteGamer(gamerId)
         } catch (e: Exception) {
             logger.logE(TAG, e)
@@ -94,7 +94,7 @@ class GamerRepositoryImpl @Inject constructor(
 
     override suspend fun getGamerById(gamerId: String): Result<Gamer?, GeneralError> {
         return try {
-            if (!connectionSource.isNetworkAvailable()) GeneralError.NetworkError.toUnsuccessful()
+            if (!connectionSource.isNetworkAvailable()) GeneralError.ConnectionError.toUnsuccessful()
             else gamerRemoteSource.getGamerById(gamerId)
         } catch (e: Exception) {
             logger.logE(TAG, e)
