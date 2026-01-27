@@ -1,5 +1,6 @@
 package com.asm.taken.model
 
+import androidx.collection.ObjectList
 import com.asm.domain.entities.AuthUser
 import com.asm.domain.entities.CountryInfo
 import com.asm.domain.entities.Gamer
@@ -133,12 +134,14 @@ data class MetaDataEditForm(
     val gamer: Gamer,
     val defaultImageUrl: String?,
     val socialNetworkImage: String?,
-)
-
-data class EditGamerUIState(
-    val editFormState: CommonProcessState<MetaDataEditForm> = CommonProcessState.Loading,
     val editGamerProcessType: EditGamerProcessType = EditGamerProcessType.Idle
 )
+
+sealed class EditGamerUIState {
+    data object Loading : EditGamerUIState()
+    data class Success(val metaDataEditForm: MetaDataEditForm): EditGamerUIState()
+    data class Failure(val error: GeneralError): EditGamerUIState()
+}
 
 sealed class EditGamerProcessType {
     data object Idle: EditGamerProcessType()

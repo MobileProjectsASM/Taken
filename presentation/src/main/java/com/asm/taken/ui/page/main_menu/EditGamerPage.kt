@@ -95,7 +95,7 @@ fun EditGamerPage(
     }
 
     EditGamerSection(
-        editGamerFormState = editGamerUIState.editFormState,
+        editGamerFormState = editGamerUIState,
         gamerId = gamerId,
         snackBarHostState = snackBarHostState,
         saveGamer = editGamerVM::saveGamer,
@@ -105,25 +105,14 @@ fun EditGamerPage(
         },
         navigateToMainMenu = navigateToMainMenu,
         retryGetMetaData = { editGamerVM.getGamerData(gamerId = gamerId) },
+        resetGamerProcessState = editGamerVM::resetEditGamerProcessState,
         onBack = navigateToMainMenu
-    )
-    ResultOperationsSection(
-        editGamerProcessType = editGamerUIState.editGamerProcessType,
-        snackBarHostState = snackBarHostState,
-        navigateToMainMenu = navigateToMainMenu,
-        retryUpdateGamerProcess = {
-
-        },
-        retryDeleteGamerProcess = {
-
-        },
-        resetEditGamerProcess = editGamerVM::resetEditGamerProcessState
     )
 }
 
 @Composable
 fun EditGamerSection(
-    editGamerFormState: CommonProcessState<MetaDataEditForm>,
+    editGamerFormState: EditGamerUIState,
     gamerId: String,
     snackBarHostState: SnackbarHostState,
     saveGamer: (String, String, Int, String, String?, String?) -> Unit,
@@ -131,39 +120,40 @@ fun EditGamerSection(
     deleteGamer: () -> Unit,
     navigateToMainMenu: () -> Unit,
     retryGetMetaData: () -> Unit,
+    resetGamerProcessState: () -> Unit,
     onBack: () -> Unit
 ) {
     when (editGamerFormState) {
-        is CommonProcessState.Failure -> ErrorComponent(
+        is EditGamerUIState.Failure -> ErrorComponent(
             generalError = editGamerFormState.error,
             retryProcess = retryGetMetaData,
             onBack = onBack
         )
-
-        CommonProcessState.Loading -> CircularProgressDialog()
-        is CommonProcessState.Success<MetaDataEditForm> -> PanelFormEditGamer(
-            metaDataEditForm = editGamerFormState.data,
+        EditGamerUIState.Loading -> CircularProgressDialog()
+        is EditGamerUIState.Success -> PanelFormEditGamer(
+            metaDataEditForm = editGamerFormState.metaDataEditForm,
             snackBarHostState = snackBarHostState,
-            currentGamer = editGamerFormState.data.gamer,
-            defaultImageUrl = editGamerFormState.data.defaultImageUrl,
+            currentGamer = editGamerFormState.metaDataEditForm.gamer,
+            defaultImageUrl = editGamerFormState.metaDataEditForm.defaultImageUrl,
             labelButtonSaveGamer = stringResource(R.string.txt_btn_save_changes),
-            socialNetworkImage = editGamerFormState.data.socialNetworkImage,
-            countries = editGamerFormState.data.countries,
+            socialNetworkImage = editGamerFormState.metaDataEditForm.socialNetworkImage,
+            countries = editGamerFormState.metaDataEditForm.countries,
             validateFormCreateGamer = validateEditGamerForm,
             saveGamer = {
                 saveGamer(
                     gamerId,
-                    editGamerFormState.data.aliasUiState.value,
-                    editGamerFormState.data.ageUiState.value.toInt(),
-                    editGamerFormState.data.countryUiState.value.name,
-                    editGamerFormState.data.countryUiState.value.flag,
-                    editGamerFormState.data.imageURI.value
+                    editGamerFormState.metaDataEditForm.aliasUiState.value,
+                    editGamerFormState.metaDataEditForm.ageUiState.value.toInt(),
+                    editGamerFormState.metaDataEditForm.countryUiState.value.name,
+                    editGamerFormState.metaDataEditForm.countryUiState.value.flag,
+                    editGamerFormState.metaDataEditForm.imageURI.value
                 )
             },
             deleteGamer = deleteGamer,
-            onBack = navigateToMainMenu
+            navigateToMainMenu = navigateToMainMenu,
+            onBack = navigateToMainMenu,
+            resetGamerProcessState = resetGamerProcessState
         )
-
         CommonProcessState.Idle -> return
     }
 }
@@ -241,7 +231,9 @@ fun PanelFormEditGamer(
     validateFormCreateGamer: (String, String, CountryData, String?) -> Unit,
     saveGamer: () -> Unit,
     deleteGamer: () -> Unit,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    navigateToMainMenu: () -> Unit,
+    resetGamerProcessState: () -> Unit
 ) {
     Box {
         var showConfirmationDialog by rememberSaveable { mutableStateOf(false) }
@@ -336,6 +328,18 @@ fun PanelFormEditGamer(
                 }
             }
         }
+        ResultOperationsSection(
+            editGamerProcessType = metaDataEditForm.editGamerProcessType,
+            snackBarHostState = snackBarHostState,
+            navigateToMainMenu = navigateToMainMenu,
+            retryUpdateGamerProcess = {
+
+            },
+            retryDeleteGamerProcess = {
+
+            },
+            resetEditGamerProcess = resetGamerProcessState
+        )
     }
 }
 
@@ -572,11 +576,13 @@ fun EditGamerPagePreview() {
             gamerImage = ""
         ),
         defaultImageUrl = "",
-        socialNetworkImage = ""
+        socialNetworkImage = "",
+        editGamerProcessType = EditGamerProcessType.DeleteGamerState(processState = CommonProcessState.Success(
+            Unit))
     )
 
     EditGamerSection(
-        editGamerFormState = CommonProcessState.Success(data = editForm),
+        editGamerFormState = EditGamerUIState.Success(metaDataEditForm = editForm),
         gamerId = "abcd-efgh",
         snackBarHostState = snackBarHostState,
         saveGamer = { a, b, c, d, e, f ->
@@ -592,6 +598,9 @@ fun EditGamerPagePreview() {
 
         },
         retryGetMetaData = { },
+        resetGamerProcessState = {
+
+        },
         onBack = {}
     )
 }
