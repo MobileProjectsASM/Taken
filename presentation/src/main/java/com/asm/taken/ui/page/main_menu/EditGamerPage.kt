@@ -129,6 +129,7 @@ fun EditGamerSection(
             retryProcess = retryGetMetaData,
             onBack = onBack
         )
+
         EditGamerUIState.Loading -> CircularProgressDialog()
         is EditGamerUIState.Success -> PanelFormEditGamer(
             metaDataEditForm = editGamerFormState.metaDataEditForm,
@@ -154,6 +155,7 @@ fun EditGamerSection(
             onBack = navigateToMainMenu,
             resetGamerProcessState = resetGamerProcessState
         )
+
         CommonProcessState.Idle -> return
     }
 }
@@ -167,6 +169,7 @@ fun ResultOperationsSection(
     retryDeleteGamerProcess: () -> Unit,
     resetEditGamerProcess: () -> Unit
 ) {
+    val coroutineScope = rememberCoroutineScope()
     when (editGamerProcessType) {
         is EditGamerProcessType.DeleteGamerState -> when (val processState =
             editGamerProcessType.processState) {
@@ -193,22 +196,20 @@ fun ResultOperationsSection(
 
             CommonProcessState.Loading -> CircularProgressDialog()
             is CommonProcessState.Success<Unit> -> {
-                var showDialog by rememberSaveable { mutableStateOf(true) }
-                if (showDialog) {
-                    ImageDialog(
-                        title = stringResource(R.string.txt_ttl_success_operation),
-                        image = painterResource(R.drawable.ic_success),
-                        message = stringResource(R.string.txt_label_gamer_updated)
-                    ) {
-                        DefaultButton(
-                            text = stringResource(R.string.txt_btn_accept),
-                            onClickButton = {
-                                resetEditGamerProcess()
+                ImageDialog(
+                    title = stringResource(R.string.txt_ttl_success_operation),
+                    image = painterResource(R.drawable.ic_success),
+                    message = stringResource(R.string.txt_label_gamer_updated)
+                ) {
+                    DefaultButton(
+                        text = stringResource(R.string.txt_btn_accept),
+                        onClickButton = {
+                            resetEditGamerProcess()
+                            coroutineScope.launch {
                                 navigateToMainMenu()
-                                showDialog = false
                             }
-                        )
-                    }
+                        }
+                    )
                 }
             }
 
@@ -577,8 +578,11 @@ fun EditGamerPagePreview() {
         ),
         defaultImageUrl = "",
         socialNetworkImage = "",
-        editGamerProcessType = EditGamerProcessType.DeleteGamerState(processState = CommonProcessState.Success(
-            Unit))
+        editGamerProcessType = EditGamerProcessType.DeleteGamerState(
+            processState = CommonProcessState.Success(
+                Unit
+            )
+        )
     )
 
     EditGamerSection(
