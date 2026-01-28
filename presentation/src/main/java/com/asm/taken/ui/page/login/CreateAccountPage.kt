@@ -32,7 +32,7 @@ import com.asm.taken.model.CreateAccountUIState
 import com.asm.taken.ui.CircularProgressDialog
 import com.asm.taken.ui.DefaultButton
 import com.asm.taken.ui.DefaultOutlinedTextFieldLI
-import com.asm.taken.ui.ErrorComponent
+import com.asm.taken.ui.ErrorProcessComponent
 import com.asm.taken.ui.PasswordOutlinedTextField
 import com.asm.taken.ui.PuzzleGeneralTitle
 import com.asm.taken.utils.getErrorEmail
@@ -72,7 +72,7 @@ fun CreateAccountPage(
                 password = createAccountUIState.createAccountFormState.passwordUiState.value
             )
         },
-        resetProcessState = createAccountVM::resetProcessState
+        resetProcess = createAccountVM::resetProcessState
     )
 }
 
@@ -82,15 +82,15 @@ fun ProcessSection(
     snackBarHostState: SnackbarHostState,
     accountCreated: @Composable () -> Unit,
     retryProcess: () -> Unit,
-    resetProcessState: () -> Unit
+    resetProcess: () -> Unit
 ) {
     when (createAccountProcessState) {
         CreateAccountProcessState.AccountProcessCreated -> accountCreated()
-        is CreateAccountProcessState.Error -> ErrorComponent(
+        is CreateAccountProcessState.Error -> ErrorProcessComponent(
             generalError = createAccountProcessState.generalError,
             snackBarHostState = snackBarHostState,
             retryProcess = retryProcess,
-            resetProcessState = resetProcessState
+            resetProcess = resetProcess
         )
         CreateAccountProcessState.Loading -> CircularProgressDialog()
         CreateAccountProcessState.Idle -> return

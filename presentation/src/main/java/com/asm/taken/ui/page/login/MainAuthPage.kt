@@ -42,7 +42,7 @@ import com.asm.taken.ui.DefaultImageButton
 import com.asm.taken.ui.DefaultOutlinedTextFieldLI
 import com.asm.taken.ui.DefaultText
 import com.asm.taken.ui.DefaultTextButton
-import com.asm.taken.ui.ErrorComponent
+import com.asm.taken.ui.ErrorProcessComponent
 import com.asm.taken.ui.PasswordOutlinedTextField
 import com.asm.taken.ui.PuzzleGeneralTitle
 import com.asm.taken.utils.AuthenticationProviders
@@ -104,7 +104,7 @@ fun MainAuthPage(
             },
             onNavigateToMainPage = onNavigateToMainPage,
             onNavigateToCreateGamer = onNavigateToCreateGamer,
-            resetProcessState = loginVM::resetProcessState
+            resetProcess = loginVM::resetProcessState
         )
         is AuthTypeState.FacebookAuthType -> ProcessSection(
             authState = authType.authState,
@@ -121,7 +121,7 @@ fun MainAuthPage(
             },
             onNavigateToMainPage = onNavigateToMainPage,
             onNavigateToCreateGamer = onNavigateToCreateGamer,
-            resetProcessState = loginVM::resetProcessState
+            resetProcess = loginVM::resetProcessState
         )
         is AuthTypeState.GoogleAuthType -> ProcessSection(
             authState = authType.authState,
@@ -138,7 +138,7 @@ fun MainAuthPage(
             },
             onNavigateToMainPage = onNavigateToMainPage,
             onNavigateToCreateGamer = onNavigateToCreateGamer,
-            resetProcessState = loginVM::resetProcessState
+            resetProcess = loginVM::resetProcessState
         )
         AuthTypeState.Idle -> return
     }
@@ -215,16 +215,16 @@ fun ProcessSection(
     authState: AuthState,
     snackBarHostState: SnackbarHostState,
     retryProcess: () -> Unit,
-    resetProcessState: () -> Unit,
+    resetProcess: () -> Unit,
     onNavigateToMainPage: (gamerId: String) -> Unit,
     onNavigateToCreateGamer: (AuthUser) -> Unit
 ) {
     when (authState) {
-        is AuthState.Error -> ErrorComponent(
+        is AuthState.Error -> ErrorProcessComponent(
             generalError = authState.generalError,
             retryProcess = retryProcess,
             snackBarHostState = snackBarHostState,
-            resetProcessState = resetProcessState
+            resetProcess = resetProcess
         )
         AuthState.Loading -> CircularProgressDialog()
         is AuthState.RegisteredUser -> LaunchedEffect(true) {

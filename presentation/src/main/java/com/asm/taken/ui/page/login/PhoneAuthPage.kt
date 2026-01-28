@@ -63,7 +63,7 @@ import com.asm.taken.ui.CircularProgressDialog
 import com.asm.taken.ui.DefaultButton
 import com.asm.taken.ui.DefaultOutlinedTextFieldLI
 import com.asm.taken.ui.DefaultText
-import com.asm.taken.ui.ErrorComponent
+import com.asm.taken.ui.ErrorProcessComponent
 import com.asm.taken.ui.OtpMultiple
 import com.asm.taken.ui.PuzzleGeneralTitle
 import com.asm.taken.utils.AuthenticationProviders
@@ -114,7 +114,7 @@ fun PhoneAuthPage(
             }
         },
         retryGetDataForm = authPhoneVM::getCountriesInfo,
-        resetProcessState = authPhoneVM::resetDataProcess
+        resetProcess = authPhoneVM::resetDataProcess
     )
     SessionSection(
         authPhoneProcessState = authPhoneVM.phoneAuthUIState.value.phoneAuthProcessState,
@@ -128,7 +128,7 @@ fun PhoneAuthPage(
         retryProcessAuth = {
 
         },
-        resetProcessState = authPhoneVM::resetAuthProcessState,
+        resetProcess = authPhoneVM::resetAuthProcessState,
     )
 }
 
@@ -139,7 +139,7 @@ fun AuthWithPhone(
     validateForm: (String, String) -> Unit,
     phoneNumberSent: (String, String) -> Unit,
     retryGetDataForm: () -> Unit,
-    resetProcessState: () -> Unit
+    resetProcess: () -> Unit
 ) {
     PanelFormPhoneNumber(
         phoneAuthFormState = phoneAuthFormState,
@@ -147,11 +147,11 @@ fun AuthWithPhone(
         onSentPhone = phoneNumberSent
     )
     when (val currentState = phoneAuthFormState.dataFormProcess) {
-        is CountriesState.Error -> ErrorComponent(
+        is CountriesState.Error -> ErrorProcessComponent(
             generalError = currentState.generalError,
             snackBarHostState = snackBarHostState,
             retryProcess = retryGetDataForm,
-            resetProcessState = resetProcessState
+            resetProcess = resetProcess
         )
         CountriesState.Loading -> CircularProgressDialog()
         else -> return
@@ -372,19 +372,19 @@ fun SessionSection(
     validateForm: (String) -> Unit,
     verifyOtp: (String, String) -> Unit,
     retryProcessAuth: () -> Unit,
-    resetProcessState: () -> Unit
+    resetProcess: () -> Unit
 ) {
     when (authPhoneProcessState) {
-        is AuthPhoneProcessState.Error -> ErrorComponent(
+        is AuthPhoneProcessState.Error -> ErrorProcessComponent(
             generalError = authPhoneProcessState.generalError,
             snackBarHostState = snackBarHostState,
             retryProcess = retryProcessAuth,
-            resetProcessState = resetProcessState
+            resetProcess = resetProcess
         )
         AuthPhoneProcessState.Loading -> CircularProgressDialog()
         is AuthPhoneProcessState.SentOtp -> OtpDialog(
             otpFormState = authPhoneProcessState.otpFormState,
-            onCloseDialog = resetProcessState,
+            onCloseDialog = resetProcess,
             phoneNumber = authPhoneProcessState.phoneNumber,
             validateForm = validateForm,
             verifyOtp = {

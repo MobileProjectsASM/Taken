@@ -29,6 +29,7 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.filled.Replay
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.outlined.Cancel
@@ -86,6 +87,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.asm.domain.errors.GeneralError
 import com.asm.taken.R
+import com.asm.taken.ui.page.main_menu.DialogError
 import com.asm.taken.ui.theme.Purple80
 
 @Composable
@@ -695,44 +697,6 @@ fun ImageDialog(
 
 
 @Composable
-fun DialogError(
-    title: String,
-    image: Painter,
-    message: String,
-    onDismissedDialog: () -> Unit,
-    onClickAction: (() -> Unit)? = null
-) {
-    var showErrorDialog by rememberSaveable { mutableStateOf(true) }
-    if (showErrorDialog) {
-        ImageDialog(
-            title = title,
-            image = image,
-            message = message,
-            onDismissRequest = {
-                showErrorDialog = false
-                onDismissedDialog()
-            },
-            onClose = {
-                showErrorDialog = false
-                onDismissedDialog()
-            },
-            contentButtons = onClickAction?.let {
-                {
-                    DefaultButton(
-                        text = stringResource(id = R.string.txt_label_retry),
-                        onClickButton = {
-                            onClickAction()
-                            showErrorDialog = false
-                            onDismissedDialog()
-                        }
-                    )
-                }
-            }
-        )
-    }
-}
-
-@Composable
 fun SnackBarError(
     snackBarHostState: SnackbarHostState,
     message: String,
@@ -753,40 +717,69 @@ fun SnackBarError(
 }
 
 @Composable
-fun ErrorComponent(
-    generalError: GeneralError,
+fun ErrorProcessComponent(
     snackBarHostState: SnackbarHostState,
+    generalError: GeneralError,
     retryProcess: () -> Unit,
-    resetProcessState: () -> Unit
+    resetProcess: () -> Unit
 ) {
     when (generalError) {
         is GeneralError.ClientError -> DialogError(
             title = stringResource(R.string.txt_ttl_client_error),
             image = painterResource(R.drawable.ic_warning),
             message = stringResource(R.string.err_client),
-            onDismissedDialog = resetProcessState
+            onDismissRequest = resetProcess,
+            onClose = resetProcess,
+            onAction = retryProcess
         )
 
         GeneralError.ConnectionError -> DialogError(
-            title = stringResource(R.string.txt_ttl_service_error),
+            title = stringResource(R.string.txt_ttl_client_error),
             image = painterResource(R.drawable.ic_sin_internet),
-            message = stringResource(R.string.err_server),
-            onDismissedDialog = resetProcessState,
-            onClickAction = retryProcess
+            message = stringResource(R.string.err_connection),
+            onDismissRequest = resetProcess,
+            onClose = resetProcess,
+            onAction = retryProcess
         )
 
         is GeneralError.ServerError -> DialogError(
             title = stringResource(R.string.txt_ttl_service_error),
             image = painterResource(R.drawable.ic_error),
             message = stringResource(R.string.err_server),
-            onDismissedDialog = resetProcessState
+            onDismissRequest = resetProcess,
+            onClose = resetProcess,
+            onAction = retryProcess
         )
 
         GeneralError.Unknown -> SnackBarError(
             snackBarHostState = snackBarHostState,
             message = stringResource(R.string.err_auth),
             withDismissAction = true,
-            onDismissed = resetProcessState
+            onDismissed = resetProcess
+        )
+    }
+}
+
+@Composable
+fun DialogError(
+    title: String,
+    image: Painter,
+    message: String,
+    onDismissRequest: (() -> Unit)? = null,
+    onClose: () -> Unit,
+    onAction: () -> Unit
+) {
+    ImageDialog(
+        title = title,
+        image = image,
+        message = message,
+        onDismissRequest = onDismissRequest,
+        onClose = onClose
+    ) {
+        DefaultIconButton(
+            text = stringResource(id = R.string.txt_label_retry),
+            imageVector = Icons.Filled.Replay,
+            onClickButton = onAction
         )
     }
 }

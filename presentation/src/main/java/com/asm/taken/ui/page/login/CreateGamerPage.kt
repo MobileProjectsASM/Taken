@@ -78,7 +78,7 @@ import com.asm.taken.ui.CircularProgressDialog
 import com.asm.taken.ui.DefaultButton
 import com.asm.taken.ui.DefaultOutlinedTextFieldLI
 import com.asm.taken.ui.DefaultText
-import com.asm.taken.ui.ErrorComponent
+import com.asm.taken.ui.ErrorProcessComponent
 import com.asm.taken.ui.PuzzleGeneralTitle
 import com.asm.taken.ui.navigation.CreateGamer
 import com.asm.taken.ui.puzzleFontFamily
@@ -111,7 +111,7 @@ fun CreateGamerPage(
         validateFormCreateGamer = createGamerVM::validateCreateGamerForm,
         saveGamer = createGamerVM::createGamer,
         closeSession = createGamerVM::closeSession,
-        resetProcessState = createGamerVM::resetCountriesState,
+        resetProcess = createGamerVM::resetCountriesState,
         retryGetCountries = createGamerVM::getCountriesInfo
     )
     NavigationSection(
@@ -122,7 +122,7 @@ fun CreateGamerPage(
         retryCreateGamer = {
 
         },
-        resetProcessState = createGamerVM::resetProcessState
+        resetProcess = createGamerVM::resetProcessState
     )
 }
 
@@ -135,7 +135,7 @@ fun CreateGamerSection(
     validateFormCreateGamer: (String, String, CountryData, String?) -> Unit,
     saveGamer: (String, String, Int, String, String?, String?) -> Unit,
     closeSession: () -> Unit,
-    resetProcessState: () -> Unit,
+    resetProcess: () -> Unit,
     retryGetCountries: () -> Unit
 ) {
     PanelFormCreateGamer(
@@ -158,10 +158,10 @@ fun CreateGamerSection(
         closeSession = closeSession
     )
     when (val countriesState = createGamerFormState.countriesState) {
-        is CountriesState.Error -> ErrorComponent(
+        is CountriesState.Error -> ErrorProcessComponent(
             generalError = countriesState.generalError,
             snackBarHostState = snackBarHostState,
-            resetProcessState = resetProcessState,
+            resetProcess = resetProcess,
             retryProcess = retryGetCountries
         )
 
@@ -177,14 +177,14 @@ fun NavigationSection(
     onNavigateToHome: (String) -> Unit,
     onNavigateToAuthentication: () -> Unit,
     retryCreateGamer: () -> Unit,
-    resetProcessState: () -> Unit
+    resetProcess: () -> Unit
 ) {
     when (createGamerProcessState) {
-        is CreateGamerProcessState.Failure -> ErrorComponent(
+        is CreateGamerProcessState.Failure -> ErrorProcessComponent(
             generalError = createGamerProcessState.error,
             snackBarHostState = snackBarHostState,
             retryProcess = retryCreateGamer,
-            resetProcessState = resetProcessState
+            resetProcess = resetProcess
         )
         is CreateGamerProcessState.GamerCreated -> LaunchedEffect(true) {
             onNavigateToHome(createGamerProcessState.gamerId)

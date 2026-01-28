@@ -66,10 +66,9 @@ import com.asm.taken.ui.CircularProgressDialog
 import com.asm.taken.ui.DefaultButton
 import com.asm.taken.ui.DefaultIconButton
 import com.asm.taken.ui.DefaultOutlinedTextFieldLI
-import com.asm.taken.ui.ErrorComponent
+import com.asm.taken.ui.ErrorProcessComponent
 import com.asm.taken.ui.ImageDialog
 import com.asm.taken.ui.PuzzleGeneralTitle
-import com.asm.taken.ui.SnackBarError
 import com.asm.taken.ui.page.login.ChangeProfileImageDialog
 import com.asm.taken.ui.page.login.CountryInput
 import com.asm.taken.ui.page.login.InputSelectImage
@@ -548,50 +547,6 @@ fun ErrorComponent(
 }
 
 @Composable
-fun ErrorProcessComponent(
-    snackBarHostState: SnackbarHostState,
-    generalError: GeneralError,
-    retryProcess: () -> Unit,
-    resetProcess: () -> Unit
-) {
-    when (generalError) {
-        is GeneralError.ClientError -> DialogError(
-            title = stringResource(R.string.txt_ttl_client_error),
-            image = painterResource(R.drawable.ic_warning),
-            message = stringResource(R.string.err_client),
-            onDismissRequest = resetProcess,
-            onClose = resetProcess,
-            onAction = retryProcess
-        )
-
-        GeneralError.ConnectionError -> DialogError(
-            title = stringResource(R.string.txt_ttl_client_error),
-            image = painterResource(R.drawable.ic_sin_internet),
-            message = stringResource(R.string.err_connection),
-            onDismissRequest = resetProcess,
-            onClose = resetProcess,
-            onAction = retryProcess
-        )
-
-        is GeneralError.ServerError -> DialogError(
-            title = stringResource(R.string.txt_ttl_service_error),
-            image = painterResource(R.drawable.ic_error),
-            message = stringResource(R.string.err_server),
-            onDismissRequest = resetProcess,
-            onClose = resetProcess,
-            onAction = retryProcess
-        )
-
-        GeneralError.Unknown -> SnackBarError(
-            snackBarHostState = snackBarHostState,
-            message = stringResource(R.string.err_auth),
-            withDismissAction = true,
-            onDismissed = resetProcess
-        )
-    }
-}
-
-@Composable
 fun DialogError(
     title: String,
     image: Painter,
@@ -604,30 +559,6 @@ fun DialogError(
         image = image,
         message = message,
         onBack = onBack
-    ) {
-        DefaultIconButton(
-            text = stringResource(id = R.string.txt_label_retry),
-            imageVector = Icons.Filled.Replay,
-            onClickButton = onAction
-        )
-    }
-}
-
-@Composable
-fun DialogError(
-    title: String,
-    image: Painter,
-    message: String,
-    onDismissRequest: (() -> Unit)? = null,
-    onClose: () -> Unit,
-    onAction: () -> Unit
-) {
-    ImageDialog(
-        title = title,
-        image = image,
-        message = message,
-        onDismissRequest = onDismissRequest,
-        onClose = onClose
     ) {
         DefaultIconButton(
             text = stringResource(id = R.string.txt_label_retry),
