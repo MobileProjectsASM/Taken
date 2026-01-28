@@ -733,42 +733,6 @@ fun DialogError(
 }
 
 @Composable
-fun DialogError(
-    title: String,
-    image: Painter,
-    message: String,
-    textAction: String,
-    iconAction: ImageVector,
-    onAction: () -> Unit,
-    onBack: (() -> Unit)? = null
-) {
-    var showDialog by rememberSaveable { mutableStateOf(true) }
-    if (showDialog) {
-        ImageDialog(
-            title = title,
-            image = image,
-            message = message,
-            onBack = onBack?.let {
-                {
-                    showDialog = false
-                    onBack()
-                }
-            },
-            contentButtons = {
-                DefaultIconButton(
-                    text = textAction,
-                    imageVector = iconAction,
-                    onClickButton = {
-                        showDialog = false
-                        onAction()
-                    }
-                )
-            }
-        )
-    }
-}
-
-@Composable
 fun SnackBarError(
     snackBarHostState: SnackbarHostState,
     message: String,

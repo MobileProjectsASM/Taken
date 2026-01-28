@@ -39,6 +39,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -63,11 +64,12 @@ import com.asm.taken.model.InputUiState
 import com.asm.taken.model.MetaDataEditForm
 import com.asm.taken.ui.CircularProgressDialog
 import com.asm.taken.ui.DefaultButton
+import com.asm.taken.ui.DefaultIconButton
 import com.asm.taken.ui.DefaultOutlinedTextFieldLI
-import com.asm.taken.ui.DialogError
 import com.asm.taken.ui.ErrorComponent
 import com.asm.taken.ui.ImageDialog
 import com.asm.taken.ui.PuzzleGeneralTitle
+import com.asm.taken.ui.SnackBarError
 import com.asm.taken.ui.page.login.ChangeProfileImageDialog
 import com.asm.taken.ui.page.login.CountryInput
 import com.asm.taken.ui.page.login.InputSelectImage
@@ -173,11 +175,11 @@ fun ResultOperationsSection(
     when (editGamerProcessType) {
         is EditGamerProcessType.DeleteGamerState -> when (val processState =
             editGamerProcessType.processState) {
-            is CommonProcessState.Failure -> ErrorComponent(
-                generalError = processState.error,
+            is CommonProcessState.Failure -> ErrorProcessComponent(
                 snackBarHostState = snackBarHostState,
+                generalError = processState.error,
                 retryProcess = retryDeleteGamerProcess,
-                resetProcessState = resetEditGamerProcess
+                resetProcess = resetEditGamerProcess
             )
 
             CommonProcessState.Loading -> CircularProgressDialog()
@@ -187,11 +189,11 @@ fun ResultOperationsSection(
 
         is EditGamerProcessType.UpdateGamerState -> when (val processState =
             editGamerProcessType.processState) {
-            is CommonProcessState.Failure -> ErrorComponent(
-                generalError = processState.error,
+            is CommonProcessState.Failure -> ErrorProcessComponent(
                 snackBarHostState = snackBarHostState,
+                generalError = processState.error,
                 retryProcess = retryUpdateGamerProcess,
-                resetProcessState = resetEditGamerProcess
+                resetProcess = resetEditGamerProcess
             )
 
             CommonProcessState.Loading -> CircularProgressDialog()
@@ -333,12 +335,8 @@ fun PanelFormEditGamer(
             editGamerProcessType = metaDataEditForm.editGamerProcessType,
             snackBarHostState = snackBarHostState,
             navigateToMainMenu = navigateToMainMenu,
-            retryUpdateGamerProcess = {
-
-            },
-            retryDeleteGamerProcess = {
-
-            },
+            retryUpdateGamerProcess = saveGamer,
+            retryDeleteGamerProcess = deleteGamer,
             resetEditGamerProcess = resetGamerProcessState
         )
     }
@@ -519,8 +517,6 @@ fun ErrorComponent(
             title = stringResource(R.string.txt_ttl_client_error),
             image = painterResource(R.drawable.ic_warning),
             message = stringResource(R.string.err_client),
-            textAction = stringResource(id = R.string.txt_label_retry),
-            iconAction = Icons.Filled.Replay,
             onAction = retryProcess,
             onBack = onBack
         )
@@ -529,8 +525,6 @@ fun ErrorComponent(
             title = stringResource(R.string.txt_ttl_client_error),
             image = painterResource(R.drawable.ic_sin_internet),
             message = stringResource(R.string.err_connection),
-            textAction = stringResource(id = R.string.txt_label_retry),
-            iconAction = Icons.Filled.Replay,
             onAction = retryProcess,
             onBack = onBack
         )
@@ -539,8 +533,6 @@ fun ErrorComponent(
             title = stringResource(R.string.txt_ttl_service_error),
             image = painterResource(R.drawable.ic_error),
             message = stringResource(R.string.err_server),
-            textAction = stringResource(id = R.string.txt_label_retry),
-            iconAction = Icons.Filled.Replay,
             onAction = retryProcess,
             onBack = onBack
         )
@@ -549,10 +541,98 @@ fun ErrorComponent(
             title = stringResource(R.string.txt_ttl_unexpected_error),
             image = painterResource(R.drawable.ic_warning),
             message = stringResource(R.string.err_unknown),
-            textAction = stringResource(id = R.string.txt_label_retry),
-            iconAction = Icons.Filled.Replay,
             onAction = retryProcess,
             onBack = onBack
+        )
+    }
+}
+
+@Composable
+fun ErrorProcessComponent(
+    snackBarHostState: SnackbarHostState,
+    generalError: GeneralError,
+    retryProcess: () -> Unit,
+    resetProcess: () -> Unit
+) {
+    when (generalError) {
+        is GeneralError.ClientError -> DialogError(
+            title = stringResource(R.string.txt_ttl_client_error),
+            image = painterResource(R.drawable.ic_warning),
+            message = stringResource(R.string.err_client),
+            onDismissRequest = resetProcess,
+            onClose = resetProcess,
+            onAction = retryProcess
+        )
+
+        GeneralError.ConnectionError -> DialogError(
+            title = stringResource(R.string.txt_ttl_client_error),
+            image = painterResource(R.drawable.ic_sin_internet),
+            message = stringResource(R.string.err_connection),
+            onDismissRequest = resetProcess,
+            onClose = resetProcess,
+            onAction = retryProcess
+        )
+
+        is GeneralError.ServerError -> DialogError(
+            title = stringResource(R.string.txt_ttl_service_error),
+            image = painterResource(R.drawable.ic_error),
+            message = stringResource(R.string.err_server),
+            onDismissRequest = resetProcess,
+            onClose = resetProcess,
+            onAction = retryProcess
+        )
+
+        GeneralError.Unknown -> SnackBarError(
+            snackBarHostState = snackBarHostState,
+            message = stringResource(R.string.err_auth),
+            withDismissAction = true,
+            onDismissed = resetProcess
+        )
+    }
+}
+
+@Composable
+fun DialogError(
+    title: String,
+    image: Painter,
+    message: String,
+    onBack: () -> Unit,
+    onAction: () -> Unit
+) {
+    ImageDialog(
+        title = title,
+        image = image,
+        message = message,
+        onBack = onBack
+    ) {
+        DefaultIconButton(
+            text = stringResource(id = R.string.txt_label_retry),
+            imageVector = Icons.Filled.Replay,
+            onClickButton = onAction
+        )
+    }
+}
+
+@Composable
+fun DialogError(
+    title: String,
+    image: Painter,
+    message: String,
+    onDismissRequest: (() -> Unit)? = null,
+    onClose: () -> Unit,
+    onAction: () -> Unit
+) {
+    ImageDialog(
+        title = title,
+        image = image,
+        message = message,
+        onDismissRequest = onDismissRequest,
+        onClose = onClose
+    ) {
+        DefaultIconButton(
+            text = stringResource(id = R.string.txt_label_retry),
+            imageVector = Icons.Filled.Replay,
+            onClickButton = onAction
         )
     }
 }
