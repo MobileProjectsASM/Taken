@@ -8,7 +8,8 @@ import com.google.firebase.auth.AuthCredential
 
 interface AuthRemoteSource {
     suspend fun authWithEmailAndPassword(email: String, password: String): Result<AuthUser, GeneralError>
-    suspend fun authWithToken(token: String, providerId: ProviderId): Result<AuthUser, GeneralError>
+    suspend fun authWithOAuth(token: String, providerId: String): Result<AuthUser, GeneralError>
+    suspend fun authWithOpenIdConnect(token: String, providerId: String): Result<AuthUser, GeneralError>
     suspend fun authWithOtp(sessionId: String, otp: String): Result<AuthUser, GeneralError>
     suspend fun authWithCredential(authCredential: AuthCredential): Result<AuthUser, GeneralError> //Exception case
     suspend fun createAccount(email: String, password: String): Result<Unit, GeneralError>
