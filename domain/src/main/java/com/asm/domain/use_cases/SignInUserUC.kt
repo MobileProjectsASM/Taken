@@ -1,7 +1,6 @@
 package com.asm.domain.use_cases
 
 import com.asm.domain.entities.AuthUser
-import com.asm.domain.entities.ProviderId
 import com.asm.domain.entities.Result
 import com.asm.domain.entities.Session
 import com.asm.domain.errors.GeneralError
@@ -32,7 +31,7 @@ class SignInUserUC @Inject constructor(
 
         data class Token(
             val token: String,
-            val providerId: ProviderId
+            val providerId: String
         ) : CredentialType()
 
         data class OTP(

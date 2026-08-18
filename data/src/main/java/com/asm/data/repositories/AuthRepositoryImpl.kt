@@ -31,24 +31,12 @@ class AuthRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun authWithOAuth(
+    override suspend fun authWithToken(
         token: String,
         providerId: String
     ): Result<AuthUser, GeneralError> {
         return try {
-            authRemoteSource.authWithOAuth(token, providerId)
-        } catch (exception: Exception) {
-            logger.logE(TAG, exception)
-            return GeneralError.Unknown.toUnsuccessful()
-        }
-    }
-
-    override suspend fun authWithOpenIdConnect(
-        token: String,
-        providerId: String
-    ): Result<AuthUser, GeneralError> {
-        return try {
-            authRemoteSource.authWithOtp(token, providerId)
+            authRemoteSource.authWithToken(token, providerId)
         } catch (exception: Exception) {
             logger.logE(TAG, exception)
             return GeneralError.Unknown.toUnsuccessful()
