@@ -3,8 +3,7 @@ package com.asm.domain.use_cases
 import com.asm.domain.entities.AuthUser
 import com.asm.domain.entities.Result
 import com.asm.domain.entities.Session
-import com.asm.domain.errors.GeneralError
-import com.asm.domain.errors.toUnsuccessful
+import com.asm.domain.errors.Failure
 import com.asm.domain.repositories.AuthRepository
 import com.asm.domain.repositories.GamerRepository
 import com.asm.domain.repositories.SessionRepository
@@ -17,10 +16,10 @@ class SignInUserUC @Inject constructor(
     private val gamerRepository: GamerRepository,
     private val sessionRepository: SessionRepository,
     private val authRepository: AuthRepository
-) : UseCaseSync<Result<SignInUserUC.User, GeneralError>, SignInUserUC.CredentialType>() {
+) : UseCaseSync<Result<SignInUserUC.User, Failure>, SignInUserUC.CredentialType>() {
 
     companion object {
-        const val TAG = "SignInUser"
+        const val TAG = "sign-in-user"
     }
 
     sealed class CredentialType {
@@ -37,59 +36,64 @@ class SignInUserUC @Inject constructor(
         data class OTP(
             val sessionId: String,
             val otp: String
-        ): CredentialType()
+        ) : CredentialType()
     }
 
     sealed class User {
-        data class RegisteredUser(val gamerId: String): User()
-        data class UnregisteredUser(val authUser: AuthUser): User()
+        data class RegisteredUser(val gamerId: String) : User()
+        data class UnregisteredUser(val authUser: AuthUser) : User()
     }
 
-    override suspend fun run(params: CredentialType): Result<User, GeneralError> {
+    override suspend fun run(params: CredentialType): Result<User, Failure> {
         return try {
-            when (val authUserResult = authUser(params)) {
-                is Result.Successful<AuthUser> -> when (val gamerExistsResult =
-                    gamerRepository.verifyGamerExists(authUserResult.data.userId)) {
-                    is Result.Successful<Boolean> -> {
-                        val session = when (gamerExistsResult.data) {
-                            true -> Session.UserRegister(authUserResult.data.userId)
-                            false -> Session.UserUnregister(
-                                authUserResult.data.userId,
-                                authUserResult.data.profilePictureUrl
-                            )
-                        }
-                        when (val saveSessionResult = sessionRepository.saveSession(session)) {
-                            is Result.Successful<Unit> -> {
-                                val user = when (gamerExistsResult.data) {
-                                    true ->  User.RegisteredUser(authUserResult.data.userId)
-                                    false -> User.UnregisteredUser(authUserResult.data)
-                                }
-                                Result.Successful(user)
-                            }
-
-                            is Result.Unsuccessful<GeneralError> -> saveSessionResult
-                        }
-                    }
-
-                    is Result.Unsuccessful<GeneralError> -> gamerExistsResult
-                }
-
-                is Result.Unsuccessful<GeneralError> -> authUserResult
+            val authUser = when (val authUserResult = authUser(params)) {
+                is Result.Successful<AuthUser> -> authUserResult.data
+                is Result.Unsuccessful<Failure> -> return authUserResult
             }
+
+            val gamerExists = when (
+                val gamerExistsResult = gamerRepository.verifyGamerExists(authUser.userId)
+            ) {
+                is Result.Successful<Boolean> -> gamerExistsResult.data
+                is Result.Unsuccessful<Failure> -> return gamerExistsResult
+            }
+
+            val session = if (gamerExists) Session.UserRegister(authUser.userId)
+            else Session.UserUnregister(
+                userId = authUser.userId,
+                userImage = authUser.profilePictureUrl
+            )
+
+            when (val saveSessionResult = sessionRepository.saveSession(session)) {
+                is Result.Successful<Unit> -> saveSessionResult.data
+                is Result.Unsuccessful<Failure> -> return saveSessionResult
+            }
+
+            val user = if (gamerExists) User.RegisteredUser(authUser.userId)
+            else User.UnregisteredUser(authUser)
+
+            Result.Successful(user)
         } catch (exception: Exception) {
             logger.logE(TAG, exception)
-            GeneralError.Unknown.toUnsuccessful()
+            Result.Unsuccessful(Failure.UnexpectedFailure)
         }
     }
 
-    private suspend fun authUser(credentialType: CredentialType): Result<AuthUser, GeneralError> =
+    private suspend fun authUser(credentialType: CredentialType): Result<AuthUser, Failure> =
         when (credentialType) {
             is CredentialType.EmailAndPassword -> authRepository.authWithEmailAndPassword(
                 credentialType.email,
                 credentialType.password
             )
 
-            is CredentialType.Token -> authRepository.authWithToken(credentialType.token, credentialType.providerId)
-            is CredentialType.OTP -> authRepository.authWithOTP(credentialType.sessionId, credentialType.otp)
+            is CredentialType.Token -> authRepository.authWithToken(
+                credentialType.token,
+                credentialType.providerId
+            )
+
+            is CredentialType.OTP -> authRepository.authWithOTP(
+                credentialType.sessionId,
+                credentialType.otp
+            )
         }
 }
