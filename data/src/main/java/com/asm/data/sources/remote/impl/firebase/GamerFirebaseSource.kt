@@ -8,8 +8,10 @@ import com.asm.data.sources.remote.impl.firebase.data.GamerFirebase
 import com.asm.data.sources.remote.impl.firebase.data.GamerKeys
 import com.asm.domain.entities.Gamer
 import com.asm.domain.entities.Result
+import com.asm.domain.errors.Failure
 import com.asm.domain.errors.GeneralError
 import com.asm.domain.errors.toUnsuccessful
+import com.google.firebase.FirebaseException
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.FirebaseFirestoreException
 import com.google.firebase.functions.FirebaseFunctions
@@ -120,16 +122,17 @@ class GamerFirebaseSource @Inject constructor(
         }
     }
 
-    override suspend fun checkGamerExists(gamerId: String): Result<Boolean, GeneralError> {
+    override suspend fun checkGamerExists(gamerId: String): Result<Boolean, Failure> {
         return try {
             val snapshot = fs.collection(GAMER_COLLECTION).document(gamerId).get().await()
             Result.Successful(snapshot.exists())
         } catch (exception: Exception) {
-            Log.e(TAG, "Unexpected error to check gamer exists", exception)
-            when {
-                exception is FirebaseFirestoreException -> GeneralError.ClientError().toUnsuccessful()
-                else -> GeneralError.Unknown.toUnsuccessful()
+            Log.e(TAG, "Error to check gamer exists", exception)
+            val failure = when (exception) {
+                is FirebaseException -> Failure.RepositoryFailure.SERVICE_FAILURE
+                else -> Failure.UnexpectedFailure
             }
+            return Result.Unsuccessful(failure)
         }
     }
 
@@ -155,6 +158,19 @@ class GamerFirebaseSource @Inject constructor(
         } catch (exception: Exception) {
             Log.e(TAG, "Unexpected error to delete gamer", exception)
             GeneralError.Unknown.toUnsuccessful()
+        }
+    }
+
+    private fun handleFirebaseFirestoreException(exception: FirebaseFirestoreException) {
+        return when (val code = exception.code) {
+            FirebaseFirestoreException.Code.PERMISSION_DENIED -> Failure.RepositoryFailure.DATA_SOURCE_FAILURE
+            FirebaseFirestoreException.Code.UNAVAILABLE -> Failure.SystemFailure.NETWORK_CONNECTION
+            FirebaseFirestoreException.Code.RESOURCE_EXHAUSTED -> {
+                println("Error: Servidor saturado (Cuota excedida).")
+            }
+            else -> {
+                println("Error de base de datos: ${e.message}")
+            }
         }
     }
 

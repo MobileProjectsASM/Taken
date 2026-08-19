@@ -6,6 +6,7 @@ import androidx.core.content.edit
 import com.asm.data.sources.local.interfaces.SessionLocalSource
 import com.asm.domain.entities.Result
 import com.asm.domain.entities.Session
+import com.asm.domain.errors.Failure
 import com.asm.domain.errors.GeneralError
 import com.asm.domain.errors.toUnsuccessful
 import com.google.gson.Gson
@@ -35,7 +36,7 @@ class SessionSharedPreferencesSource @Inject constructor(
         }
     }
 
-    override suspend fun saveSession(session: Session): Result<Unit, GeneralError> {
+    override suspend fun saveSession(session: Session): Result<Unit, Failure> {
         return try {
             val data = gson.toJson(session, Session::class.java)
             sharedPreferences.edit(commit = true) {
@@ -44,7 +45,7 @@ class SessionSharedPreferencesSource @Inject constructor(
             Result.Successful(Unit)
         } catch (e: Exception) {
             Log.e(TAG, e.message, e)
-            GeneralError.Unknown.toUnsuccessful()
+            Result.Unsuccessful(Failure.UnexpectedFailure)
         }
     }
 

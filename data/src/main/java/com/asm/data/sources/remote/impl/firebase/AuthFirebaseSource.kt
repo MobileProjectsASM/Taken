@@ -5,8 +5,9 @@ import androidx.credentials.ClearCredentialStateRequest
 import androidx.credentials.CredentialManager
 import com.asm.data.sources.remote.abstract_remotes.AuthRemoteSource
 import com.asm.domain.entities.AuthUser
-import com.asm.domain.entities.ProviderId
 import com.asm.domain.entities.Result
+import com.asm.domain.errors.AuthProcessException
+import com.asm.domain.errors.Failure
 import com.asm.domain.errors.GeneralError
 import com.asm.domain.errors.toUnsuccessful
 import com.google.firebase.FirebaseException
@@ -17,6 +18,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthException
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.google.firebase.auth.FirebaseAuthInvalidUserException
+import com.google.firebase.auth.FirebaseAuthUserCollisionException
 import com.google.firebase.auth.GetTokenResult
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.OAuthProvider
@@ -54,85 +56,82 @@ class AuthFirebaseSource @Inject constructor(
     override suspend fun authWithEmailAndPassword(
         email: String,
         password: String
-    ): Result<AuthUser, GeneralError> {
-        return try {
-            val authResult = firebaseAuth.signInWithEmailAndPassword(email, password).await()
-            val firebaseUser = authResult.user
-            if (firebaseUser == null) {
-                Log.e(TAG, "FirebaseUser is null")
-                return GeneralError.ServerError().toUnsuccessful()
-            }
-            Result.Successful(AuthUser(firebaseUser.uid, firebaseUser.photoUrl?.toString()))
+    ): Result<AuthUser, Failure> {
+        val authResult = try {
+            firebaseAuth.signInWithEmailAndPassword(email, password).await()
         } catch (exception: Exception) {
-            Log.e(TAG, "Unexpected exception to sign in with email and password", exception)
-            when (exception) {
-                is FirebaseAuthInvalidUserException -> GeneralError.ClientError("")
-                is FirebaseAuthInvalidCredentialsException -> GeneralError.ClientError("")
-                is FirebaseNetworkException -> GeneralError.ConnectionError
-                is FirebaseException -> GeneralError.ClientError("")
-                else -> GeneralError.Unknown
-            }.toUnsuccessful()
+            Log.e(TAG, "Error to sign in with email and password", exception)
+            val failure = when (exception) {
+                is FirebaseAuthInvalidUserException, is FirebaseAuthInvalidCredentialsException -> Failure.AuthenticationFailure.INVALID_CREDENTIALS
+
+                is FirebaseException -> Failure.RepositoryFailure.SERVICE_FAILURE
+
+                else -> Failure.UnexpectedFailure
+            }
+            return Result.Unsuccessful(failure)
         }
+
+        val firebaseUser = authResult.user
+            ?: throw AuthProcessException("Firebase user is null despite the user is signed in")
+        return Result.Successful(AuthUser(firebaseUser.uid, firebaseUser.photoUrl?.toString()))
     }
 
     override suspend fun authWithToken(
         token: String,
         providerId: String
-    ): Result<AuthUser, GeneralError> {
-        return try {
+    ): Result<AuthUser, Failure> {
+        val authResult = try {
             val authCredential = getCredential(providerId) {
                 return@getCredential when (providerId) {
                     FacebookAuthProvider.PROVIDER_ID -> setAccessToken(token)
                     GoogleAuthProvider.PROVIDER_ID -> setIdToken(token)
-                    else -> throw Exception()
+                    else -> throw AuthProcessException("Error to get credential, $providerId provider not supported")
                 }
             }
-            val authResult = firebaseAuth.signInWithCredential(authCredential).await()
-            val firebaseUser = authResult.user
-            if (firebaseUser == null) {
-                Log.e(TAG, "FirebaseUser is null")
-                return GeneralError.ServerError().toUnsuccessful()
-            }
-            val photoUrl = firebaseUser.photoUrl?.toString()?.let { baseUrl ->
-                if (providerId == FacebookAuthProvider.PROVIDER_ID) "$baseUrl?height=500&access_token=$token"
-                else baseUrl
-            }
-            Result.Successful(AuthUser(firebaseUser.uid, photoUrl))
+            firebaseAuth.signInWithCredential(authCredential).await()
         } catch (exception: Exception) {
-            Log.e(TAG, "Unexpected exception to sign in with token", exception)
-            when (exception) {
-                is FirebaseAuthInvalidUserException -> GeneralError.ClientError("")
-                is FirebaseAuthInvalidCredentialsException -> GeneralError.ClientError("")
-                is FirebaseNetworkException -> GeneralError.ConnectionError
-                is FirebaseException -> GeneralError.ClientError("")
-                else -> GeneralError.Unknown
-            }.toUnsuccessful()
+            Log.e(TAG, "Error to sign in with token", exception)
+            val failure = when (exception) {
+                is FirebaseAuthInvalidUserException, is FirebaseAuthInvalidCredentialsException -> Failure.AuthenticationFailure.INVALID_CREDENTIALS
+
+                is FirebaseException -> Failure.RepositoryFailure.SERVICE_FAILURE
+
+                else -> Failure.UnexpectedFailure
+            }
+            return Result.Unsuccessful(failure)
         }
+
+        val firebaseUser = authResult.user
+            ?: throw AuthProcessException("Firebase user is null despite the user is signed in")
+        val photoUrl = firebaseUser.photoUrl?.toString()?.let { baseUrl ->
+            if (providerId == FacebookAuthProvider.PROVIDER_ID) "$baseUrl?height=500&access_token=$token"
+            else baseUrl
+        }
+        return Result.Successful(AuthUser(firebaseUser.uid, photoUrl))
     }
 
     override suspend fun authWithOtp(
         sessionId: String,
         otp: String
-    ): Result<AuthUser, GeneralError> {
-        return try {
+    ): Result<AuthUser, Failure> {
+        val authResult = try {
             val phoneAuthCredential = PhoneAuthProvider.getCredential(sessionId, otp)
-            val authResult = firebaseAuth.signInWithCredential(phoneAuthCredential).await()
-            val firebaseUser = authResult.user
-            if (firebaseUser == null) {
-                Log.e(TAG, "FirebaseUser is null")
-                return GeneralError.ServerError().toUnsuccessful()
-            }
-            Result.Successful(AuthUser(firebaseUser.uid, null))
+            firebaseAuth.signInWithCredential(phoneAuthCredential).await()
         } catch (exception: Exception) {
-            Log.e(TAG, "Unexpected exception to sign in with otp", exception)
-            when (exception) {
-                is FirebaseAuthInvalidUserException -> GeneralError.ClientError("")
-                is FirebaseAuthInvalidCredentialsException -> GeneralError.ClientError("")
-                is FirebaseNetworkException -> GeneralError.ConnectionError
-                is FirebaseException -> GeneralError.ClientError("")
-                else -> GeneralError.Unknown
-            }.toUnsuccessful()
+            Log.e(TAG, "Error to sign in with otp", exception)
+            val failure = when (exception) {
+                is FirebaseAuthInvalidUserException, is FirebaseAuthInvalidCredentialsException -> Failure.AuthenticationFailure.INVALID_CREDENTIALS
+
+                is FirebaseException -> Failure.RepositoryFailure.SERVICE_FAILURE
+
+                else -> Failure.UnexpectedFailure
+            }
+            return Result.Unsuccessful(failure)
         }
+
+        val firebaseUser = authResult.user
+            ?: throw AuthProcessException("Firebase user is null despite the user is signed in")
+        return Result.Successful(AuthUser(firebaseUser.uid, firebaseUser.photoUrl?.toString()))
     }
 
     override suspend fun authWithCredential(authCredential: AuthCredential): Result<AuthUser, GeneralError> {

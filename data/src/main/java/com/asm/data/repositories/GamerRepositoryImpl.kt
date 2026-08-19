@@ -4,6 +4,7 @@ import com.asm.data.sources.hardware.ConnectionSource
 import com.asm.data.sources.remote.abstract_remotes.GamerRemoteSource
 import com.asm.domain.entities.Gamer
 import com.asm.domain.entities.Result
+import com.asm.domain.errors.Failure
 import com.asm.domain.errors.GeneralError
 import com.asm.domain.errors.toUnsuccessful
 import com.asm.domain.repositories.GamerRepository
@@ -72,13 +73,12 @@ class GamerRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun verifyGamerExists(gamerId: String): Result<Boolean, GeneralError> {
+    override suspend fun verifyGamerExists(gamerId: String): Result<Boolean, Failure> {
         return try {
-            if (!connectionSource.isNetworkAvailable()) GeneralError.ConnectionError.toUnsuccessful()
-            else gamerRemoteSource.checkGamerExists(gamerId)
+            ifConnectionIsAvailableRun { gamerRemoteSource.checkGamerExists(gamerId) }
         } catch (e: Exception) {
             logger.logE(TAG, e)
-            GeneralError.Unknown.toUnsuccessful()
+            Result.Unsuccessful(Failure.UnexpectedFailure)
         }
     }
 
@@ -100,5 +100,11 @@ class GamerRepositoryImpl @Inject constructor(
             logger.logE(TAG, e)
             GeneralError.Unknown.toUnsuccessful()
         }
+    }
+
+    private suspend fun <T> ifConnectionIsAvailableRun(execute: suspend () -> Result<T, Failure>): Result<T, Failure> {
+        val networkAvailable = connectionSource.isNetworkAvailable()
+        return if (networkAvailable) execute()
+        else Result.Unsuccessful(Failure.SystemFailure.NETWORK_CONNECTION)
     }
 }

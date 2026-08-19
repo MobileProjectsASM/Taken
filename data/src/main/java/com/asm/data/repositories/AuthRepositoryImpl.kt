@@ -1,9 +1,10 @@
 package com.asm.data.repositories
 
+import com.asm.data.sources.hardware.ConnectionSource
 import com.asm.data.sources.remote.abstract_remotes.AuthRemoteSource
 import com.asm.domain.entities.AuthUser
-import com.asm.domain.entities.ProviderId
 import com.asm.domain.entities.Result
+import com.asm.domain.errors.Failure
 import com.asm.domain.errors.GeneralError
 import com.asm.domain.errors.toUnsuccessful
 import com.asm.domain.repositories.AuthRepository
@@ -12,46 +13,49 @@ import javax.inject.Inject
 
 class AuthRepositoryImpl @Inject constructor(
     private val logger: Logger,
-    private val authRemoteSource: AuthRemoteSource
-): AuthRepository {
+    private val authRemoteSource: AuthRemoteSource,
+    private val connectionSource: ConnectionSource,
+) : AuthRepository {
 
     companion object {
-        const val TAG = "auth_repository"
+        const val TAG = "auth-repository"
     }
 
     override suspend fun authWithEmailAndPassword(
         email: String,
         password: String
-    ): Result<AuthUser, GeneralError> {
+    ): Result<AuthUser, Failure> {
         return try {
-            authRemoteSource.authWithEmailAndPassword(email, password)
+            ifConnectionIsAvailableRun {
+                authRemoteSource.authWithEmailAndPassword(email, password)
+            }
         } catch (exception: Exception) {
             logger.logE(TAG, exception)
-            return GeneralError.Unknown.toUnsuccessful()
+            Result.Unsuccessful(Failure.UnexpectedFailure)
         }
     }
 
     override suspend fun authWithToken(
         token: String,
         providerId: String
-    ): Result<AuthUser, GeneralError> {
+    ): Result<AuthUser, Failure> {
         return try {
-            authRemoteSource.authWithToken(token, providerId)
+            ifConnectionIsAvailableRun { authRemoteSource.authWithToken(token, providerId) }
         } catch (exception: Exception) {
             logger.logE(TAG, exception)
-            return GeneralError.Unknown.toUnsuccessful()
+            Result.Unsuccessful(Failure.UnexpectedFailure)
         }
     }
 
     override suspend fun authWithOTP(
         sessionId: String,
         otp: String
-    ): Result<AuthUser, GeneralError> {
+    ): Result<AuthUser, Failure> {
         return try {
-            authRemoteSource.authWithOtp(sessionId, otp)
+            ifConnectionIsAvailableRun { authRemoteSource.authWithOtp(sessionId, otp) }
         } catch (exception: Exception) {
             logger.logE(TAG, exception)
-            return GeneralError.Unknown.toUnsuccessful()
+            Result.Unsuccessful(Failure.UnexpectedFailure)
         }
     }
 
@@ -83,5 +87,11 @@ class AuthRepositoryImpl @Inject constructor(
             logger.logE(TAG, exception)
             return GeneralError.Unknown.toUnsuccessful()
         }
+    }
+
+    private suspend fun <T> ifConnectionIsAvailableRun(execute: suspend () -> Result<T, Failure>): Result<T, Failure> {
+        val networkAvailable = connectionSource.isNetworkAvailable()
+        return if (networkAvailable) execute()
+        else Result.Unsuccessful(Failure.SystemFailure.NETWORK_CONNECTION)
     }
 }

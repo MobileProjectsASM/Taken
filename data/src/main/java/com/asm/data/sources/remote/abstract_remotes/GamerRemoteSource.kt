@@ -2,6 +2,7 @@ package com.asm.data.sources.remote.abstract_remotes
 
 import com.asm.domain.entities.Gamer
 import com.asm.domain.entities.Result
+import com.asm.domain.errors.Failure
 import com.asm.domain.errors.GeneralError
 
 interface GamerRemoteSource {
@@ -24,7 +25,7 @@ interface GamerRemoteSource {
         gamerImage: String = ""
     ): Result<String, GeneralError>
 
-    suspend fun checkGamerExists(gamerId: String): Result<Boolean, GeneralError>
+    suspend fun checkGamerExists(gamerId: String): Result<Boolean, Failure>
     suspend fun updateGamerImage(gamerId: String, gamerImage: String): Result<Unit, GeneralError>
     suspend fun deleteGamer(gamerId: String): Result<Unit, GeneralError>
 }
