@@ -4,6 +4,7 @@ import androidx.collection.ObjectList
 import com.asm.domain.entities.AuthUser
 import com.asm.domain.entities.CountryInfo
 import com.asm.domain.entities.Gamer
+import com.asm.domain.errors.Failure
 import com.asm.domain.errors.GeneralError
 
 data class InputUiState<out Value, out InputError>(
@@ -52,7 +53,7 @@ sealed class AuthPhoneProcessState {
 
     data class RegisteredUser(val gamerId: String) : AuthPhoneProcessState()
     data class UnregisteredUser(val authUser: AuthUser) : AuthPhoneProcessState()
-    data class Error(val generalError: GeneralError) : AuthPhoneProcessState()
+    data class Error(val failure: Failure) : AuthPhoneProcessState()
 }
 
 data class EmailAndPasswordFormState(
@@ -77,7 +78,7 @@ sealed class AuthState {
     data object Loading : AuthState()
     data class RegisteredUser(val gamerId: String) : AuthState()
     data class UnregisteredUser(val authUser: AuthUser) : AuthState()
-    data class Error(val generalError: GeneralError) : AuthState()
+    data class Error(val failure: Failure) : AuthState()
 }
 
 data class CreateAccountUIState(

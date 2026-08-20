@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.asm.domain.entities.AuthUser
 import com.asm.domain.entities.Result
-import com.asm.domain.errors.GeneralError
+import com.asm.domain.errors.Failure
 import com.asm.domain.use_cases.GamerExistsUC
 import com.asm.domain.use_cases.GetCountriesInfoUC
 import com.asm.domain.use_cases.SignInUserUC
@@ -69,10 +69,10 @@ class AuthPhoneVM @Inject constructor(
         }
     }
 
-    fun updateToError(generalError: GeneralError) {
+    fun updateToError(failure: Failure) {
         _phoneAuthUIState.update {
             it.copy(
-                phoneAuthProcessState = AuthPhoneProcessState.Error(generalError)
+                phoneAuthProcessState = AuthPhoneProcessState.Error(failure)
             )
         }
     }
@@ -142,22 +142,29 @@ class AuthPhoneVM @Inject constructor(
         viewModelScope.launch {
             val processState = AuthPhoneProcessState.Loading
             _phoneAuthUIState.update { it.copy(phoneAuthProcessState = processState) }
+
             val credentials = SignInUserUC.CredentialType.OTP(sessionId, otp)
-            val authProcessType = when (val authResult = signInUserUC.execute(credentials)) {
-                is Result.Successful<SignInUserUC.User> -> {
-                    when (val data = authResult.data) {
-                        is SignInUserUC.User.RegisteredUser -> AuthPhoneProcessState.RegisteredUser(
-                            data.gamerId
-                        )
 
-                        is SignInUserUC.User.UnregisteredUser -> AuthPhoneProcessState.UnregisteredUser(
-                            data.authUser
-                        )
-                    }
+            val user = when (val result = signInUserUC.execute(credentials)) {
+                is Result.Successful<SignInUserUC.User> -> result.data
+                is Result.Unsuccessful<Failure> -> {
+                    val errorState = AuthPhoneProcessState.Error(result.error)
+                    _phoneAuthUIState.update { it.copy(phoneAuthProcessState = errorState) }
+
+                    return@launch
                 }
-
-                is Result.Unsuccessful<GeneralError> -> AuthPhoneProcessState.Error(authResult.error)
             }
+
+            val authProcessType = when (user) {
+                is SignInUserUC.User.RegisteredUser -> AuthPhoneProcessState.RegisteredUser(
+                    user.gamerId
+                )
+
+                is SignInUserUC.User.UnregisteredUser -> AuthPhoneProcessState.UnregisteredUser(
+                    user.authUser
+                )
+            }
+
             _phoneAuthUIState.update { it.copy(phoneAuthProcessState = authProcessType) }
         }
     }
@@ -168,11 +175,20 @@ class AuthPhoneVM @Inject constructor(
             _phoneAuthUIState.update {
                 it.copy(phoneAuthProcessState = AuthPhoneProcessState.Loading)
             }
-            val processState = when (val result = gamerExistsUC.execute(userId)) {
-                is Result.Successful<Boolean> -> if (result.data) AuthPhoneProcessState.RegisteredUser(userId)
-                else AuthPhoneProcessState.UnregisteredUser(AuthUser(userId, null))
-                is Result.Unsuccessful<GeneralError> -> AuthPhoneProcessState.Error(result.error)
+
+            val userExists = when (val result = gamerExistsUC.execute(userId)) {
+                is Result.Successful<Boolean> -> result.data
+                is Result.Unsuccessful<Failure> -> {
+                    val errorState = AuthPhoneProcessState.Error(result.error)
+                    _phoneAuthUIState.update { it.copy(phoneAuthProcessState = errorState) }
+
+                    return@launch
+                }
             }
+
+            val processState = if (userExists) AuthPhoneProcessState.RegisteredUser(userId)
+            else AuthPhoneProcessState.UnregisteredUser(AuthUser(userId, null))
+
             _phoneAuthUIState.update {
                 it.copy(phoneAuthProcessState = processState)
             }

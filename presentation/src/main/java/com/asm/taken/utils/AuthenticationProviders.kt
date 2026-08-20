@@ -12,6 +12,7 @@ import androidx.credentials.exceptions.GetCredentialException
 import com.asm.data.sources.remote.abstract_remotes.AuthRemoteSource
 import com.asm.domain.entities.AuthUser
 import com.asm.domain.entities.Result
+import com.asm.domain.errors.Failure
 import com.asm.domain.errors.GeneralError
 import com.asm.domain.errors.toUnsuccessful
 import com.asm.taken.R
@@ -25,9 +26,11 @@ import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.firebase.FirebaseException
 import com.google.firebase.FirebaseNetworkException
 import com.google.firebase.FirebaseTooManyRequestsException
+import com.google.firebase.auth.FacebookAuthProvider
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.google.firebase.auth.FirebaseAuthMissingActivityForRecaptchaException
+import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.PhoneAuthCredential
 import com.google.firebase.auth.PhoneAuthOptions
 import com.google.firebase.auth.PhoneAuthProvider
@@ -50,7 +53,9 @@ class AuthenticationProviders(
 ) {
 
     companion object {
-        const val TAG: String = "auth_providers"
+        const val TAG: String = "auth-providers"
+        const val GOOGLE_PROVIDER_ID = GoogleAuthProvider.PROVIDER_ID
+        const val FACEBOOK_PROVIDER_ID = FacebookAuthProvider.PROVIDER_ID
     }
 
     sealed class AuthWithPhoneResult {
@@ -67,20 +72,20 @@ class AuthenticationProviders(
         data class Error(val generalError: GeneralError) : AuthWithPhone()
     }
 
-    suspend fun authWithGoogle(): Result<String, GeneralError> =
+    suspend fun authWithGoogle(): Result<String, Failure> =
         signInWithCredentialManager(true)
 
-    suspend fun authWithFacebook(): Result<String, GeneralError> {
+    suspend fun authWithFacebook(): Result<String, Failure> {
         val authWithFacebookResult = suspendCancellableCoroutine {
             val callback = object : FacebookCallback<LoginResult> {
                 override fun onCancel() {
                     Log.e(TAG, "Unexpected Error cancel process")
-                    it.resume(GeneralError.ClientError().toUnsuccessful())
+                    it.resume(Result.Unsuccessful(Failure.UnexpectedFailure))
                 }
 
                 override fun onError(error: FacebookException) {
                     Log.e(TAG, "Unexpected Exception to sign in with facebook", error)
-                    it.resume(GeneralError.ServerError().toUnsuccessful())
+                    it.resume(Result.Unsuccessful(Failure.RepositoryFailure.SERVICE_FAILURE))
                 }
 
                 override fun onSuccess(result: LoginResult) {
@@ -102,7 +107,7 @@ class AuthenticationProviders(
                 Result.Successful(token)
             }
 
-            is Result.Unsuccessful<GeneralError> -> authWithFacebookResult
+            is Result.Unsuccessful<Failure> -> authWithFacebookResult
         }
     }
 
@@ -166,7 +171,7 @@ class AuthenticationProviders(
 
     private suspend fun signInWithCredentialManager(
         authorizedAccounts: Boolean
-    ): Result<String, GeneralError> {
+    ): Result<String, Failure> {
         return try {
             val credentialRequest = buildCredentialRequest(authorizedAccounts)
             val credentialResponse =
@@ -176,15 +181,15 @@ class AuthenticationProviders(
                 Result.Successful(token)
             } catch (exception: Exception) {
                 Log.e(TAG, "Unexpected exception to handle credentials", exception)
-                GeneralError.ClientError().toUnsuccessful()
+                Result.Unsuccessful(Failure.UnexpectedFailure)
             }
         } catch (exception: GetCredentialException) {
             Log.e(TAG, "Unexpected exception to get credentials", exception)
             if (authorizedAccounts) signInWithCredentialManager(false)
-            else GeneralError.ClientError().toUnsuccessful()
+            else Result.Unsuccessful(Failure.RepositoryFailure.SERVICE_FAILURE)
         } catch (exception: Exception) {
             Log.e(TAG, "Unexpected exception to get credentials", exception)
-            GeneralError.Unknown.toUnsuccessful()
+            Result.Unsuccessful(Failure.UnexpectedFailure)
         }
     }
 

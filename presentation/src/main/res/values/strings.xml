@@ -11,6 +11,8 @@
     <string name="txt_ttl_form_edit_gamer">Edit Gamer!</string>
     <string name="txt_ttl_choose_country">Choose country</string>
     <string name="txt_ttl_choose_option">Choose option</string>
+    <string name="txt_ttl_connection_error">Connection Error</string>
+    <string name="txt_ttl_auth_error">Authentication Error</string>
     <string name="txt_ttl_client_error">Request Error</string>
     <string name="txt_ttl_service_error">Service Error</string>
     <string name="txt_ttl_success_operation">Success operation</string>
@@ -53,6 +55,7 @@
     <string name="txt_btn_accept">Aceptar</string>
     <string name="txt_btn_delete_gamer">DELETE GAMER</string>
     <string name="txt_btn_confirm_delete_button">CONFIRM</string>
+    <string name="txt_btn_open_network_settings">Open Network Settings</string>
     
     <!-- Errors -->
     <string name="err_get_session_data">Error to get session data</string>
@@ -79,6 +82,7 @@
     <string name="err_get_countries">Error to get countries</string>
     <string name="err_phone_number_invalid">Phone number invalid</string>
     <string name="err_connection">There was an error connecting to the service.\nPlease check your internet connection.\nIf the error persists, try again later.</string>
+    <string name="err_network_connection">Check your internet connection.</string>
     <string name="err_email_already_in_use">Email already in use</string>
     <string name="err_weak_password">Weak password</string>
     <string name="err_incorrect_email_or_password">Incorrect email or password</string>
@@ -94,6 +98,8 @@
     <string name="err_process_data">An error occurred while processing data.</string>
     <string name="err_client">An error occurred while processing your request.\nPlease verify that your information is correct.</string>
     <string name="err_server">There has been an error with the service.\nPlease try again later.</string>
+    <string name="err_invalid_credential">Your credentials are invalid.</string>
+    <string name="err_unexpected_error">An unexpected error occurred.</string>
 
     <string name="session_file" translatable="false">session_info</string>
     <string name="default_web_client_id" translatable="false">537568996262-c7nrhuvi4s9jaukcg9uh0hvm98l9ubls.apps.googleusercontent.com</string>

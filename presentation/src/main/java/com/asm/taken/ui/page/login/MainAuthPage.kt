@@ -22,6 +22,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
@@ -29,12 +30,12 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.asm.domain.entities.AuthUser
 import com.asm.domain.entities.Result
-import com.asm.domain.errors.GeneralError
+import com.asm.domain.errors.Failure
 import com.asm.taken.R
 import com.asm.taken.model.AuthState
 import com.asm.taken.model.AuthTypeState
-import com.asm.taken.model.InputState
 import com.asm.taken.model.EmailAndPasswordFormState
+import com.asm.taken.model.InputState
 import com.asm.taken.model.LoginUIState
 import com.asm.taken.ui.CircularProgressDialog
 import com.asm.taken.ui.DefaultButton
@@ -42,13 +43,16 @@ import com.asm.taken.ui.DefaultImageButton
 import com.asm.taken.ui.DefaultOutlinedTextFieldLI
 import com.asm.taken.ui.DefaultText
 import com.asm.taken.ui.DefaultTextButton
-import com.asm.taken.ui.ErrorProcessComponent
+import com.asm.taken.ui.ImageDialog
 import com.asm.taken.ui.PasswordOutlinedTextField
 import com.asm.taken.ui.PuzzleGeneralTitle
+import com.asm.taken.ui.SnackBarError
 import com.asm.taken.utils.AuthenticationProviders
 import com.asm.taken.utils.getErrorEmail
 import com.asm.taken.utils.getErrorPassword
 import com.asm.taken.vm.LoginVM
+import com.google.firebase.auth.FacebookAuthProvider
+import com.google.firebase.auth.GoogleAuthProvider
 import kotlinx.coroutines.launch
 
 @Composable
@@ -74,8 +78,11 @@ fun MainAuthPage(
         loginWithGoogle = {
             coroutineScope.launch {
                 when (val result = authProvider.authWithGoogle()) {
-                    is Result.Successful<String> -> loginVM.signInWithGoogle(result.data)
-                    is Result.Unsuccessful<GeneralError> -> loginVM.updateAuthGoogleErrorState(
+                    is Result.Successful<String> -> loginVM.signInWithGoogle(
+                        token = result.data,
+                        providerId = AuthenticationProviders.GOOGLE_PROVIDER_ID
+                    )
+                    is Result.Unsuccessful<Failure> -> loginVM.updateAuthGoogleErrorState(
                         result.error
                     )
                 }
@@ -84,8 +91,11 @@ fun MainAuthPage(
         loginWithFacebook = {
             coroutineScope.launch {
                 when (val result = authProvider.authWithFacebook()) {
-                    is Result.Successful<String> -> loginVM.signInWithFacebook(result.data)
-                    is Result.Unsuccessful<GeneralError> -> loginVM.updateAuthFacebookErrorState(
+                    is Result.Successful<String> -> loginVM.signInWithFacebook(
+                        token = result.data,
+                        providerId = AuthenticationProviders.FACEBOOK_PROVIDER_ID
+                    )
+                    is Result.Unsuccessful<Failure> -> loginVM.updateAuthFacebookErrorState(
                         result.error
                     )
                 }
@@ -112,8 +122,11 @@ fun MainAuthPage(
             retryProcess = {
                 coroutineScope.launch {
                     when (val result = authProvider.authWithFacebook()) {
-                        is Result.Successful<String> -> loginVM.signInWithFacebook(result.data)
-                        is Result.Unsuccessful<GeneralError> -> loginVM.updateAuthFacebookErrorState(
+                        is Result.Successful<String> -> loginVM.signInWithFacebook(
+                            token = result.data,
+                            providerId = FacebookAuthProvider.PROVIDER_ID
+                        )
+                        is Result.Unsuccessful<Failure> -> loginVM.updateAuthFacebookErrorState(
                             result.error
                         )
                     }
@@ -129,8 +142,11 @@ fun MainAuthPage(
             retryProcess = {
                 coroutineScope.launch {
                     when (val result = authProvider.authWithGoogle()) {
-                        is Result.Successful<String> -> loginVM.signInWithGoogle(result.data)
-                        is Result.Unsuccessful<GeneralError> -> loginVM.updateAuthGoogleErrorState(
+                        is Result.Successful<String> -> loginVM.signInWithGoogle(
+                            token = result.data,
+                            providerId = GoogleAuthProvider.PROVIDER_ID
+                        )
+                        is Result.Unsuccessful<Failure> -> loginVM.updateAuthGoogleErrorState(
                             result.error
                         )
                     }
@@ -220,11 +236,11 @@ fun ProcessSection(
     onNavigateToCreateGamer: (AuthUser) -> Unit
 ) {
     when (authState) {
-        is AuthState.Error -> ErrorProcessComponent(
-            generalError = authState.generalError,
-            retryProcess = retryProcess,
+        is AuthState.Error -> ErrorAuthComponent(
             snackBarHostState = snackBarHostState,
-            resetProcess = resetProcess
+            failure = authState.failure,
+            resetProcess = resetProcess,
+            retryProcess = retryProcess
         )
         AuthState.Loading -> CircularProgressDialog()
         is AuthState.RegisteredUser -> LaunchedEffect(true) {
@@ -350,5 +366,54 @@ fun PanelSocialMedia(
                 onClickButton = createAccount
             )
         }
+    }
+}
+
+@Composable
+fun ErrorAuthComponent(
+    snackBarHostState: SnackbarHostState,
+    failure: Failure,
+    resetProcess: () -> Unit,
+    retryProcess: () -> Unit
+) {
+    when (failure) {
+        Failure.AuthenticationFailure.INVALID_CREDENTIALS -> ImageDialog(
+            title = stringResource(R.string.txt_ttl_auth_error),
+            image = painterResource(R.drawable.ic_warning),
+            message = stringResource(R.string.err_invalid_credential),
+            onDismissRequest = resetProcess,
+            onClose = resetProcess
+        )
+        Failure.RepositoryFailure.SERVICE_FAILURE -> ImageDialog(
+            title = stringResource(R.string.txt_ttl_service_error),
+            image = painterResource(R.drawable.ic_error),
+            message = stringResource(R.string.err_server),
+            onDismissRequest = resetProcess,
+            onClose = resetProcess
+        )
+        Failure.SystemFailure.NETWORK_CONNECTION -> ImageDialog(
+            title = stringResource(R.string.txt_ttl_connection_error),
+            image = painterResource(R.drawable.ic_sin_internet),
+            message = stringResource(R.string.err_connection),
+            onDismissRequest = resetProcess,
+            onClose = resetProcess
+        ) {
+            DefaultButton(
+                text = stringResource(id = R.string.txt_label_retry),
+                onClickButton = retryProcess
+            )
+            DefaultButton(
+                text = stringResource(id = R.string.txt_btn_open_network_settings),
+                onClickButton = {
+
+                }
+            )
+        }
+        Failure.UnexpectedFailure -> SnackBarError(
+            snackBarHostState = snackBarHostState,
+            message = stringResource(R.string.err_unexpected_error),
+            withDismissAction = true,
+            onDismissed = resetProcess
+        )
     }
 }

@@ -2,9 +2,8 @@ package com.asm.taken.vm
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.asm.domain.entities.ProviderId
 import com.asm.domain.entities.Result
-import com.asm.domain.errors.GeneralError
+import com.asm.domain.errors.Failure
 import com.asm.domain.use_cases.SignInUserUC
 import com.asm.taken.model.AuthState
 import com.asm.taken.model.AuthTypeState
@@ -32,21 +31,21 @@ class LoginVM @Inject constructor(
 
     fun resetProcessState() = _loginUIState.update { it.copy(authTypeState = AuthTypeState.Idle) }
 
-    fun updateAuthGoogleErrorState(error: GeneralError) {
+    fun updateAuthGoogleErrorState(failure: Failure) {
         _loginUIState.update {
             it.copy(
                 authTypeState = AuthTypeState.GoogleAuthType(
-                    AuthState.Error(error)
+                    AuthState.Error(failure)
                 )
             )
         }
     }
 
-    fun updateAuthFacebookErrorState(error: GeneralError) {
+    fun updateAuthFacebookErrorState(failure: Failure) {
         _loginUIState.update {
             it.copy(
                 authTypeState = AuthTypeState.FacebookAuthType(
-                    AuthState.Error(error)
+                    AuthState.Error(failure)
                 )
             )
         }
@@ -82,77 +81,102 @@ class LoginVM @Inject constructor(
                 email = email,
                 password = password,
             )
-            val authEmailAndPasswordState = when (val result = signInUserUC.execute(credentials)) {
-                is Result.Successful<SignInUserUC.User> -> when (val user = result.data) {
-                    is SignInUserUC.User.RegisteredUser -> AuthTypeState.EmailAndPasswordAuthType(
-                        AuthState.RegisteredUser(user.gamerId)
-                    )
 
-                    is SignInUserUC.User.UnregisteredUser -> AuthTypeState.EmailAndPasswordAuthType(
-                        AuthState.UnregisteredUser(user.authUser)
+            val user = when (val result = signInUserUC.execute(credentials)) {
+                is Result.Successful<SignInUserUC.User> -> result.data
+
+                is Result.Unsuccessful<Failure> -> {
+                    val errorState = AuthTypeState.EmailAndPasswordAuthType(
+                        AuthState.Error(result.error)
                     )
+                    _loginUIState.update { it.copy(authTypeState = errorState) }
+
+                    return@launch
                 }
+            }
 
-                is Result.Unsuccessful<GeneralError> -> AuthTypeState.EmailAndPasswordAuthType(
-                    AuthState.Error(result.error)
+            val authState = when (user) {
+                is SignInUserUC.User.RegisteredUser -> AuthTypeState.EmailAndPasswordAuthType(
+                    AuthState.RegisteredUser(user.gamerId)
+                )
+
+                is SignInUserUC.User.UnregisteredUser -> AuthTypeState.EmailAndPasswordAuthType(
+                    AuthState.UnregisteredUser(user.authUser)
                 )
             }
-            _loginUIState.update { it.copy(authTypeState = authEmailAndPasswordState) }
+
+            _loginUIState.update { it.copy(authTypeState = authState) }
         }
     }
 
-    fun signInWithGoogle(token: String) {
+    fun signInWithGoogle(token: String, providerId: String) {
         viewModelScope.launch {
             val authTypeState = AuthTypeState.GoogleAuthType(AuthState.Loading)
             _loginUIState.update { it.copy(authTypeState = authTypeState) }
 
             val credentials = SignInUserUC.CredentialType.Token(
                 token = token,
-                providerId = ProviderId.GOOGLE
+                providerId = providerId
             )
-            val authGoogleState = when (val result = signInUserUC.execute(credentials)) {
-                is Result.Successful<SignInUserUC.User> -> when (val user = result.data) {
-                    is SignInUserUC.User.RegisteredUser -> AuthTypeState.GoogleAuthType(
-                        AuthState.RegisteredUser(user.gamerId)
-                    )
 
-                    is SignInUserUC.User.UnregisteredUser -> AuthTypeState.GoogleAuthType(
-                        AuthState.UnregisteredUser(user.authUser)
+            val user = when (val result = signInUserUC.execute(credentials)) {
+                is Result.Successful<SignInUserUC.User> -> result.data
+                is Result.Unsuccessful<Failure> -> {
+                    val errorState = AuthTypeState.GoogleAuthType(
+                        AuthState.Error(result.error)
                     )
+                    _loginUIState.update { it.copy(authTypeState = errorState) }
+
+                    return@launch
                 }
+            }
 
-                is Result.Unsuccessful<GeneralError> -> AuthTypeState.GoogleAuthType(
-                    AuthState.Error(result.error)
+            val authGoogleState = when (user) {
+                is SignInUserUC.User.RegisteredUser -> AuthTypeState.GoogleAuthType(
+                    AuthState.RegisteredUser(user.gamerId)
+                )
+
+                is SignInUserUC.User.UnregisteredUser -> AuthTypeState.GoogleAuthType(
+                    AuthState.UnregisteredUser(user.authUser)
                 )
             }
+
             _loginUIState.update { it.copy(authTypeState = authGoogleState) }
         }
     }
 
-    fun signInWithFacebook(token: String) {
+    fun signInWithFacebook(token: String, providerId: String) {
         viewModelScope.launch {
             val authTypeState = AuthTypeState.FacebookAuthType(AuthState.Loading)
             _loginUIState.update { it.copy(authTypeState = authTypeState) }
 
             val credentials = SignInUserUC.CredentialType.Token(
                 token = token,
-                providerId = ProviderId.FACEBOOK
+                providerId = providerId
             )
-            val authFacebookState = when (val result = signInUserUC.execute(credentials)) {
-                is Result.Successful<SignInUserUC.User> -> when (val user = result.data) {
-                    is SignInUserUC.User.RegisteredUser -> AuthTypeState.FacebookAuthType(
-                        AuthState.RegisteredUser(user.gamerId)
-                    )
 
-                    is SignInUserUC.User.UnregisteredUser -> AuthTypeState.FacebookAuthType(
-                        AuthState.UnregisteredUser(user.authUser)
+            val user = when (val result = signInUserUC.execute(credentials)) {
+                is Result.Successful<SignInUserUC.User> -> result.data
+                is Result.Unsuccessful<Failure> -> {
+                    val errorState = AuthTypeState.FacebookAuthType(
+                        AuthState.Error(result.error)
                     )
+                    _loginUIState.update { it.copy(authTypeState = errorState) }
+
+                    return@launch
                 }
+            }
 
-                is Result.Unsuccessful<GeneralError> -> AuthTypeState.FacebookAuthType(
-                    AuthState.Error(result.error)
+            val authFacebookState = when (user) {
+                is SignInUserUC.User.RegisteredUser -> AuthTypeState.FacebookAuthType(
+                    AuthState.RegisteredUser(user.gamerId)
+                )
+
+                is SignInUserUC.User.UnregisteredUser -> AuthTypeState.FacebookAuthType(
+                    AuthState.UnregisteredUser(user.authUser)
                 )
             }
+
             _loginUIState.update { it.copy(authTypeState = authFacebookState) }
         }
     }
