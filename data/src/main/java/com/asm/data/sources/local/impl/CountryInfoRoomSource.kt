@@ -6,6 +6,7 @@ import com.asm.data.sources.local.interfaces.CountryInfoLocalSource
 import com.asm.data.sources.local.mappers.CountryInfoMapper
 import com.asm.domain.entities.CountryInfo
 import com.asm.domain.entities.Result
+import com.asm.domain.errors.Failure
 import com.asm.domain.errors.GeneralError
 import com.asm.domain.errors.toUnsuccessful
 import javax.inject.Inject
@@ -18,7 +19,7 @@ class CountryInfoRoomSource @Inject constructor(
         const val TAG = "CountryInfoRoomSource"
     }
 
-    override suspend fun getCountriesInfoSortedByName(ascending: Boolean): Result<List<CountryInfo>, GeneralError> {
+    override suspend fun getCountriesInfoSortedByName(ascending: Boolean): Result<List<CountryInfo>, Failure> {
         return try {
             val countries = when {
                 ascending -> takenDB.getCountryInfoDao().getCountriesInfoSortedByNameAsc()
@@ -31,7 +32,7 @@ class CountryInfoRoomSource @Inject constructor(
         }
     }
 
-    override suspend fun saveCountriesInfo(countriesInfo: List<CountryInfo>): Result<Unit, GeneralError> {
+    override suspend fun saveCountriesInfo(countriesInfo: List<CountryInfo>): Result<Unit, Failure> {
         return try {
             val countriesInfoRoom = countriesInfo.map(countryInfoMapper::getCountryInfoRoom)
             val sorted = countriesInfoRoom.sortedBy { it.phoneCode }

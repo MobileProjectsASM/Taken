@@ -129,7 +129,7 @@ class GamerFirebaseSource @Inject constructor(
         } catch (exception: Exception) {
             Log.e(TAG, "Error to check gamer exists", exception)
             val failure = when (exception) {
-                is FirebaseException -> Failure.RepositoryFailure.SERVICE_FAILURE
+                is FirebaseException -> Failure.RepositoryFailure.REMOTE_SOURCE_FAILURE
                 else -> Failure.UnexpectedFailure
             }
             return Result.Unsuccessful(failure)

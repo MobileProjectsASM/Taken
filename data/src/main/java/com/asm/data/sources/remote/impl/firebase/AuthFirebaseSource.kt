@@ -18,7 +18,6 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthException
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.google.firebase.auth.FirebaseAuthInvalidUserException
-import com.google.firebase.auth.FirebaseAuthUserCollisionException
 import com.google.firebase.auth.GetTokenResult
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.OAuthProvider
@@ -64,7 +63,7 @@ class AuthFirebaseSource @Inject constructor(
             val failure = when (exception) {
                 is FirebaseAuthInvalidUserException, is FirebaseAuthInvalidCredentialsException -> Failure.AuthenticationFailure.INVALID_CREDENTIALS
 
-                is FirebaseException -> Failure.RepositoryFailure.SERVICE_FAILURE
+                is FirebaseException -> Failure.RepositoryFailure.REMOTE_SOURCE_FAILURE
 
                 else -> Failure.UnexpectedFailure
             }
@@ -94,7 +93,7 @@ class AuthFirebaseSource @Inject constructor(
             val failure = when (exception) {
                 is FirebaseAuthInvalidUserException, is FirebaseAuthInvalidCredentialsException -> Failure.AuthenticationFailure.INVALID_CREDENTIALS
 
-                is FirebaseException -> Failure.RepositoryFailure.SERVICE_FAILURE
+                is FirebaseException -> Failure.RepositoryFailure.REMOTE_SOURCE_FAILURE
 
                 else -> Failure.UnexpectedFailure
             }
@@ -122,7 +121,7 @@ class AuthFirebaseSource @Inject constructor(
             val failure = when (exception) {
                 is FirebaseAuthInvalidUserException, is FirebaseAuthInvalidCredentialsException -> Failure.AuthenticationFailure.INVALID_CREDENTIALS
 
-                is FirebaseException -> Failure.RepositoryFailure.SERVICE_FAILURE
+                is FirebaseException -> Failure.RepositoryFailure.REMOTE_SOURCE_FAILURE
 
                 else -> Failure.UnexpectedFailure
             }

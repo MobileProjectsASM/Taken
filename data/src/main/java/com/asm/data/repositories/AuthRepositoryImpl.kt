@@ -26,7 +26,7 @@ class AuthRepositoryImpl @Inject constructor(
         password: String
     ): Result<AuthUser, Failure> {
         return try {
-            ifConnectionIsAvailableRun {
+            connectionSource.ifConnectionIsAvailableRun {
                 authRemoteSource.authWithEmailAndPassword(email, password)
             }
         } catch (exception: Exception) {
@@ -40,7 +40,12 @@ class AuthRepositoryImpl @Inject constructor(
         providerId: String
     ): Result<AuthUser, Failure> {
         return try {
-            ifConnectionIsAvailableRun { authRemoteSource.authWithToken(token, providerId) }
+            connectionSource.ifConnectionIsAvailableRun {
+                authRemoteSource.authWithToken(
+                    token,
+                    providerId
+                )
+            }
         } catch (exception: Exception) {
             logger.logE(TAG, exception)
             Result.Unsuccessful(Failure.UnexpectedFailure)
@@ -52,7 +57,12 @@ class AuthRepositoryImpl @Inject constructor(
         otp: String
     ): Result<AuthUser, Failure> {
         return try {
-            ifConnectionIsAvailableRun { authRemoteSource.authWithOtp(sessionId, otp) }
+            connectionSource.ifConnectionIsAvailableRun {
+                authRemoteSource.authWithOtp(
+                    sessionId,
+                    otp
+                )
+            }
         } catch (exception: Exception) {
             logger.logE(TAG, exception)
             Result.Unsuccessful(Failure.UnexpectedFailure)
@@ -87,11 +97,5 @@ class AuthRepositoryImpl @Inject constructor(
             logger.logE(TAG, exception)
             return GeneralError.Unknown.toUnsuccessful()
         }
-    }
-
-    private suspend fun <T> ifConnectionIsAvailableRun(execute: suspend () -> Result<T, Failure>): Result<T, Failure> {
-        val networkAvailable = connectionSource.isNetworkAvailable()
-        return if (networkAvailable) execute()
-        else Result.Unsuccessful(Failure.SystemFailure.NETWORK_CONNECTION)
     }
 }
