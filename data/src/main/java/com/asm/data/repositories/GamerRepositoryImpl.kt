@@ -4,7 +4,7 @@ import com.asm.data.sources.hardware.ConnectionSource
 import com.asm.data.sources.remote.abstract_remotes.GamerRemoteSource
 import com.asm.domain.entities.Gamer
 import com.asm.domain.entities.Result
-import com.asm.domain.errors.Failure
+import com.asm.domain.errors.CommonFailure
 import com.asm.domain.errors.GeneralError
 import com.asm.domain.errors.toUnsuccessful
 import com.asm.domain.repositories.GamerRepository
@@ -17,7 +17,7 @@ class GamerRepositoryImpl @Inject constructor(
     private val logger: Logger
 ) : GamerRepository {
     companion object {
-        const val TAG = "GamerRepositoryImpl"
+        const val TAG = "gamer-repository"
     }
 
     override suspend fun registerGamer(
@@ -73,12 +73,12 @@ class GamerRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun verifyGamerExists(gamerId: String): Result<Boolean, Failure> {
+    override suspend fun verifyGamerExists(gamerId: String): Result<Boolean, CommonFailure> {
         return try {
-            ifConnectionIsAvailableRun { gamerRemoteSource.checkGamerExists(gamerId) }
+            connectionSource.ifConnectionIsAvailableRun { gamerRemoteSource.checkGamerExists(gamerId) }
         } catch (e: Exception) {
             logger.logE(TAG, e)
-            Result.Unsuccessful(Failure.UnexpectedFailure)
+            Result.Unsuccessful(CommonFailure.UNEXPECTED_FAILURE)
         }
     }
 
@@ -102,9 +102,8 @@ class GamerRepositoryImpl @Inject constructor(
         }
     }
 
-    private suspend fun <T> ifConnectionIsAvailableRun(execute: suspend () -> Result<T, Failure>): Result<T, Failure> {
-        val networkAvailable = connectionSource.isNetworkAvailable()
-        return if (networkAvailable) execute()
-        else Result.Unsuccessful(Failure.SystemFailure.NETWORK_CONNECTION)
+    private suspend fun <T> ConnectionSource.ifConnectionIsAvailableRun(execute: suspend () -> Result<T, CommonFailure>): Result<T, CommonFailure> {
+        return if (isNetworkAvailable()) execute()
+        else Result.Unsuccessful(CommonFailure.NETWORK_CONNECTION)
     }
 }

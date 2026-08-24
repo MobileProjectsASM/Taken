@@ -7,8 +7,10 @@ import com.asm.data.sources.remote.abstract_remotes.AuthRemoteSource
 import com.asm.domain.entities.AuthUser
 import com.asm.domain.entities.Result
 import com.asm.domain.errors.AuthProcessException
-import com.asm.domain.errors.Failure
+import com.asm.domain.errors.AuthenticationFailure
+import com.asm.domain.errors.CommonFailure
 import com.asm.domain.errors.GeneralError
+import com.asm.domain.errors.InvalidCredentials
 import com.asm.domain.errors.toUnsuccessful
 import com.google.firebase.FirebaseException
 import com.google.firebase.FirebaseNetworkException
@@ -31,7 +33,7 @@ class AuthFirebaseSource @Inject constructor(
 ) : AuthRemoteSource {
 
     companion object {
-        const val TAG = "auth_firebase_source"
+        const val TAG = "auth-firebase-source"
 
         enum class Provider {
             UNDEFINED,
@@ -55,17 +57,17 @@ class AuthFirebaseSource @Inject constructor(
     override suspend fun authWithEmailAndPassword(
         email: String,
         password: String
-    ): Result<AuthUser, Failure> {
+    ): Result<AuthUser, AuthenticationFailure> {
         val authResult = try {
             firebaseAuth.signInWithEmailAndPassword(email, password).await()
         } catch (exception: Exception) {
             Log.e(TAG, "Error to sign in with email and password", exception)
             val failure = when (exception) {
-                is FirebaseAuthInvalidUserException, is FirebaseAuthInvalidCredentialsException -> Failure.AuthenticationFailure.INVALID_CREDENTIALS
+                is FirebaseAuthInvalidUserException, is FirebaseAuthInvalidCredentialsException -> InvalidCredentials
 
-                is FirebaseException -> Failure.RepositoryFailure.REMOTE_SOURCE_FAILURE
+                is FirebaseException -> CommonFailure.REPOSITORY_FAILURE
 
-                else -> Failure.UnexpectedFailure
+                else -> CommonFailure.UNEXPECTED_FAILURE
             }
             return Result.Unsuccessful(failure)
         }
@@ -78,7 +80,7 @@ class AuthFirebaseSource @Inject constructor(
     override suspend fun authWithToken(
         token: String,
         providerId: String
-    ): Result<AuthUser, Failure> {
+    ): Result<AuthUser, AuthenticationFailure> {
         val authResult = try {
             val authCredential = getCredential(providerId) {
                 return@getCredential when (providerId) {
@@ -91,11 +93,11 @@ class AuthFirebaseSource @Inject constructor(
         } catch (exception: Exception) {
             Log.e(TAG, "Error to sign in with token", exception)
             val failure = when (exception) {
-                is FirebaseAuthInvalidUserException, is FirebaseAuthInvalidCredentialsException -> Failure.AuthenticationFailure.INVALID_CREDENTIALS
+                is FirebaseAuthInvalidUserException, is FirebaseAuthInvalidCredentialsException -> InvalidCredentials
 
-                is FirebaseException -> Failure.RepositoryFailure.REMOTE_SOURCE_FAILURE
+                is FirebaseException -> CommonFailure.REPOSITORY_FAILURE
 
-                else -> Failure.UnexpectedFailure
+                else -> CommonFailure.UNEXPECTED_FAILURE
             }
             return Result.Unsuccessful(failure)
         }
@@ -112,18 +114,18 @@ class AuthFirebaseSource @Inject constructor(
     override suspend fun authWithOtp(
         sessionId: String,
         otp: String
-    ): Result<AuthUser, Failure> {
+    ): Result<AuthUser, AuthenticationFailure> {
         val authResult = try {
             val phoneAuthCredential = PhoneAuthProvider.getCredential(sessionId, otp)
             firebaseAuth.signInWithCredential(phoneAuthCredential).await()
         } catch (exception: Exception) {
             Log.e(TAG, "Error to sign in with otp", exception)
             val failure = when (exception) {
-                is FirebaseAuthInvalidUserException, is FirebaseAuthInvalidCredentialsException -> Failure.AuthenticationFailure.INVALID_CREDENTIALS
+                is FirebaseAuthInvalidUserException, is FirebaseAuthInvalidCredentialsException -> InvalidCredentials
 
-                is FirebaseException -> Failure.RepositoryFailure.REMOTE_SOURCE_FAILURE
+                is FirebaseException -> CommonFailure.REPOSITORY_FAILURE
 
-                else -> Failure.UnexpectedFailure
+                else -> CommonFailure.UNEXPECTED_FAILURE
             }
             return Result.Unsuccessful(failure)
         }

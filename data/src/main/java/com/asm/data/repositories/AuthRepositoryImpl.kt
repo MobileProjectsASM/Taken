@@ -4,7 +4,8 @@ import com.asm.data.sources.hardware.ConnectionSource
 import com.asm.data.sources.remote.abstract_remotes.AuthRemoteSource
 import com.asm.domain.entities.AuthUser
 import com.asm.domain.entities.Result
-import com.asm.domain.errors.Failure
+import com.asm.domain.errors.AuthenticationFailure
+import com.asm.domain.errors.CommonFailure
 import com.asm.domain.errors.GeneralError
 import com.asm.domain.errors.toUnsuccessful
 import com.asm.domain.repositories.AuthRepository
@@ -24,21 +25,21 @@ class AuthRepositoryImpl @Inject constructor(
     override suspend fun authWithEmailAndPassword(
         email: String,
         password: String
-    ): Result<AuthUser, Failure> {
+    ): Result<AuthUser, AuthenticationFailure> {
         return try {
             connectionSource.ifConnectionIsAvailableRun {
                 authRemoteSource.authWithEmailAndPassword(email, password)
             }
         } catch (exception: Exception) {
             logger.logE(TAG, exception)
-            Result.Unsuccessful(Failure.UnexpectedFailure)
+            Result.Unsuccessful(CommonFailure.UNEXPECTED_FAILURE)
         }
     }
 
     override suspend fun authWithToken(
         token: String,
         providerId: String
-    ): Result<AuthUser, Failure> {
+    ): Result<AuthUser, AuthenticationFailure> {
         return try {
             connectionSource.ifConnectionIsAvailableRun {
                 authRemoteSource.authWithToken(
@@ -48,14 +49,14 @@ class AuthRepositoryImpl @Inject constructor(
             }
         } catch (exception: Exception) {
             logger.logE(TAG, exception)
-            Result.Unsuccessful(Failure.UnexpectedFailure)
+            Result.Unsuccessful(CommonFailure.UNEXPECTED_FAILURE)
         }
     }
 
     override suspend fun authWithOTP(
         sessionId: String,
         otp: String
-    ): Result<AuthUser, Failure> {
+    ): Result<AuthUser, AuthenticationFailure> {
         return try {
             connectionSource.ifConnectionIsAvailableRun {
                 authRemoteSource.authWithOtp(
@@ -65,7 +66,7 @@ class AuthRepositoryImpl @Inject constructor(
             }
         } catch (exception: Exception) {
             logger.logE(TAG, exception)
-            Result.Unsuccessful(Failure.UnexpectedFailure)
+            Result.Unsuccessful(CommonFailure.UNEXPECTED_FAILURE)
         }
     }
 
@@ -97,5 +98,10 @@ class AuthRepositoryImpl @Inject constructor(
             logger.logE(TAG, exception)
             return GeneralError.Unknown.toUnsuccessful()
         }
+    }
+
+    private suspend fun <T> ConnectionSource.ifConnectionIsAvailableRun(execute: suspend () -> Result<T, AuthenticationFailure>): Result<T, AuthenticationFailure> {
+        return if (isNetworkAvailable()) execute()
+        else Result.Unsuccessful(CommonFailure.NETWORK_CONNECTION)
     }
 }
