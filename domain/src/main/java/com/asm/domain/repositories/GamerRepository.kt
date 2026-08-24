@@ -2,7 +2,7 @@ package com.asm.domain.repositories
 
 import com.asm.domain.entities.Gamer
 import com.asm.domain.entities.Result
-import com.asm.domain.errors.Failure
+import com.asm.domain.errors.CommonFailure
 import com.asm.domain.errors.GeneralError
 
 interface GamerRepository {
@@ -26,6 +26,6 @@ interface GamerRepository {
 
     suspend fun getGamerById(gamerId: String): Result<Gamer?, GeneralError>
     suspend fun updateGamerImage(gamerId: String, imageUrl: String): Result<Unit, GeneralError>
-    suspend fun verifyGamerExists(gamerId: String): Result<Boolean, Failure>
+    suspend fun verifyGamerExists(gamerId: String): Result<Boolean, CommonFailure>
     suspend fun deleteGamer(gamerId: String): Result<Unit, GeneralError>
 }
